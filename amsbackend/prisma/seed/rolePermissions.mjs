@@ -1,0 +1,89 @@
+export const ROLE_PERMISSIONS = {
+  personal_owner: [
+    "VIEW_DASHBOARD",
+    "VIEW_REPORTS",
+    "VIEW_ASSET",
+    "CREATE_ASSET",
+    "EDIT_ASSET",
+    "DELETE_ASSET",
+    "EXPORT_ASSET"
+  ],
+
+  user: [
+    "VIEW_DASHBOARD",
+    "VIEW_REPORTS"
+  ],
+
+  viewer: [
+    "VIEW_REPORTS",
+    "VIEW_DASHBOARD",
+    "VIEW_USERS",
+    "VIEW_ASSET"
+  ],
+
+  editor: [
+    "VIEW_REPORTS",
+    "EDIT_REPORTS",
+    "VIEW_DASHBOARD",
+    "VIEW_USERS",
+    "VIEW_ASSET",
+    "CREATE_ASSET",
+    "EDIT_ASSET",
+    "EXPORT_ASSET",
+    "ARCHIVE_ASSET",
+    "BULK_UPDATE_ASSET",
+    "VIEW_ASSET_AUDIT_LOGS"
+  ],
+
+  company_admin: [
+    "VIEW_DASHBOARD",
+    "VIEW_REPORTS",
+    "EDIT_REPORTS",
+    "VIEW_USERS",
+    "VIEW_ASSET",
+    "CREATE_ASSET",
+    "EDIT_ASSET",
+    "DELETE_ASSET",
+    "RESTORE_ASSET",
+    "EXPORT_ASSET",
+    "ARCHIVE_ASSET",
+    "BULK_UPDATE_ASSET",
+    "VIEW_ASSET_AUDIT_LOGS",
+    "MANAGE_CLIENT_GROUP",
+    "INVITE_USERS"
+  ],
+
+  app_admin: [
+    "VIEW_DASHBOARD",
+    "VIEW_REPORTS",
+    "EDIT_REPORTS",
+    "VIEW_USERS",
+    "VIEW_ASSET",
+    "CREATE_ASSET",
+    "EDIT_ASSET",
+    "DELETE_ASSET",
+    "RESTORE_ASSET",
+    "EXPORT_ASSET",
+    "ARCHIVE_ASSET",
+    "BULK_UPDATE_ASSET",
+    "VIEW_ASSET_AUDIT_LOGS",
+    "MANAGE_CLIENT_GROUP",
+    "INVITE_USERS",
+    "MANAGE_SYSTEM",
+    "MANAGE_ROLES",
+    "MANAGE_PERMISSIONS",
+    "VIEW_AUDIT_LOGS"
+  ], 
+  // ⭐ THE MISSING ROLE — THIS FIXES YOUR ISSUE
+  single_user: [
+    "VIEW_DASHBOARD",
+    "VIEW_REPORTS",
+    "VIEW_ASSET",
+    "CREATE_ASSET",
+    "EDIT_ASSET",
+    "DELETE_ASSET",
+    "RESTORE_ASSET"
+  ]
+
+
+};

@@ -1,0 +1,323 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id              Int              @id @default(autoincrement())
+  name            String
+  createdAt       DateTime         @default(now())
+  clientGroups    ClientGroup[]
+  users           Users[]
+  issues          AssetIssue[]
+  assets          assets[]
+  audits          Audit[]
+  systemAlerts    SystemAlert[]
+  userActivity    UserActivity[]
+  companySettings CompanySettings?
+}
+
+model Users {
+  id              Int                @id @default(autoincrement())
+  firstname       String
+  lastname        String
+  username        String             @unique
+  email           String             @unique
+  password        String
+  role            String
+  role_id         Int?
+  clientGroupId   Int?
+  accountTypeId   Int?
+  disabled        Boolean            @default(false)
+  disabledAt      DateTime?
+  companyId       Int?
+  assignedIssues  AssetIssue[]       @relation("AssignedUser")
+  completedIssues AssetIssue[]       @relation("CompletedUser")
+  audits          Audit[]
+  groups          UserGroup[]
+  passwordResets  PasswordReset?
+  accountType     AccountTypeOption? @relation(fields: [accountTypeId], references: [id])
+  clientGroup     ClientGroup?       @relation(fields: [clientGroupId], references: [id])
+  company         Company?           @relation(fields: [companyId], references: [id])
+  roleRef         Role?              @relation(fields: [role_id], references: [id])
+  // ⭐ ADD THIS LINE
+  userActivity    UserActivity[]
+
+  @@map("users")
+}
+
+model AccountTypeOption {
+  id    Int     @id @default(autoincrement())
+  value String  @unique
+  label String
+  users Users[]
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      Users    @relation(fields: [userId], references: [id])
+
+  @@map("password_reset")
+}
+
+model InviteToken {
+  id        Int       @id @default(autoincrement())
+  token     String    @unique
+  email     String?
+  role      String
+  groupId   Int
+  expiresAt DateTime
+  used      Boolean   @default(false)
+  usedAt    DateTime? // ⭐ Added this field (required fix)
+  createdAt DateTime  @default(now())
+
+  clientGroup ClientGroup @relation(fields: [groupId], references: [id])
+}
+
+model assets {
+  id                        Int                  @id @default(autoincrement())
+  elr                       String?
+  structure_no              String?
+  mileage                   String?
+  structure_type            String?
+  spans                     String?
+  structure_name            String?
+  location                  String?
+  carries                   String?
+  material_type             String?
+  work_item                 String?
+  possible_consequence      String?
+  current_likelihood        String?
+  current_severity          String?
+  current_rating            String?
+  current_date_logged       DateTime?
+  risk_mitigation_proposals String?
+  mitigation_likelihood     String?
+  mitigation_severity       String?
+  mitigation_rating         String?
+  mitigation_completion     DateTime?
+  status                    String?
+  detailed_exam_years       String?
+  last_exam                 DateTime?
+  next_exam                 DateTime?
+  visual_report             String?
+  detailed_report           String?
+  assessment                String?
+  records                   String?
+  longitude                 Float?
+  latitude                  Float?
+  geocodeWarning            Boolean?             @default(false) // ⭐ ADD THIS
+  is_deleted                Boolean              @default(false)
+  riskRating                Int?                 @map("risk_rating")
+  archived_at               DateTime?
+  clientGroupId             Int?
+  routeOrder                Int?
+  issues                    AssetIssue[]
+  asset_deletion_log        asset_deletion_log[]
+  clientGroup               ClientGroup?         @relation(fields: [clientGroupId], references: [id])
+  category                  String? // ⭐ required for analytics
+  companyId                 Int? // ⭐ required for filtering
+  company                   Company?             @relation(fields: [companyId], references: [id])
+}
+
+model asset_deletion_log {
+  id             Int      @id @default(autoincrement())
+  asset_id       Int
+  deleted_by     String
+  asset_snapshot Json
+  deleted_at     DateTime @default(now())
+  asset          assets   @relation(fields: [asset_id], references: [id])
+}
+
+model DropdownCategory {
+  id     Int             @id @default(autoincrement())
+  name   String          @unique
+  values DropdownValue[]
+}
+
+model DropdownValue {
+  id         Int              @id @default(autoincrement())
+  value      String
+  categoryId Int
+  isDeleted  Boolean          @default(false)
+  category   DropdownCategory @relation(fields: [categoryId], references: [id])
+
+  @@unique([value, categoryId])
+}
+
+model AssetIssue {
+  id            Int          @id @default(autoincrement())
+  assetId       Int
+  code          String
+  title         String
+  issue         String
+  score         Int?
+  mitigation    String?
+  status        String       @default("open")
+  assignedTo    Int?
+  assignedAt    DateTime?
+  completedAt   DateTime?
+  completedBy   Int?
+  clientGroupId Int?
+  companyId     Int?
+  asset         assets       @relation(fields: [assetId], references: [id])
+  assignedUser  Users?       @relation("AssignedUser", fields: [assignedTo], references: [id])
+  clientGroup   ClientGroup? @relation(fields: [clientGroupId], references: [id])
+  completedUser Users?       @relation("CompletedUser", fields: [completedBy], references: [id])
+  company       Company?     @relation(fields: [companyId], references: [id]) // ⭐ OPTIONAL BUT GOOD
+}
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique @db.VarChar(100)
+  description String?
+  groupRoles  GroupRole[]
+  permissions RolePermission[]
+  users       Users[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id              Int              @id @default(autoincrement())
+  name            String           @unique @db.VarChar(100)
+  description     String?
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+  Permission   Permission @relation(fields: [permissionId], references: [id])
+  Role         Role       @relation(fields: [roleId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+model Group {
+  id            Int         @id @default(autoincrement())
+  name          String      @unique @db.VarChar(150)
+  parentGroupId Int?
+  parent        Group?      @relation("GroupHierarchy", fields: [parentGroupId], references: [id])
+  children      Group[]     @relation("GroupHierarchy")
+  groupRoles    GroupRole[]
+  members       UserGroup[]
+}
+
+model UserGroup {
+  userId  Int
+  groupId Int
+  Group   Group @relation(fields: [groupId], references: [id])
+  User    Users @relation(fields: [userId], references: [id])
+
+  @@id([userId, groupId])
+}
+
+model GroupRole {
+  groupId Int
+  roleId  Int
+  Group   Group @relation(fields: [groupId], references: [id])
+  Role    Role  @relation(fields: [roleId], references: [id])
+
+  @@id([groupId, roleId])
+}
+
+model ClientGroup {
+  id           Int           @id @default(autoincrement())
+  name         String
+  createdAt    DateTime      @default(now())
+  accessCode   String        @unique @db.VarChar(100)
+  department   String?
+  companyId    Int?
+  deletedAt    DateTime?
+  isDeleted    Boolean       @default(false)
+  description  String?
+  issues       AssetIssue[]
+  company      Company?      @relation(fields: [companyId], references: [id])
+  assets       assets[]
+  users        Users[]
+  inviteTokens InviteToken[]
+}
+
+model Audit {
+  id            Int      @id @default(autoincrement())
+  actorUserId   Int?
+  action        String   @db.VarChar(100)
+  targetType    String   @db.VarChar(50)
+  targetId      Int?
+  details       Json?
+  createdAt     DateTime @default(now())
+  clientGroupId Int?
+  metadata      Json?
+  performedBy   String
+  companyId     Int? // ⭐ add
+  company       Company? @relation(fields: [companyId], references: [id])
+
+  actor Users? @relation(fields: [actorUserId], references: [id])
+}
+
+model SystemAlert {
+  id        Int      @id @default(autoincrement())
+  type      String   @db.VarChar(100)
+  message   String
+  severity  String   @db.VarChar(20)
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  companyId Int? // ⭐ add
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  @@map("system_alerts")
+}
+
+model ReferenceLocation {
+  id            Int      @id @default(autoincrement())
+  rawInput      String // full combined input from user
+  type          String // "postcode", "address", "osgb36", "easting_northing", "uprn", "latlng", "refcode", etc.
+  referenceCode String? // parsed contractor/custom reference code, if any
+  latitude      Float? // resolved WGS84 latitude
+  longitude     Float? // resolved WGS84 longitude
+  easting       Float? // for OSGB / grid
+  northing      Float? // for OSGB / grid
+  osgb36        String? // original OSGB36 string if needed
+  uprn          String? // UPRN if provided
+  description   String? // optional human-readable description
+  sourceSystem  String? // e.g. "web_form", "import", "api"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model UserActivity {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  hour      String // "00:00" → "23:00"
+  dayOfWeek Int
+  category  String
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  companyId Int? // ⭐ add
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  user Users? @relation(fields: [userId], references: [id])
+
+  @@unique([hour, dayOfWeek, category])
+}
+
+model CompanySettings {
+  id          Int   @id @default(autoincrement())
+  companyId   Int   @unique
+  companyInfo Json?
+  branding    Json?
+  preferences Json?
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("company_settings")
+}

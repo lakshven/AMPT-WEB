@@ -1,0 +1,95 @@
+import { Request, Response } from "express";
+import prisma from "../../prisma/client";
+import { logAudit } from "../../models/Audit";
+
+export async function removeUserFromClientGroup(req: Request, res: Response) {
+  try {
+    const { userId } = req.body;
+
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "userId is required",
+      });
+    }
+
+    const actor = req.user;
+
+    // Fetch user
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (!user.clientGroupId) {
+      return res.status(400).json({
+        success: false,
+        message: "User is not assigned to any client group",
+      });
+    }
+
+    const previousGroupId = user.clientGroupId;
+
+    // Fetch group for permission check
+    const group = await prisma.clientGroup.findUnique({
+      where: { id: previousGroupId },
+    });
+
+    if (!group) {
+      return res.status(404).json({ success: false, message: "Client group not found" });
+    }
+
+    // Company Admin restriction
+    if (actor.role === "company_admin" && actor.companyId !== group.companyId) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot remove users from groups outside your company",
+      });
+    }
+
+    // Remove user from group
+    const updatedUser = await prisma.users.update({
+      where: { id: userId },
+      data: { clientGroupId: null },
+    });
+
+    // ⭐ AUDIT LOG
+    await logAudit({
+      action: "REMOVE_USER_FROM_CLIENT_GROUP",
+      targetType: "ClientGroup",
+      targetId: previousGroupId,
+      actorUserId: actor.id,
+      clientGroupId: previousGroupId,
+      companyId: group.companyId,
+      details: {
+        userId,
+        previousGroupId,
+        newGroupId: null,
+      },
+      metadata: {
+        username: user.username,
+        groupName: group.name,
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: "User removed from client group successfully",
+      data: updatedUser,
+    });
+
+  } catch (error) {
+    console.error("Remove user error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to remove user",
+    });
+  }
+}

@@ -1,0 +1,34 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const clientGroupsController_1 = require("../controllers/clientGroups/clientGroupsController");
+const auth_1 = require("../middleware/auth"); // adjust name if different
+const requireRole_1 = require("../middleware/requireRole");
+const restoreClientGroups_1 = require("../controllers/clientGroups/restoreClientGroups");
+const deleteClientGroups_1 = require("../controllers/clientGroups/deleteClientGroups");
+const updateClientGroups_1 = require("../controllers/clientGroups/updateClientGroups");
+const assignUserToClientGroup_1 = require("../controllers/clientGroups/assignUserToClientGroup");
+const removeUserFromClientGroup_1 = require("../controllers/clientGroups/removeUserFromClientGroup");
+const getUsersInClientGroup_1 = require("../controllers/clientGroups/getUsersInClientGroup");
+const moveUserToAnotherGroup_1 = require("../controllers/clientGroups/moveUserToAnotherGroup");
+const generateInviteToken_1 = require("../controllers/clientGroups/generateInviteToken");
+const verifyInviteToken_1 = require("../controllers/clientGroups/verifyInviteToken");
+const clientGroupAuditLogs_1 = require("../controllers/clientGroups/clientGroupAuditLogs");
+const router = (0, express_1.Router)();
+router.get("/verify-invite", verifyInviteToken_1.verifyInviteToken);
+router.use(auth_1.attachUserContext);
+router.get("/", (0, requireRole_1.requireRole)("company_admin", "app_admin"), clientGroupsController_1.getClientGroups);
+router.post("/", (0, requireRole_1.requireRole)("company_admin", "app_admin"), clientGroupsController_1.createClientGroup);
+router.put("/update", (0, requireRole_1.requireRole)("company_admin", "app_admin"), updateClientGroups_1.updateClientGroup);
+router.put("/delete", (0, requireRole_1.requireRole)("company_admin", "app_admin"), deleteClientGroups_1.deleteClientGroup);
+router.put("/restore", (0, requireRole_1.requireRole)("company_admin", "app_admin"), restoreClientGroups_1.restoreClientGroup);
+router.get("/assets-summary", (0, requireRole_1.requireRole)("company_admin", "app_admin"), clientGroupsController_1.getClientGroupAssetSummary);
+router.post("/assign-user", (0, requireRole_1.requireRole)("company_admin", "app_admin"), assignUserToClientGroup_1.assignUserToClientGroup);
+router.post("/remove-user", (0, requireRole_1.requireRole)("company_admin", "app_admin"), removeUserFromClientGroup_1.removeUserFromClientGroup);
+router.get("/:clientGroupId/users", (0, requireRole_1.requireRole)("company_admin", "app_admin"), getUsersInClientGroup_1.getUsersInClientGroup);
+router.post("/move-user", (0, requireRole_1.requireRole)("company_admin", "app_admin"), moveUserToAnotherGroup_1.moveUserToAnotherGroup);
+router.get("/:groupId/audit-logs", (0, requireRole_1.requireRole)("company_admin", "app_admin"), clientGroupAuditLogs_1.getClientGroupAuditLogs);
+router.post("/send-invite", (0, requireRole_1.requireRole)("company_admin", "app_admin"), clientGroupsController_1.sendInviteEmail);
+router.post("/invite-token", (0, requireRole_1.requireRole)("company_admin", "app_admin"), generateInviteToken_1.generateInviteToken);
+exports.default = router;
+//# sourceMappingURL=clientGroupsRoutes.js.map
