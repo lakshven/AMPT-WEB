@@ -23,11 +23,5 @@ jobs:
           script: |
             cd /home/ECSL/AMPT-WEB/amsbackend
             git pull origin main
-            pm2 restart AMPT-backend  
-
-            cd /var/www/frontend
-            git pull origin main
-            npm install
-            npm run build
-
+            pm2 restart AMPT-backend
             sudo systemctl reload nginx
