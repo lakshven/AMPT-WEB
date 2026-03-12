@@ -29,7 +29,4 @@ jobs:
 
             npm install
 
-            pm2 restart AMPT-backend || pm2 restart all
-
-            sudo nginx -t
-            sudo systemctl reload nginx
+            sudo pm2 restart AMPT-backend || sudo pm2 restart all
