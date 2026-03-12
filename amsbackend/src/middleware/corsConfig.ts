@@ -3,8 +3,8 @@ import cors from "cors";
 const corsOptions = cors({
   origin: [
     "http://localhost:3000",
-    "http://ampt.online:3000",
-    "http://www.ampt.online:3000"
+    "https://ampt.online",
+    "https://www.ampt.online"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: [
