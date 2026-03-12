@@ -30,3 +30,12 @@ jobs:
             npm install
 
             sudo pm2 restart AMPT-backend || sudo pm2 restart all
+
+            echo "Deploy Frontend"
+            cd /home/ECSL/AMPT-WEB/amsfrontend
+            git pull origin main
+            sudo npm install
+            sudo npm run build
+            sudo echo "Reload Nginx"
+            sudo nginx -t
+            sudo systemctl reload nginx
