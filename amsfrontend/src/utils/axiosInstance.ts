@@ -2,7 +2,8 @@ import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
 
 // ✅ Create the axios instance
 const instance: AxiosInstance = axios.create({
-  baseURL: "http://localhost:5000/api",
+  // baseURL: "http://localhost:5000/api",
+  baseURL: "https://www.ampt.online/api"
   withCredentials: false, // ⭐ important if backend uses cookies
   headers: { "Content-Type": "application/json" },
 });
