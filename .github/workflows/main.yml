@@ -13,7 +13,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Deploy to VM
+      - name: Deploy Application to Azure VM
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VM_HOST }}
@@ -21,21 +21,26 @@ jobs:
           password: ${{ secrets.VM_PASSWORD }}
           port: 22
           script: |
+
+            echo "Fix Git Safe Directory"
             git config --global --add safe.directory /home/ECSL/AMPT-WEB
 
+            echo "Deploy Backend"
             cd /home/ECSL/AMPT-WEB/amsbackend
-
             git pull origin main
-
             npm install
-
-            sudo pm2 restart AMPT-backend || sudo pm2 restart all
+            pm2 restart AMPT-backend || pm2 restart all
 
             echo "Deploy Frontend"
             cd /home/ECSL/AMPT-WEB/amsfrontend
             git pull origin main
-            sudo npm install
-            sudo npm run build
-            sudo echo "Reload Nginx"
+            npm install
+            npm run build
+
+            echo "Copy React build to Nginx"
+            sudo rm -rf /var/www/html/*
+            sudo cp -r build/* /var/www/html/
+
+            echo "Restart Nginx"
             sudo nginx -t
-            sudo systemctl reload nginx
+            sudo systemctl restart nginx
