@@ -29,7 +29,8 @@ jobs:
             cd /home/ECSL/AMPT-WEB/amsbackend
             git pull origin main
             npm install
-            pm2 restart AMPT-backend || pm2 restart all
+            pm2 restart AMPT-backend || pm2 start npm --name AMPT-backend -- start
+            pm2 save
 
             echo "Deploy Frontend"
             cd /home/ECSL/AMPT-WEB/amsfrontend
