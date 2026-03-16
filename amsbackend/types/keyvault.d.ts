@@ -1,3 +1,3 @@
-declare module "keyvault" {
+declare module "./keyvault" {
   export function loadSecrets(): Promise<void>;
 }
