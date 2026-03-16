@@ -9,11 +9,11 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "typeRoots": ["./src/types", "./node_modules/@types"],
+    "typeRoots": ["./types", "./src/types", "./node_modules/@types"],
     "types": ["node", "express"],
     "resolveJsonModule": true,
     "sourceMap": true
   },
-  "include": ["src/**/*", "src/types/**/*.d.ts"],
+  "include": ["src/**/*", "types/**/*.d.ts"],
   "exclude": ["dist"]
 }
