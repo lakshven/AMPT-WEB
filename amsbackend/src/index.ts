@@ -27,7 +27,7 @@ import { getDepartments } from "./controllers/department/departmentController";
 import auditRoutes from "./routes/auditRoutes";
 import companyAdminRoutes from "./routes/companyAdminRoutes";
 import { attachUserContext } from "./middleware/auth";
-
+import {startCronJobs} from "./scheduler/systemCron";
 // ⭐ Wrap everything in an async bootstrap function
 async function bootstrap() {
   dotenv.config();
@@ -112,9 +112,8 @@ async function bootstrap() {
 
   app.listen(PORT, () => {
     console.log(`✅ Backend running on port ${PORT}`);
-
-    // ⭐ Load cron AFTER server + Key Vault + Prisma are ready
-    require("./scheduler/systemCron");
+// ⭐ Start cron AFTER server + Key Vault + Prisma are ready
+    startCronJobs();
   });
 
   return app;
