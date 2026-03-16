@@ -28,6 +28,8 @@ import auditRoutes from "./routes/auditRoutes";
 import companyAdminRoutes from "./routes/companyAdminRoutes";
 import { attachUserContext } from "./middleware/auth";
 import {startCronJobs} from "./scheduler/systemCron";
+// ⭐ ADD THIS — lazy Prisma initialization
+import { getPrisma } from "./prisma/client";
 // ⭐ Wrap everything in an async bootstrap function
 async function bootstrap() {
   dotenv.config();
@@ -35,7 +37,8 @@ async function bootstrap() {
   // ⭐ WAIT for Key Vault secrets BEFORE Prisma loads anywhere
   await loadSecrets();
   console.log("🔥 DATABASE_URL LOADED:", process.env.DATABASE_URL);
-
+  // ⭐ Initialize Prisma AFTER secrets load
+  const prisma = getPrisma();
   const app: Application = express();
   app.set("trust proxy", 1);
 
