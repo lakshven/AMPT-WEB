@@ -11,19 +11,19 @@ export async function loadSecrets() {
     const credential = new DefaultAzureCredential();
     const client = new SecretClient(process.env.KEYVAULT_URL!, credential);
 
-    const db = await client.getSecret("DATABASE_URL");
+    const db = await client.getSecret("database-url");
     process.env.DATABASE_URL = db.value;
 
-    const emailUser = await client.getSecret("EMAIL_USER");
+    const emailUser = await client.getSecret("EMAIL-USER");
     process.env.EMAIL_USER = emailUser.value;
 
-    const emailPass = await client.getSecret("EMAIL_PASS");
+    const emailPass = await client.getSecret("EMAIL-PASS");
     process.env.EMAIL_PASS = emailPass.value;
 
-    const jwt = await client.getSecret("JWT_SECRET");
+    const jwt = await client.getSecret("JWT-SECRET");
     process.env.JWT_SECRET = jwt.value;
 
-    const admin = await client.getSecret("ADMIN_CODE");
+    const admin = await client.getSecret("AADMIN-CODE");
     process.env.ADMIN_CODE = admin.value;
 
     console.log("🔥 All secrets loaded successfully from Key Vault");
