@@ -1,6 +1,8 @@
 import cron from "node-cron";
 import { checkSystemMetricsAndCreateAlerts } from "../services/metricsService";
-import prisma from "../prisma/client"
+import prisma from "../prisma/client";
+export function startCronJobs() {
+  console.log("⏱️ Cron jobs started...");
 //  Every 10 minutes → System metrics + alerts
 cron.schedule("*/10 * * * *", async () => {
   try {
@@ -31,4 +33,4 @@ cron.schedule("0 3 * * *", async () => {
     console.error("Client group cleanup failed:", error);
   }
 });
-
+}
