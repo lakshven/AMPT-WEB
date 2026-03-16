@@ -1,5 +1,5 @@
-import prisma from "../prisma/client";
-
+import { getPrisma } from "../../prisma/client";
+const prisma = getPrisma();
 // Define the shape of an alert creation request
 export interface CreateAlertInput {
   type: string;
