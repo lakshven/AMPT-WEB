@@ -1,6 +1,6 @@
 // index.ts
 // ⭐ Load Key Vault FIRST — and WAIT for it before anything else
-import { loadSecrets } from "../keyvault";
+import { loadSecrets } from "keyvault";
 import express, { Application } from "express";
 import dotenv from "dotenv";
 import path from "path";
