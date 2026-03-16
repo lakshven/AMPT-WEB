@@ -1,0 +1,21 @@
+# Database connection
+DATABASE_URL="postgresql://ECSL:Admin123456%40@ecslpostgressql.postgres.database.azure.com:5432/ecslpostgressql?sslmode=require"
+
+PORT=5000
+
+PGUSER=ECSL
+PGHOST=ecslpostgressql.postgres.database.azure.com
+PGDATABASE=ecslpostgressql
+PGPASSWORD=Dhanvin@2018
+PGPORT=5432
+
+# Gmail credentials for Nodemailer
+EMAIL_USER=lakshmiangular8@gmail.com
+EMAIL_PASS=mmvwakcyrduetajl
+
+# Security
+JWT_SECRET=Dhanvin2018
+ADMIN_CODE=672549b7b444cd13872fcc2154b3807b26ff7bedda2d3de4bb16dcc2cf313aaf
+
+# Frontend
+FRONTEND_URL=http://localhost:3000

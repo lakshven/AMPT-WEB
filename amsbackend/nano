@@ -1,0 +1,25 @@
+#!/bin/bash
+
+KEYVAULT="ecslkeyvault"
+
+echo "Fetching secrets from Azure Key Vault..."
+
+AADMIN_CODE=$(az keyvault secret show --vault-name $KEYVAULT --name AADMIN-CODE --query value -o tsv)
+JWT_SECRET=$(az keyvault secret show --vault-name $KEYVAULT --name JWT-SECRET --query value -o tsv)
+EMAIL_PASS=$(az keyvault secret show --vault-name $KEYVAULT --name EMAIL-PASS --query value -o tsv)
+EMAIL_USER=$(az keyvault secret show --vault-name $KEYVAULT --name EMAIL-USER --query value -o tsv)
+PGUSER=$(az keyvault secret show --vault-name $KEYVAULT --name PGUSER --query value -o tsv)
+PGPASSWORD=$(az keyvault secret show --vault-name $KEYVAULT --name PGPASSWORD --query value -o tsv)
+DATABASE_URL=$(az keyvault secret show --vault-name $KEYVAULT --name database-url --query value -o tsv)
+
+cat <<EOF > .env
+AADMIN_CODE=$AADMIN_CODE
+JWT_SECRET=$JWT_SECRET
+EMAIL_PASS=$EMAIL_PASS
+EMAIL_USER=$EMAIL_USER
+PGUSER=$PGUSER
+PGPASSWORD=$PGPASSWORD
+DATABASE_URL=$DATABASE_URL
+EOF
+
+echo ".env file created successfully!"
