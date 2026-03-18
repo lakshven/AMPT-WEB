@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUsersInClientGroup = getUsersInClientGroup;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 async function getUsersInClientGroup(req, res) {
     try {
         const { clientGroupId } = req.params;
@@ -19,7 +17,7 @@ async function getUsersInClientGroup(req, res) {
         }
         const actor = req.user;
         // Fetch group
-        const group = await client_1.default.clientGroup.findUnique({
+        const group = await prismaClient().clientGroup.findUnique({
             where: { id: Number(clientGroupId) },
         });
         if (!group) {
@@ -33,7 +31,7 @@ async function getUsersInClientGroup(req, res) {
             });
         }
         // Fetch users in this group
-        const users = await client_1.default.users.findMany({
+        const users = await prismaClient().users.findMany({
             where: { clientGroupId: Number(clientGroupId) },
             select: {
                 id: true,

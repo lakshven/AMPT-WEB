@@ -38,7 +38,7 @@ async function bootstrap() {
   await loadSecrets();
   console.log("🔥 DATABASE_URL LOADED:", process.env.DATABASE_URL);
   // ⭐ Initialize Prisma AFTER secrets load
-  const prisma = getPrisma();
+  function prismaClient() { return getPrisma(); }
   const app: Application = express();
   app.set("trust proxy", 1);
 
@@ -115,10 +115,9 @@ async function bootstrap() {
 
   app.listen(PORT, () => {
     console.log(`✅ Backend running on port ${PORT}`);
-// ⭐ Start cron AFTER server + Key Vault + Prisma are ready
-    startCronJobs();
+    startCronJobs();   
   });
-
+  
   return app;
 }
 

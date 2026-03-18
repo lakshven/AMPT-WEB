@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { saveFile } from "../../services/storageService";
 // Shared type for allowed upload columns
 type AssetColumn =
@@ -46,7 +47,7 @@ export async function uploadFile(req: Request, res: Response) {
     const savedPath = await saveFile(file, column);
 
     // Update DB
-    const updated = await prisma.assets.update({
+    const updated = await prismaClient().assets.update({
       where: { id: Number(rowId) },
       data: { [column]: savedPath },
     });

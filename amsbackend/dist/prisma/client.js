@@ -1,6 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getPrisma = getPrisma;
 const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
-exports.default = prisma;
+let prisma = null;
+function getPrisma() {
+    if (!prisma) {
+        prisma = new client_1.PrismaClient();
+    }
+    return prisma;
+}
 //# sourceMappingURL=client.js.map

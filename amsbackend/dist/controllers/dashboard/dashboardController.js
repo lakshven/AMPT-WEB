@@ -1,12 +1,10 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDashboardStats = getDashboardStats;
 exports.getDashboardMetrics = getDashboardMetrics;
 exports.getDashboardRouteAssets = getDashboardRouteAssets;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 // ⭐ Unified filter builder (matches Asset Log Table)
 function buildDashboardWhere(req) {
@@ -35,7 +33,7 @@ function buildDashboardWhere(req) {
 async function getDashboardStats(req, res) {
     try {
         const where = buildDashboardWhere(req);
-        const total = await client_1.default.assets.count({ where });
+        const total = await prismaClient().assets.count({ where });
         // ⭐ Audit log
         await (0, Audit_1.logAudit)({
             action: "view",
@@ -61,17 +59,17 @@ async function getDashboardMetrics(req, res) {
     try {
         const where = buildDashboardWhere(req);
         // ⭐ Total assets
-        const total = await client_1.default.assets.count({ where });
+        const total = await prismaClient().assets.count({ where });
         // ⭐ Completed assets
-        const completed = await client_1.default.assets.count({
+        const completed = await prismaClient().assets.count({
             where: { ...where, status: "completed" }
         });
         // ⭐ Open assets
-        const open = await client_1.default.assets.count({
+        const open = await prismaClient().assets.count({
             where: { ...where, status: "open" }
         });
         // ⭐ Highest risk rating
-        const highestRisk = await client_1.default.assets.findFirst({
+        const highestRisk = await prismaClient().assets.findFirst({
             where,
             orderBy: { riskRating: "desc" },
             select: { riskRating: true }
@@ -86,7 +84,7 @@ async function getDashboardMetrics(req, res) {
                     { clientGroupId: null }
                 ]
             };
-        const issues = await client_1.default.assetIssue.findMany({
+        const issues = await prismaClient().assetIssue.findMany({
             where: issueWhere,
             orderBy: { score: "desc" },
             take: 5,
@@ -150,7 +148,7 @@ async function getDashboardMetrics(req, res) {
 async function getDashboardRouteAssets(req, res) {
     try {
         const where = buildDashboardWhere(req);
-        const assets = await client_1.default.assets.findMany({
+        const assets = await prismaClient().assets.findMany({
             where: {
                 ...where,
                 latitude: { not: null },

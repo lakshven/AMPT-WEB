@@ -1,11 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resetPassword = resetPassword;
 const bcryptjs_1 = require("bcryptjs");
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 async function resetPassword(req, res) {
     const { token } = req.params;
@@ -22,7 +20,7 @@ async function resetPassword(req, res) {
             return;
         }
         // ✅ Find user with valid (non-expired) token
-        const resetRecord = await client_1.default.passwordReset.findFirst({
+        const resetRecord = await prismaClient().passwordReset.findFirst({
             where: {
                 token,
                 expiresAt: { gt: new Date() }
@@ -49,12 +47,12 @@ async function resetPassword(req, res) {
         // ✅ Hash new password
         const hashed = await (0, bcryptjs_1.hash)(password, 10);
         // ✅ Update user password
-        await client_1.default.users.update({
+        await prismaClient().users.update({
             where: { id: resetRecord.user.id },
             data: { password: hashed }
         });
         // ✅ Clear reset token
-        await client_1.default.passwordReset.deleteMany({
+        await prismaClient().passwordReset.deleteMany({
             where: { userId: resetRecord.user.id }
         });
         await (0, Audit_1.logAudit)({

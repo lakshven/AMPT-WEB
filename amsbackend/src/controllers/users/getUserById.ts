@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function getUserById(req: Request, res: Response) {
   const idParam = req.params.id as string;
@@ -9,7 +10,7 @@ export async function getUserById(req: Request, res: Response) {
     return res.status(400).json({ error: "Invalid user ID" });
   }
 
-  const user = await prisma.users.findUnique({
+  const user = await prismaClient().users.findUnique({
     where: { id: userId },
   });
 

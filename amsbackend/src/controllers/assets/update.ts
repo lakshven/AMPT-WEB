@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import axios from "axios";
-import  prisma  from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { normalizeLocation } from "../../utils/normalizeLocation";
 import { logAudit } from "../../models/Audit";
 import { detectNorthingEasting } from "../../utils/coordinateUtils";
@@ -64,7 +65,7 @@ const files = req.files as AssetFiles | undefined;
 
 
     // 1) Fetch existing asset + ownership validation
-    const existing = await prisma.assets.findUnique({
+    const existing = await prismaClient().assets.findUnique({
       where: { id: assetId },
       select: {
         latitude: true,
@@ -222,7 +223,7 @@ const files = req.files as AssetFiles | undefined;
 
 
     // ✅ 6) Perform update using Prisma
-    const updated = await prisma.assets.update({
+    const updated = await prismaClient().assets.update({
       where: {
         id: assetId,
       },

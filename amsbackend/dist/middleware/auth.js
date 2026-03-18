@@ -5,7 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.attachUserContext = attachUserContext;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const client_1 = __importDefault(require("../prisma/client"));
+const client_1 = require("../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 async function attachUserContext(req, res, next) {
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -16,7 +17,7 @@ async function attachUserContext(req, res, next) {
     try {
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
         // ⭐ Always load fresh user from DB (Prisma-safe)
-        const dbUser = await client_1.default.users.findUnique({
+        const dbUser = await prismaClient().users.findUnique({
             where: { id: decoded.id },
             include: {
                 roleRef: true,

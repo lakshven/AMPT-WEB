@@ -1,27 +1,25 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAuditAnalytics = getAuditAnalytics;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 async function getAuditAnalytics(req, res) {
     try {
-        const totalLogs = await client_1.default.audit.count();
-        const logsLast30Days = await client_1.default.audit.count({
+        const totalLogs = await prismaClient().audit.count();
+        const logsLast30Days = await prismaClient().audit.count({
             where: {
                 createdAt: {
                     gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
                 }
             }
         });
-        const topActions = await client_1.default.audit.groupBy({
+        const topActions = await prismaClient().audit.groupBy({
             by: ["action"],
             _count: { action: true },
             orderBy: { _count: { action: "desc" } },
             take: 5
         });
-        const topUsers = await client_1.default.audit.groupBy({
+        const topUsers = await prismaClient().audit.groupBy({
             by: ["performedBy"],
             _count: { performedBy: true },
             orderBy: { _count: { performedBy: "desc" } },

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { hash } from "bcryptjs";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 
 export async function createUser(req: Request, res: Response): Promise<void> {
@@ -21,7 +22,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
 
   const finalRoleName = invitedRole;
 
-  const existing = await prisma.users.findFirst({
+  const existing = await prismaClient().users.findFirst({
     where: { OR: [{ username }, { email }] }
   });
 
@@ -30,13 +31,13 @@ export async function createUser(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const roleRow = await prisma.role.findUnique({ where: { name: finalRoleName } });
+  const roleRow = await prismaClient().role.findUnique({ where: { name: finalRoleName } });
   if (!roleRow) {
     res.status(400).json({ success: false, message: "Role not found" });
     return;
   }
 
-  const accountTypeRow = await prisma.accountTypeOption.findUnique({
+  const accountTypeRow = await prismaClient().accountTypeOption.findUnique({
     where: { value: user.accountType }
   });
 
@@ -49,7 +50,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
   const finalClientGroupId = clientGroupId ?? user.clientGroupId;
 
   // ⭐ Fetch group to validate company ownership
-  const group = await prisma.clientGroup.findUnique({
+  const group = await prismaClient().clientGroup.findUnique({
     where: { id: finalClientGroupId },
     select: { id: true, companyId: true }
   });
@@ -73,7 +74,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
   const hashedPassword = await hash(rawPassword, 10);
 
   // ⭐ Create user with correct companyId
-  const newUser = await prisma.users.create({
+  const newUser = await prismaClient().users.create({
     data: {
       firstname,
       lastname,

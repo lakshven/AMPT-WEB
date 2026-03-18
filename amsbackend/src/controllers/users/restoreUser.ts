@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 
 export async function restoreUser(req: Request, res: Response): Promise<void> {
@@ -13,7 +14,7 @@ export async function restoreUser(req: Request, res: Response): Promise<void> {
 
   const userId = Number(req.params.id);
 
-  const existing = await prisma.users.findUnique({ where: { id: userId } });
+  const existing = await prismaClient().users.findUnique({ where: { id: userId } });
 
   if (!existing) {
     res.status(404).json({ success: false, message: "User not found" });
@@ -29,7 +30,7 @@ export async function restoreUser(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const restored = await prisma.users.update({
+  const restored = await prismaClient().users.update({
     where: { id: userId },
     data: {
       disabled: false,

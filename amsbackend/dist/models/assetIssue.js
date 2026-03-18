@@ -1,7 +1,4 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createIssueModel = createIssueModel;
 exports.listIssuesModel = listIssuesModel;
@@ -10,7 +7,8 @@ exports.updateIssueModel = updateIssueModel;
 exports.assignIssueModel = assignIssueModel;
 exports.completeIssueModel = completeIssueModel;
 exports.deleteIssueModel = deleteIssueModel;
-const client_1 = __importDefault(require("../prisma/client"));
+const client_1 = require("../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 // Helper: tenant-aware check
 function canAccessIssue(issue, group) {
     if (!issue)
@@ -25,7 +23,7 @@ function canAccessIssue(issue, group) {
 // CREATE ISSUE
 // ------------------------------------------------------
 async function createIssueModel(data) {
-    return client_1.default.assetIssue.create({ data });
+    return prismaClient().assetIssue.create({ data });
 }
 // ------------------------------------------------------
 // LIST ISSUES (tenant-aware)
@@ -34,7 +32,7 @@ async function listIssuesModel(group) {
     const where = group === "ALL"
         ? {}
         : { clientGroupId: group };
-    return client_1.default.assetIssue.findMany({
+    return prismaClient().assetIssue.findMany({
         where,
         orderBy: { id: "desc" },
         include: {
@@ -48,7 +46,7 @@ async function listIssuesModel(group) {
 // GET ISSUE BY ID
 // ------------------------------------------------------
 async function getIssueByIdModel(id, group) {
-    const issue = await client_1.default.assetIssue.findUnique({ where: { id } });
+    const issue = await prismaClient().assetIssue.findUnique({ where: { id } });
     if (!canAccessIssue(issue, group))
         return null;
     return issue;
@@ -57,10 +55,10 @@ async function getIssueByIdModel(id, group) {
 // UPDATE ISSUE
 // ------------------------------------------------------
 async function updateIssueModel(id, group, data) {
-    const existing = await client_1.default.assetIssue.findUnique({ where: { id } });
+    const existing = await prismaClient().assetIssue.findUnique({ where: { id } });
     if (!canAccessIssue(existing, group))
         return null;
-    return client_1.default.assetIssue.update({
+    return prismaClient().assetIssue.update({
         where: { id },
         data
     });
@@ -69,10 +67,10 @@ async function updateIssueModel(id, group, data) {
 // ASSIGN ISSUE
 // ------------------------------------------------------
 async function assignIssueModel(id, group, assignedTo) {
-    const existing = await client_1.default.assetIssue.findUnique({ where: { id } });
+    const existing = await prismaClient().assetIssue.findUnique({ where: { id } });
     if (!canAccessIssue(existing, group))
         return null;
-    return client_1.default.assetIssue.update({
+    return prismaClient().assetIssue.update({
         where: { id },
         data: {
             assignedTo,
@@ -84,10 +82,10 @@ async function assignIssueModel(id, group, assignedTo) {
 // COMPLETE ISSUE
 // ------------------------------------------------------
 async function completeIssueModel(id, group, completedBy) {
-    const existing = await client_1.default.assetIssue.findUnique({ where: { id } });
+    const existing = await prismaClient().assetIssue.findUnique({ where: { id } });
     if (!canAccessIssue(existing, group))
         return null;
-    return client_1.default.assetIssue.update({
+    return prismaClient().assetIssue.update({
         where: { id },
         data: {
             status: "completed",
@@ -100,10 +98,10 @@ async function completeIssueModel(id, group, completedBy) {
 // DELETE ISSUE (soft delete)
 // ------------------------------------------------------
 async function deleteIssueModel(id, group) {
-    const existing = await client_1.default.assetIssue.findUnique({ where: { id } });
+    const existing = await prismaClient().assetIssue.findUnique({ where: { id } });
     if (!canAccessIssue(existing, group))
         return null;
-    return client_1.default.assetIssue.update({
+    return prismaClient().assetIssue.update({
         where: { id },
         data: { status: "deleted" }
     });

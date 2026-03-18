@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadFile = uploadFile;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const storageService_1 = require("../../services/storageService");
 async function uploadFile(req, res) {
     try {
@@ -32,7 +30,7 @@ async function uploadFile(req, res) {
         // Save file to disk (with validation inside)
         const savedPath = await (0, storageService_1.saveFile)(file, column);
         // Update DB
-        const updated = await client_1.default.assets.update({
+        const updated = await prismaClient().assets.update({
             where: { id: Number(rowId) },
             data: { [column]: savedPath },
         });

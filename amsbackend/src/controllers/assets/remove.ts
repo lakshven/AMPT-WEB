@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { deleteAsset } from '../../models/Assets.js';
-import prisma  from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from '../../models/Audit.js';
 export const deleteAssetController = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
@@ -25,7 +26,7 @@ export const deleteAssetController = async (req: Request, res: Response): Promis
   }
 
   try {
-    const existing = await prisma.assets.findUnique({
+    const existing = await prismaClient().assets.findUnique({
       where: { id: assetId },
       select: { 
         clientGroupId: true, 

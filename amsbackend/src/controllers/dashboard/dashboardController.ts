@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 // ⭐ Unified filter builder (matches Asset Log Table)
 function buildDashboardWhere(req: Request) {
@@ -33,7 +34,7 @@ export async function getDashboardStats(req: Request, res: Response): Promise<vo
   try {
     const where = buildDashboardWhere(req);
 
-    const total = await prisma.assets.count({ where });
+    const total = await prismaClient().assets.count({ where });
     // ⭐ Audit log
     await logAudit({
       action: "view",
@@ -60,17 +61,17 @@ export async function getDashboardMetrics(req: Request, res: Response): Promise<
   try {
     const where = buildDashboardWhere(req);
     // ⭐ Total assets
-    const total = await prisma.assets.count({ where });
+    const total = await prismaClient().assets.count({ where });
     // ⭐ Completed assets
-    const completed = await prisma.assets.count({
+    const completed = await prismaClient().assets.count({
       where: { ...where, status: "completed" }
     });
     // ⭐ Open assets
-    const open = await prisma.assets.count({
+    const open = await prismaClient().assets.count({
       where: { ...where, status: "open" }
     });
     // ⭐ Highest risk rating
-    const highestRisk = await prisma.assets.findFirst({
+    const highestRisk = await prismaClient().assets.findFirst({
       where,
       orderBy: { riskRating: "desc" },
       select: { riskRating: true }
@@ -87,7 +88,7 @@ export async function getDashboardMetrics(req: Request, res: Response): Promise<
             ]
           };
 
-    const issues = await prisma.assetIssue.findMany({
+    const issues = await prismaClient().assetIssue.findMany({
       where: issueWhere,
       orderBy: { score: "desc" },
       take: 5,
@@ -154,7 +155,7 @@ export async function getDashboardRouteAssets(req: Request, res: Response): Prom
   try {
     const where = buildDashboardWhere(req);
 
-    const assets = await prisma.assets.findMany({
+    const assets = await prismaClient().assets.findMany({
       where: {
         ...where,
         latitude: { not: null },

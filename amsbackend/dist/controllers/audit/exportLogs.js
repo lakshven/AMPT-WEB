@@ -5,12 +5,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.exportAuditLogsCSV = exportAuditLogsCSV;
 exports.exportAuditLogsExcel = exportAuditLogsExcel;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const json2csv_1 = require("json2csv");
 const exceljs_1 = __importDefault(require("exceljs"));
 async function exportAuditLogsCSV(req, res) {
     try {
-        const logs = await client_1.default.audit.findMany({
+        const logs = await prismaClient().audit.findMany({
             orderBy: { createdAt: "desc" }
         });
         const parser = new json2csv_1.Parser();
@@ -26,7 +27,7 @@ async function exportAuditLogsCSV(req, res) {
 }
 async function exportAuditLogsExcel(req, res) {
     try {
-        const logs = await client_1.default.audit.findMany({
+        const logs = await prismaClient().audit.findMany({
             orderBy: { createdAt: "desc" }
         });
         const workbook = new exceljs_1.default.Workbook();

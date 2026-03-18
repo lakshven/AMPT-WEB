@@ -1,12 +1,10 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getGlobalAuditLogs = getGlobalAuditLogs;
 exports.getAuditLogsByUser = getAuditLogsByUser;
 exports.getAuditLogsByEntity = getAuditLogsByEntity;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 /**
  * GET /audit-logs?limit=100
  * Returns global audit logs, ordered by newest first
@@ -14,7 +12,7 @@ const client_1 = __importDefault(require("../../prisma/client"));
 async function getGlobalAuditLogs(req, res) {
     try {
         const limit = Number(req.query.limit) || 100;
-        const logs = await client_1.default.audit.findMany({
+        const logs = await prismaClient().audit.findMany({
             take: limit,
             orderBy: { createdAt: "desc" }
         });
@@ -32,7 +30,7 @@ async function getGlobalAuditLogs(req, res) {
 async function getAuditLogsByUser(req, res) {
     try {
         const userId = Number(req.params.userId);
-        const logs = await client_1.default.audit.findMany({
+        const logs = await prismaClient().audit.findMany({
             where: { actorUserId: userId },
             orderBy: { createdAt: "desc" }
         });
@@ -52,7 +50,7 @@ async function getAuditLogsByEntity(req, res) {
         // FIX: force-cast to string to avoid TS error
         const entity = String(req.params.entity);
         const entityId = Number(req.params.entityId);
-        const logs = await client_1.default.audit.findMany({
+        const logs = await prismaClient().audit.findMany({
             where: {
                 targetType: entity,
                 targetId: Number(entityId)

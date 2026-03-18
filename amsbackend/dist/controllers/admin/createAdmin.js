@@ -5,14 +5,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createAdmin = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const createAdmin = async (req, res) => {
     try {
         const { firstname, lastname, email, password } = req.body;
         const hashed = await bcrypt_1.default.hash(password, 10);
         const username = email.toLowerCase();
         // ⭐ 1. Get the "system" account type
-        const systemType = await client_1.default.accountTypeOption.findUnique({
+        const systemType = await prismaClient().accountTypeOption.findUnique({
             where: { value: "system" }
         });
         if (!systemType) {
@@ -22,7 +23,7 @@ const createAdmin = async (req, res) => {
             });
         }
         // ⭐ 2. Get the app_admin role
-        const appAdminRole = await client_1.default.role.findUnique({
+        const appAdminRole = await prismaClient().role.findUnique({
             where: { name: "app_admin" }
         });
         if (!appAdminRole) {
@@ -32,7 +33,7 @@ const createAdmin = async (req, res) => {
             });
         }
         // ⭐ 3. Create admin user
-        const admin = await client_1.default.users.create({
+        const admin = await prismaClient().users.create({
             data: {
                 firstname,
                 lastname,

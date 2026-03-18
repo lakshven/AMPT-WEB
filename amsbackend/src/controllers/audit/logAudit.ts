@@ -1,5 +1,6 @@
 // controllers/audit/logAudit.ts
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { Prisma } from "@prisma/client";
 
 interface LogAuditInput {
@@ -23,7 +24,7 @@ export async function logAudit({
   details = null,
   actorUserId = null
 }: LogAuditInput) {
-  return prisma.audit.create({
+  return prismaClient().audit.create({
     data: {
       action,
       targetType,

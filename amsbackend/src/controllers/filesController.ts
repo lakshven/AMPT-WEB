@@ -1,7 +1,8 @@
 import path from "node:path";
 import fs from "fs";
 import { Request, Response } from "express";
-import prisma from "../prisma/client";
+import { getPrisma } from "../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 const rootDir = process.cwd();
 
@@ -35,7 +36,7 @@ export const streamExcel = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const asset = await prisma.assets.findUnique({
+    const asset = await prismaClient().assets.findUnique({
       where: { id: Number(id) },
       select: { [config.field]: true },
     });

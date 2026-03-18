@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import  prisma  from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 export async function exportAssetController(req: Request, res: Response) {
   try {
@@ -11,13 +12,13 @@ export async function exportAssetController(req: Request, res: Response) {
     let asset;
 
     if (isAppAdmin) {
-      asset = await prisma.assets.findUnique({ where: { id } });
+      asset = await prismaClient().assets.findUnique({ where: { id } });
     } else if (req.user?.accountType === "single") {
-      asset = await prisma.assets.findFirst({
+      asset = await prismaClient().assets.findFirst({
         where: { id, clientGroupId: null }
       });
     } else {
-      asset = await prisma.assets.findFirst({
+      asset = await prismaClient().assets.findFirst({
         where: { id, clientGroupId: userGroup }
       });
     }

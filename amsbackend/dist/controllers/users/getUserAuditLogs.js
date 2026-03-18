@@ -1,15 +1,13 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUserAuditLogs = void 0;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const getUserAuditLogs = async (req, res) => {
     try {
         const userId = Number(req.params.userId);
         // Fetch the user to verify company ownership
-        const userRecord = await client_1.default.users.findUnique({
+        const userRecord = await prismaClient().users.findUnique({
             where: { id: userId },
             select: { companyId: true }
         });
@@ -25,7 +23,7 @@ const getUserAuditLogs = async (req, res) => {
                 return res.status(403).json({ success: false, message: "Access denied" });
             }
         }
-        const logs = await client_1.default.audit.findMany({
+        const logs = await prismaClient().audit.findMany({
             where: {
                 targetType: "user",
                 targetId: userId

@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.setDefaultFile = setDefaultFile;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 async function setDefaultFile(req, res) {
     try {
         const user = req.user;
@@ -28,7 +26,7 @@ async function setDefaultFile(req, res) {
             });
         }
         // Save "default" as the chosen file
-        const updated = await client_1.default.assets.update({
+        const updated = await prismaClient().assets.update({
             where: { id: Number(rowId) },
             data: { [column]: "default" },
         });

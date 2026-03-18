@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export const getAssignableUsers = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -18,7 +19,7 @@ export const getAssignableUsers = async (req: Request, res: Response): Promise<v
       where.companyId = actor.companyId;
     }
 
-    const users = await prisma.users.findMany({
+    const users = await prismaClient().users.findMany({
       where,
       select: {
         id: true,

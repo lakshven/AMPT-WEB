@@ -1,12 +1,13 @@
 // controllers/audit/exportLogs.ts
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { Parser } from "json2csv";
 import ExcelJS from "exceljs";
 
 export async function exportAuditLogsCSV(req: Request, res: Response) {
   try {
-    const logs = await prisma.audit.findMany({
+    const logs = await prismaClient().audit.findMany({
       orderBy: { createdAt: "desc" }
     });
 
@@ -24,7 +25,7 @@ export async function exportAuditLogsCSV(req: Request, res: Response) {
 
 export async function exportAuditLogsExcel(req: Request, res: Response) {
   try {
-    const logs = await prisma.audit.findMany({
+    const logs = await prismaClient().audit.findMany({
       orderBy: { createdAt: "desc" }
     });
 

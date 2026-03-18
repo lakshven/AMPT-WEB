@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function getUsers(req: Request, res: Response): Promise<void> {
   const user = req.user!;
@@ -44,13 +45,13 @@ export async function getUsers(req: Request, res: Response): Promise<void> {
   if (status === "disabled") where.disabled = true;
 
   const [users, total] = await Promise.all([
-    prisma.users.findMany({
+    prismaClient().users.findMany({
       where,
       skip,
       take,
       orderBy: { id: "asc" }
     }),
-    prisma.users.count({ where })
+    prismaClient().users.count({ where })
   ]);
 
   res.json({

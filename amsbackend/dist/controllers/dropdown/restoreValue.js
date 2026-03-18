@@ -4,7 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = restoreValue;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const dropDownController_1 = __importDefault(require("./dropDownController"));
 const Audit_1 = require("../../models/Audit");
 async function restoreValue(req, res) {
@@ -17,14 +18,14 @@ async function restoreValue(req, res) {
             ? req.params.value[0]
             : req.params.value;
         // 1️⃣ Validate category
-        const cat = await client_1.default.dropdownCategory.findUnique({
+        const cat = await prismaClient().dropdownCategory.findUnique({
             where: { name: category }
         });
         if (!cat) {
             return res.status(404).json({ error: "Category not found" });
         }
         // 2️⃣ Find soft-deleted value
-        const existing = await client_1.default.dropdownValue.findFirst({
+        const existing = await prismaClient().dropdownValue.findFirst({
             where: {
                 categoryId: cat.id,
                 value: value,
@@ -35,7 +36,7 @@ async function restoreValue(req, res) {
             return res.status(404).json({ error: "Value not found or not deleted" });
         }
         // 3️⃣ Restore it
-        const restored = await client_1.default.dropdownValue.update({
+        const restored = await prismaClient().dropdownValue.update({
             where: { id: existing.id },
             data: { isDeleted: false }
         });
@@ -58,7 +59,7 @@ async function restoreValue(req, res) {
             }
         });
         // 4️⃣ Return updated dropdowns
-        const categories = await client_1.default.dropdownCategory.findMany({
+        const categories = await prismaClient().dropdownCategory.findMany({
             include: {
                 values: { where: { isDeleted: false }, orderBy: { value: "asc" } }
             }

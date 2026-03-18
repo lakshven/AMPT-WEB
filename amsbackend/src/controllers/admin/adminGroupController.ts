@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export const addUserToGroup = async (req: Request, res: Response) => {
   try {
     const userId = Number(req.params.userId);
     const { groupName } = req.body;
 
-    const group = await prisma.group.findUnique({
+    const group = await prismaClient().group.findUnique({
       where: { name: groupName },
       select: { id: true }
     });
@@ -16,7 +17,7 @@ export const addUserToGroup = async (req: Request, res: Response) => {
       return;
     }
 
-    await prisma.userGroup.upsert({
+    await prismaClient().userGroup.upsert({
       where: {
         userId_groupId: {
           userId,

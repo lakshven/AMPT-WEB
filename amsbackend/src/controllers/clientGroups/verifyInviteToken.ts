@@ -1,7 +1,8 @@
 // src/controllers/clientGroups/verifyInviteToken.ts
 
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function verifyInviteToken(req: Request, res: Response) {
   try {
@@ -14,7 +15,7 @@ export async function verifyInviteToken(req: Request, res: Response) {
       });
     }
 
-    const invite = await prisma.inviteToken.findUnique({
+    const invite = await prismaClient().inviteToken.findUnique({
       where: { token },
       include: {
         clientGroup: true,

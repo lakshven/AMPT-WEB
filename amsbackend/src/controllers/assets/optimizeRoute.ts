@@ -1,6 +1,7 @@
 // controllers/assets/optimizeRoute.ts
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 
 // Haversine formula
@@ -23,7 +24,7 @@ export async function optimizeRoute(req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const assets = await prisma.assets.findMany({
+    const assets = await prismaClient().assets.findMany({
       where: { id: { in: assetIds } },
       select: { id: true, latitude: true, longitude: true },
     });
@@ -67,9 +68,9 @@ export async function optimizeRoute(req: Request, res: Response): Promise<void> 
       visited.push(current.id);
     }
    // Update routeOrder for optimized assets
-    await prisma.$transaction(
+    await prismaClient().$transaction(
       visited.map((id, index) =>
-        prisma.assets.update({
+        prismaClient().assets.update({
           where: { id },
           data: { routeOrder: index + 1 },
         })
@@ -90,7 +91,7 @@ export async function optimizeRoute(req: Request, res: Response): Promise<void> 
       },
     });
     // ⭐ FIX: Return ALL assets with coordinates, not only optimized subset
-    const allAssets = await prisma.assets.findMany({
+    const allAssets = await prismaClient().assets.findMany({
       where: {
         latitude: { not: null },
         longitude: { not: null },

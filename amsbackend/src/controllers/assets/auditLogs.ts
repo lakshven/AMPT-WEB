@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function viewAssetAuditLogsController(req: Request, res: Response) {
   try {
@@ -13,7 +14,7 @@ export async function viewAssetAuditLogsController(req: Request, res: Response) 
     const userGroup = req.user?.clientGroupId;
 
     // Validate asset ownership
-    const asset = await prisma.assets.findUnique({
+    const asset = await prismaClient().assets.findUnique({
       where: { id: assetId },
       select: { clientGroupId: true }
     });
@@ -33,7 +34,7 @@ export async function viewAssetAuditLogsController(req: Request, res: Response) 
     }
 
     // Direct asset logs
-    const directLogs = await prisma.audit.findMany({
+    const directLogs = await prismaClient().audit.findMany({
       where: {
         targetType: "asset",
         targetId: assetId
@@ -42,7 +43,7 @@ export async function viewAssetAuditLogsController(req: Request, res: Response) 
     });
 
     // Route-order logs
-    const routeOrderLogs = await prisma.audit.findMany({
+    const routeOrderLogs = await prismaClient().audit.findMany({
       where: { targetType: "routeOrder" },
       orderBy: { createdAt: "desc" }
     });

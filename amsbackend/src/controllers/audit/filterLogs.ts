@@ -1,6 +1,7 @@
 // controllers/audit/filterLogs.ts
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function filterAuditLogs(req: Request, res: Response) {
   try {
@@ -34,7 +35,7 @@ export async function filterAuditLogs(req: Request, res: Response) {
       if (to) where.createdAt.lte = new Date(String(to));
     }
 
-    const logs = await prisma.audit.findMany({
+    const logs = await prismaClient().audit.findMany({
       where,
       orderBy: { createdAt: "desc" }
     });

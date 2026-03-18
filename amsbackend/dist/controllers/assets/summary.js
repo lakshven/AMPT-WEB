@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSummary = void 0;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const getSummary = async (req, res) => {
     try {
         const { clientGroupId, accountType, role } = req.user ?? {};
@@ -26,7 +24,7 @@ const getSummary = async (req, res) => {
       FROM assets
       WHERE ${whereClause}
     `;
-        const result = await client_1.default.$queryRawUnsafe(query);
+        const result = await prismaClient().$queryRawUnsafe(query);
         const row = result[0] ?? { total: BigInt(0), high_risk: BigInt(0) };
         res.json({
             total: Number(row.total),

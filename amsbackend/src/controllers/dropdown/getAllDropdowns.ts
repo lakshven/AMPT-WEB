@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import getStaticOptions from "./dropDownController";
 
 export default async function getAllDropdowns(req: Request, res: Response) {
@@ -17,7 +18,7 @@ export default async function getAllDropdowns(req: Request, res: Response) {
     })();
 
     // 2️⃣ Load DYNAMIC dropdowns (only non-deleted values)
-    const categories = await prisma.dropdownCategory.findMany({
+    const categories = await prismaClient().dropdownCategory.findMany({
       include: {
         values: {
           where: { isDeleted: false },

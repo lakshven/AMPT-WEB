@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import sendMail from "../../utils/sendEmail";
 import { logAudit } from "../../models/Audit";
 
@@ -37,7 +38,7 @@ export async function getClientGroups(req: Request, res: Response) {
     const limit = Number(req.query.limit || 10);
     const skip = (page - 1) * limit;
 
-    const clientGroups = await prisma.clientGroup.findMany({
+    const clientGroups = await prismaClient().clientGroup.findMany({
       where: whereClause,
       orderBy: { [sort]: order },
       skip,
@@ -54,14 +55,14 @@ export async function getClientGroups(req: Request, res: Response) {
       },
     });
 
-    const total = await prisma.clientGroup.count({ where: whereClause });
+    const total = await prismaClient().clientGroup.count({ where: whereClause });
 
     // ⭐ Ensure access code exists
     for (const g of clientGroups) {
       if (!g.accessCode) {
         const newCode = Math.random().toString(36).substring(2, 10).toUpperCase();
 
-        await prisma.clientGroup.update({
+        await prismaClient().clientGroup.update({
           where: { id: g.id },
           data: { accessCode: newCode },
         });
@@ -119,13 +120,13 @@ export async function createClientGroup(req: Request, res: Response) {
 
     // If single_user → create a company for them and upgrade role
     if (isSingleUser && !req.user.companyId) {
-      const newCompany = await prisma.company.create({
+      const newCompany = await prismaClient().company.create({
         data: {
           name: `${req.user.username}'s Company`,
         },
       });
        // Load company_admin role dynamically
-      const companyAdminRole = await prisma.role.findUnique({
+      const companyAdminRole = await prismaClient().role.findUnique({
         where: { name: "company_admin" },
       });
 
@@ -136,7 +137,7 @@ export async function createClientGroup(req: Request, res: Response) {
         });
       }
 
-      await prisma.users.update({
+      await prismaClient().users.update({
         where: { id: req.user.id },
         data: {
           companyId: newCompany.id,
@@ -177,7 +178,7 @@ export async function createClientGroup(req: Request, res: Response) {
       });
     }
 
-    const existingByName = await prisma.clientGroup.findFirst({
+    const existingByName = await prismaClient().clientGroup.findFirst({
       where: { name, companyId },
     });
 
@@ -188,7 +189,7 @@ export async function createClientGroup(req: Request, res: Response) {
       });
     }
 
-    const existingByCode = await prisma.clientGroup.findFirst({
+    const existingByCode = await prismaClient().clientGroup.findFirst({
       where: { accessCode, companyId },
     });
 
@@ -199,7 +200,7 @@ export async function createClientGroup(req: Request, res: Response) {
       });
     }
 
-    const group = await prisma.clientGroup.create({
+    const group = await prismaClient().clientGroup.create({
       data: {
         name: name.trim(),
         accessCode: accessCode.trim(),
@@ -209,7 +210,7 @@ export async function createClientGroup(req: Request, res: Response) {
     });
     // ⭐ PERMANENT FIX: auto-assign user to their first client group
     if (!req.user.clientGroupId) {
-      await prisma.users.update({
+      await prismaClient().users.update({
         where: { id: req.user.id },
         data: { clientGroupId: group.id },
       });
@@ -260,7 +261,7 @@ export async function getClientGroupAssetSummary(req: Request, res: Response) {
 
     const isAppAdmin = req.user.role === "app_admin";
 
-    const groups = await prisma.clientGroup.findMany({
+    const groups = await prismaClient().clientGroup.findMany({
       where: {
         ...(isAppAdmin ? {} : { companyId: req.user.companyId }),
       },

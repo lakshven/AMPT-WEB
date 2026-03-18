@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 
 // ⭐ NEW: Resolve company instead of client group
@@ -26,7 +27,7 @@ export const createIssue = async (req: Request, res: Response) => {
     const code = `ISSUE-${Date.now()}`;
 
     // Fetch asset with companyId
-    const asset = await prisma.assets.findUnique({
+    const asset = await prismaClient().assets.findUnique({
       where: { id: assetId },
       select: { 
         clientGroupId: true, 
@@ -53,7 +54,7 @@ export const createIssue = async (req: Request, res: Response) => {
       return res.status(403).json({ error: "Not allowed to create issue for this asset" });
     }
 
-    const newIssue = await prisma.assetIssue.create({
+    const newIssue = await prismaClient().assetIssue.create({
       data: {
         assetId,
         code,
@@ -117,7 +118,7 @@ export const listIssues = async (req: Request, res: Response) => {
           : { companyId: company, status: { not: "deleted" } };
 
     const [issues, total] = await Promise.all([
-      prisma.assetIssue.findMany({
+      prismaClient().assetIssue.findMany({
         where,
         orderBy: { id: "desc" },
         skip,
@@ -128,7 +129,7 @@ export const listIssues = async (req: Request, res: Response) => {
           completedUser: true
         }
       }),
-      prisma.assetIssue.count({ where })
+      prismaClient().assetIssue.count({ where })
     ]);
 
     await logAudit({
@@ -173,7 +174,7 @@ export const getIssueById = async (req: Request, res: Response) => {
   const issueId = Number(req.params.id);
 
   try {
-    const issue = await prisma.assetIssue.findUnique({ where: { id: issueId } });
+    const issue = await prismaClient().assetIssue.findUnique({ where: { id: issueId } });
 
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -223,7 +224,7 @@ export const updateIssue = async (req: Request, res: Response) => {
   const issueId = Number(req.params.id);
 
   try {
-    const existing = await prisma.assetIssue.findUnique({ where: { id: issueId } });
+    const existing = await prismaClient().assetIssue.findUnique({ where: { id: issueId } });
 
     if (!existing) {
       res.status(404).json({ error: "Issue not found" });
@@ -244,7 +245,7 @@ export const updateIssue = async (req: Request, res: Response) => {
       return;
     }
 
-    const updated = await prisma.assetIssue.update({
+    const updated = await prismaClient().assetIssue.update({
       where: { id: issueId },
       data: req.body
     });
@@ -286,7 +287,7 @@ export const assignIssue = async (req: Request, res: Response) => {
   const { assignedTo } = req.body;
 
   try {
-    const issue = await prisma.assetIssue.findUnique({ where: { id: issueId } });
+    const issue = await prismaClient().assetIssue.findUnique({ where: { id: issueId } });
 
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -306,14 +307,14 @@ export const assignIssue = async (req: Request, res: Response) => {
       return res.status(403).json({ error: "Not allowed to assign this issue" });
     }
 
-    const user = await prisma.users.findUnique({ where: { id: assignedTo } });
+    const user = await prismaClient().users.findUnique({ where: { id: assignedTo } });
 
     // ⭐ Assigned user must belong to same company
     if (!user || (!isAppAdmin && user.companyId !== company)) {
       return res.status(400).json({ error: "User not in your company" });
     }
 
-    const updated = await prisma.assetIssue.update({
+    const updated = await prismaClient().assetIssue.update({
       where: { id: issueId },
       data: {
         assignedTo,
@@ -357,7 +358,7 @@ export const completeIssue = async (req: Request, res: Response) => {
   const issueId = Number(req.params.id);
 
   try {
-    const issue = await prisma.assetIssue.findUnique({ where: { id: issueId } });
+    const issue = await prismaClient().assetIssue.findUnique({ where: { id: issueId } });
 
     const role = String(req.user?.role);
     const isAppAdmin = role === "app_admin";
@@ -372,7 +373,7 @@ export const completeIssue = async (req: Request, res: Response) => {
       return;
     }
 
-    const updated = await prisma.assetIssue.update({
+    const updated = await prismaClient().assetIssue.update({
       where: { id: issueId },
       data: {
         status: "completed",
@@ -417,7 +418,7 @@ export const deleteIssue = async (req: Request, res: Response) => {
   const issueId = Number(req.params.id);
 
   try {
-    const issue = await prisma.assetIssue.findUnique({ where: { id: issueId } });
+    const issue = await prismaClient().assetIssue.findUnique({ where: { id: issueId } });
 
     const role = String(req.user?.role);
     const isAppAdmin = role === "app_admin";
@@ -432,7 +433,7 @@ export const deleteIssue = async (req: Request, res: Response) => {
       return;
     }
 
-    const updated = await prisma.assetIssue.update({
+    const updated = await prismaClient().assetIssue.update({
       where: { id: issueId },
       data: { status: "deleted" }
     });
@@ -471,7 +472,7 @@ export const restoreIssue = async (req: Request, res: Response) => {
   const issueId = Number(req.params.id);
 
   try {
-    const issue = await prisma.assetIssue.findUnique({ where: { id: issueId } });
+    const issue = await prismaClient().assetIssue.findUnique({ where: { id: issueId } });
 
     if (!issue) {
       return res.status(404).json({ error: "Issue not found" });
@@ -489,7 +490,7 @@ export const restoreIssue = async (req: Request, res: Response) => {
       return res.status(403).json({ error: "Not allowed to restore this issue" });
     }
 
-    const updated = await prisma.assetIssue.update({
+    const updated = await prismaClient().assetIssue.update({
       where: { id: issueId },
       data: { status: "open" }
     });

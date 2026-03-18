@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import  prisma  from '../../prisma/client';
+import { getPrisma } from '../../prisma/client';
+function prismaClient() { return getPrisma(); }
 
 export const getSummary = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -22,7 +23,7 @@ export const getSummary = async (req: Request, res: Response): Promise<void> => 
       FROM assets
       WHERE ${whereClause}
     `;
-   const result = await prisma.$queryRawUnsafe(query) as {
+   const result = await prismaClient().$queryRawUnsafe(query) as {
    total: bigint;
    high_risk: bigint;
   }[];

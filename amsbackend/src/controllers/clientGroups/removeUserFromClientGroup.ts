@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 
 export async function removeUserFromClientGroup(req: Request, res: Response) {
@@ -20,7 +21,7 @@ export async function removeUserFromClientGroup(req: Request, res: Response) {
     const actor = req.user;
 
     // Fetch user
-    const user = await prisma.users.findUnique({
+    const user = await prismaClient().users.findUnique({
       where: { id: userId },
     });
 
@@ -38,7 +39,7 @@ export async function removeUserFromClientGroup(req: Request, res: Response) {
     const previousGroupId = user.clientGroupId;
 
     // Fetch group for permission check
-    const group = await prisma.clientGroup.findUnique({
+    const group = await prismaClient().clientGroup.findUnique({
       where: { id: previousGroupId },
     });
 
@@ -55,7 +56,7 @@ export async function removeUserFromClientGroup(req: Request, res: Response) {
     }
 
     // Remove user from group
-    const updatedUser = await prisma.users.update({
+    const updatedUser = await prismaClient().users.update({
       where: { id: userId },
       data: { clientGroupId: null },
     });

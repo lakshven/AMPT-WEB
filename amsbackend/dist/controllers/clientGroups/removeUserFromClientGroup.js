@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeUserFromClientGroup = removeUserFromClientGroup;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 async function removeUserFromClientGroup(req, res) {
     try {
@@ -20,7 +18,7 @@ async function removeUserFromClientGroup(req, res) {
         }
         const actor = req.user;
         // Fetch user
-        const user = await client_1.default.users.findUnique({
+        const user = await prismaClient().users.findUnique({
             where: { id: userId },
         });
         if (!user) {
@@ -34,7 +32,7 @@ async function removeUserFromClientGroup(req, res) {
         }
         const previousGroupId = user.clientGroupId;
         // Fetch group for permission check
-        const group = await client_1.default.clientGroup.findUnique({
+        const group = await prismaClient().clientGroup.findUnique({
             where: { id: previousGroupId },
         });
         if (!group) {
@@ -48,7 +46,7 @@ async function removeUserFromClientGroup(req, res) {
             });
         }
         // Remove user from group
-        const updatedUser = await client_1.default.users.update({
+        const updatedUser = await prismaClient().users.update({
             where: { id: userId },
             data: { clientGroupId: null },
         });

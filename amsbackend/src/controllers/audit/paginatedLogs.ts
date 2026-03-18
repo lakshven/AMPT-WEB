@@ -1,6 +1,7 @@
 // controllers/audit/paginatedLogs.ts
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function getPaginatedAuditLogs(req: Request, res: Response) {
   try {
@@ -10,12 +11,12 @@ export async function getPaginatedAuditLogs(req: Request, res: Response) {
     const skip = (page - 1) * limit;
 
     const [logs, total] = await Promise.all([
-      prisma.audit.findMany({
+      prismaClient().audit.findMany({
         skip,
         take: limit,
         orderBy: { createdAt: "desc" }
       }),
-      prisma.audit.count()
+      prismaClient().audit.count()
     ]);
 
     return res.json({

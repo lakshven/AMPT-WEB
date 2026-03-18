@@ -1,7 +1,8 @@
-import prisma  from "../prisma/client";
+import { getPrisma } from "../prisma/client";
+function prismaClient() { return getPrisma(); }
 export async function resolvePermissionsForUser(userId: number): Promise<string[]> {
   // ✅ 1. Direct role permissions (user → role → permissions)
-  const directPermissions = await prisma.permission.findMany({
+  const directPermissions = await prismaClient().permission.findMany({
     where: {
       rolePermissions: {
         some: {
@@ -19,7 +20,7 @@ export async function resolvePermissionsForUser(userId: number): Promise<string[
   // ✅ 2. Group-based permissions (recursive group tree)
 
   // Step A: Get all groups the user belongs to
-  const userGroups = await prisma.userGroup.findMany({
+  const userGroups = await prismaClient().userGroup.findMany({
     where: { userId: userId },
     select: { groupId: true }
   });
@@ -34,7 +35,7 @@ export async function resolvePermissionsForUser(userId: number): Promise<string[
 
     visited.add(groupId);
 
-    const parent = await prisma.group.findUnique({
+    const parent = await prismaClient().group.findUnique({
       where: { id: groupId },
       select: { parentGroupId: true }
     });
@@ -47,7 +48,7 @@ export async function resolvePermissionsForUser(userId: number): Promise<string[
   const allGroupIds = Array.from(visited);
 
   // ✅ 3. Fetch permissions from all groups
-  const groupPermissions = await prisma.permission.findMany({
+  const groupPermissions = await prismaClient().permission.findMany({
     where: {
       rolePermissions: {
         some: {

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 
 export async function deleteUser(req: Request, res: Response): Promise<void> {
@@ -15,7 +16,7 @@ export async function deleteUser(req: Request, res: Response): Promise<void> {
   const userId = Number(req.params.id);
 
   try {
-    const targetUser = await prisma.users.findUnique({
+    const targetUser = await prismaClient().users.findUnique({
       where: { id: userId }
     });
 
@@ -40,7 +41,7 @@ export async function deleteUser(req: Request, res: Response): Promise<void> {
     }
 
     // ⭐ Soft delete
-    const deletedUser = await prisma.users.update({
+    const deletedUser = await prismaClient().users.update({
       where: { id: userId },
       data: {
         disabled: true,

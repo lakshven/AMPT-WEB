@@ -1,12 +1,13 @@
 // controllers/audit/analytics.ts
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function getAuditAnalytics(req: Request, res: Response) {
   try {
-    const totalLogs = await prisma.audit.count();
+    const totalLogs = await prismaClient().audit.count();
 
-    const logsLast30Days = await prisma.audit.count({
+    const logsLast30Days = await prismaClient().audit.count({
       where: {
         createdAt: {
           gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -14,14 +15,14 @@ export async function getAuditAnalytics(req: Request, res: Response) {
       }
     });
 
-    const topActions = await prisma.audit.groupBy({
+    const topActions = await prismaClient().audit.groupBy({
       by: ["action"],
       _count: { action: true },
       orderBy: { _count: { action: "desc" } },
       take: 5
     });
 
-    const topUsers = await prisma.audit.groupBy({
+    const topUsers = await prismaClient().audit.groupBy({
       by: ["performedBy"],
       _count: { performedBy: true },
       orderBy: { _count: { performedBy: "desc" } },

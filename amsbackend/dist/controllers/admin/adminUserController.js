@@ -1,15 +1,13 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.assignRoleToUser = void 0;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const assignRoleToUser = async (req, res) => {
     try {
         const userId = Number(req.params.userId);
         const { roleName } = req.body;
-        const role = await client_1.default.role.findUnique({
+        const role = await prismaClient().role.findUnique({
             where: { name: roleName },
             select: { id: true }
         });
@@ -17,7 +15,7 @@ const assignRoleToUser = async (req, res) => {
             res.status(400).json({ message: "Role not found" });
             return;
         }
-        await client_1.default.users.update({
+        await prismaClient().users.update({
             where: { id: userId },
             data: { role_id: role.id }
         });

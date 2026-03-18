@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
 import { compare } from "bcryptjs";
 import jwt from "jsonwebtoken";
-import  prisma  from "../../prisma/client";
-import { logAudit } from "../../models/Audit"
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
+import { logAudit } from "../../models/Audit";
+
 export async function login(req: Request, res: Response): Promise<void> {
   const { identifier, password } = req.body as {
     identifier: string;
@@ -10,26 +12,20 @@ export async function login(req: Request, res: Response): Promise<void> {
   };
 
   try {
-    // Fetch user by username or email
-    const user = await prisma.users.findFirst({
+    const user = await prismaClient().users.findFirst({
       where: {
-        OR: [
-          { username: identifier },
-          { email: identifier }
-        ]
+        OR: [{ username: identifier }, { email: identifier }]
       },
       include: {
         roleRef: {
           include: {
-            permissions: {
-              include: { Permission: true }
-            }
+            permissions: { include: { Permission: true } }
           }
         },
         accountType: true
       }
     });
-  
+
     if (!user) {
       await logAudit({
         action: "login_failed_user_not_found",
@@ -42,10 +38,11 @@ export async function login(req: Request, res: Response): Promise<void> {
         details: { identifier },
         metadata: { identifier }
       });
+
       res.status(401).json({ success: false, message: "User not found" });
       return;
     }
-    // Block disabled users (soft delete)
+
     if (user.disabled) {
       await logAudit({
         action: "login_failed_disabled_user",
@@ -59,12 +56,14 @@ export async function login(req: Request, res: Response): Promise<void> {
         metadata: {}
       });
 
-      res.status(403).json({ success: false, message: "Account disabled" });
+      res.status(403).json({ success: false, message: "User is disabled" });
       return;
     }
 
-    // ✅ Compare password
-    const isMatch = await compare(password, user.password);
+    const isMatch = user.password
+      ? await compare(password, user.password)
+      : false;
+
     if (!isMatch) {
       await logAudit({
         action: "login_failed_invalid_password",
@@ -81,29 +80,22 @@ export async function login(req: Request, res: Response): Promise<void> {
       res.status(401).json({ success: false, message: "Invalid password" });
       return;
     }
-   // ✅ Extract permission names from nested structure
-    const permissionNames = user.roleRef?.permissions?.map(
-    (p: { Permission: { name: string } }) => p.Permission.name.toUpperCase()
-  ) ?? [];
-    // Normalize backend role → frontend role
+
+    const permissionNames =
+      user.roleRef?.permissions?.map(
+        (p: { Permission: { name: string } }) =>
+          p.Permission.name.toUpperCase()
+      ) ?? [];
+
     let normalizedRole = user.roleRef?.name?.toLowerCase() ?? "user";
-
     if (normalizedRole === "personal_owner") normalizedRole = "single_user";
-    if (normalizedRole === "viewer") normalizedRole = "viewer";
-    if (normalizedRole === "editor") normalizedRole = "editor";
-    if (normalizedRole === "company_admin") normalizedRole = "company_admin";
-    if (normalizedRole === "app_admin") normalizedRole = "app_admin";
-    // ✅ Normalize accountType from relation → frontend string
-    const rawAccountType = user.accountType?.value?.toLowerCase()?? "company";
 
-    // Map backend accountType names to frontend values
-    // personal_owner  -> "single"
-    // viewer/others   -> "company"
+    const rawAccountType = user.accountType?.value?.toLowerCase() ?? "company";
     const normalizedAccountType =
       rawAccountType === "personal_owner" ? "single" : "company";
-  
+
     const jwtToken = jwt.sign(
-      { 
+      {
         id: user.id,
         username: user.username,
         roleId: user.role_id,
@@ -116,7 +108,7 @@ export async function login(req: Request, res: Response): Promise<void> {
       process.env.JWT_SECRET as string,
       { expiresIn: "12h" }
     );
-     // Audit success
+
     await logAudit({
       action: "login_success",
       targetType: "user",
@@ -135,7 +127,6 @@ export async function login(req: Request, res: Response): Promise<void> {
       }
     });
 
-    // ✅ Response unchanged
     res.json({
       success: true,
       token: jwtToken,
@@ -146,17 +137,15 @@ export async function login(req: Request, res: Response): Promise<void> {
         role: normalizedRole,
         permissions: permissionNames,
         clientGroupId: user.clientGroupId,
-        companyId: user.companyId, // ⭐ added
+        companyId: user.companyId,
         accountType: normalizedAccountType,
         needsStartupPage: normalizedAccountType === "single"
-
-
       }
     });
-
   } catch (err) {
     console.error("Login error:", err);
-     await logAudit({
+
+    await logAudit({
       action: "login_error",
       targetType: "system",
       targetId: null,

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import  prisma  from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function viewAssetDeletionLogsController(
   req: Request,
@@ -16,7 +17,7 @@ export async function viewAssetDeletionLogsController(
     const userGroup = req.user?.clientGroupId;
 
     // Fetch asset to validate ownership
-    const asset = await prisma.assets.findUnique({
+    const asset = await prismaClient().assets.findUnique({
       where: { id: assetId },
       select: { clientGroupId: true }
     });
@@ -39,7 +40,7 @@ export async function viewAssetDeletionLogsController(
     }
 
 
-    const logs = await prisma.asset_deletion_log.findMany({
+    const logs = await prismaClient().asset_deletion_log.findMany({
       where: { asset_id: assetId },
       orderBy: { deleted_at: "desc" },
     });

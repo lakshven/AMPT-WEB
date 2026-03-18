@@ -1,15 +1,13 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getClientGroupAuditLogs = void 0;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const getClientGroupAuditLogs = async (req, res) => {
     try {
         const groupId = Number(req.params.groupId);
         // Fetch the group to verify company ownership
-        const group = await client_1.default.clientGroup.findUnique({
+        const group = await prismaClient().clientGroup.findUnique({
             where: { id: groupId },
             select: { companyId: true }
         });
@@ -21,7 +19,7 @@ const getClientGroupAuditLogs = async (req, res) => {
             group.companyId !== req.user?.companyId) {
             return res.status(403).json({ success: false, message: "Access denied" });
         }
-        const logs = await client_1.default.audit.findMany({
+        const logs = await prismaClient().audit.findMany({
             where: {
                 targetType: "client_group",
                 targetId: groupId,

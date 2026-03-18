@@ -1,6 +1,7 @@
 // controllers/audit/globalLogs.ts
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 /**
  * GET /audit-logs?limit=100
@@ -10,7 +11,7 @@ export async function getGlobalAuditLogs(req: Request, res: Response) {
   try {
     const limit = Number(req.query.limit) || 100;
 
-    const logs = await prisma.audit.findMany({
+    const logs = await prismaClient().audit.findMany({
       take: limit,
       orderBy: { createdAt: "desc" }
     });
@@ -30,7 +31,7 @@ export async function getAuditLogsByUser(req: Request, res: Response) {
   try {
     const userId = Number(req.params.userId);
 
-    const logs = await prisma.audit.findMany({
+    const logs = await prismaClient().audit.findMany({
       where: { actorUserId: userId },
       orderBy: { createdAt: "desc" }
     });
@@ -52,7 +53,7 @@ export async function getAuditLogsByEntity(req: Request, res: Response) {
     const entity = String(req.params.entity);
     const entityId = Number(req.params.entityId);
 
-    const logs = await prisma.audit.findMany({
+    const logs = await prismaClient().audit.findMany({
       where: {
         targetType: entity,
         targetId: Number(entityId)

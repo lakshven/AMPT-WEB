@@ -1,6 +1,7 @@
 // controllers/dropdown/addValue.ts
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import getStaticOptions from "./dropDownController";
 import { logAudit } from "../../models/Audit";
 
@@ -16,7 +17,7 @@ export default async function addValue(req: Request, res: Response) {
     }
 
     // 1️⃣ Validate category
-    const cat = await prisma.dropdownCategory.findUnique({
+    const cat = await prismaClient().dropdownCategory.findUnique({
       where: { name: category }
     });
 
@@ -33,7 +34,7 @@ export default async function addValue(req: Request, res: Response) {
     const clientGroupId = (req as any).user?.clientGroupId || null;
     const companyId = (req as any).user?.companyId ?? null;   // ← REQUIRED
     // 2️⃣ Prevent duplicates (active)
-    const existingActive = await prisma.dropdownValue.findFirst({
+    const existingActive = await prismaClient().dropdownValue.findFirst({
       where: {
         categoryId: cat.id,
         value,
@@ -46,7 +47,7 @@ export default async function addValue(req: Request, res: Response) {
     }
 
     // 3️⃣ If soft‑deleted → restore instead of creating new
-    const existingDeleted = await prisma.dropdownValue.findFirst({
+    const existingDeleted = await prismaClient().dropdownValue.findFirst({
       where: {
         categoryId: cat.id,
         value,
@@ -58,14 +59,14 @@ export default async function addValue(req: Request, res: Response) {
     let operation: "create" | "restore" = "create";
 
     if (existingDeleted) {
-      const updated = await prisma.dropdownValue.update({
+      const updated = await prismaClient().dropdownValue.update({
         where: { id: existingDeleted.id },
         data: { isDeleted: false }
       });
       finalValueId = updated.id;
       operation = "restore";
     } else {
-      const created = await prisma.dropdownValue.create({
+      const created = await prismaClient().dropdownValue.create({
         data: {
           value,
           categoryId: cat.id
@@ -92,7 +93,7 @@ export default async function addValue(req: Request, res: Response) {
     });
 
     // 5️⃣ Load dynamic dropdowns
-    const categories = await prisma.dropdownCategory.findMany({
+    const categories = await prismaClient().dropdownCategory.findMany({
       include: {
         values: {
           where: { isDeleted: false },

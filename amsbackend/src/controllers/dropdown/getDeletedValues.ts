@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export const getDeletedValues = async (req: Request, res: Response) => {
   try {
@@ -8,7 +9,7 @@ export const getDeletedValues = async (req: Request, res: Response) => {
       ? req.params.category[0]
       : req.params.category;
 
-    const categoryRecord = await prisma.dropdownCategory.findUnique({
+    const categoryRecord = await prismaClient().dropdownCategory.findUnique({
       where: { name: category }
     });
 
@@ -16,7 +17,7 @@ export const getDeletedValues = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Category not found" });
     }
 
-    const deletedValues = await prisma.dropdownValue.findMany({
+    const deletedValues = await prismaClient().dropdownValue.findMany({
       where: {
         categoryId: categoryRecord.id,
         isDeleted: true

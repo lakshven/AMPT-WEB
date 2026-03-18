@@ -4,14 +4,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.forgotPassword = forgotPassword;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const sendEmail_1 = __importDefault(require("../../utils/sendEmail"));
 const PasswordReset_1 = require("../../models/PasswordReset");
 const Audit_1 = require("../../models/Audit");
 async function forgotPassword(req, res) {
     const { email } = req.body;
     try {
-        const user = await client_1.default.users.findUnique({
+        const user = await prismaClient().users.findUnique({
             where: { email },
         });
         // ✅ Always return success to avoid email enumeration

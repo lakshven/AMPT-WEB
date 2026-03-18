@@ -1,22 +1,20 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPaginatedAuditLogs = getPaginatedAuditLogs;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 async function getPaginatedAuditLogs(req, res) {
     try {
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || 20;
         const skip = (page - 1) * limit;
         const [logs, total] = await Promise.all([
-            client_1.default.audit.findMany({
+            prismaClient().audit.findMany({
                 skip,
                 take: limit,
                 orderBy: { createdAt: "desc" }
             }),
-            client_1.default.audit.count()
+            prismaClient().audit.count()
         ]);
         return res.json({
             logs,

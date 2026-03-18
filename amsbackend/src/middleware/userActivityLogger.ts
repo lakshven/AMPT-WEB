@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import prisma from "../prisma/client";
+import { getPrisma } from "../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export const userActivityLogger = async (
   req: Request,
@@ -27,7 +28,7 @@ export const userActivityLogger = async (
     else if (url.includes("/api/issues")) category = "issue_creation";
     else if (url.includes("/api/admin/analytics")) category = "admin_activity";
 
-    await prisma.userActivity.upsert({
+    await prismaClient().userActivity.upsert({
       where: {
         hour_dayOfWeek_category: {
           hour,

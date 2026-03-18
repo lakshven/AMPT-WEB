@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { restoreAsset } from '../../models/Assets'; // ✅ must be .js for ESM
-import prisma from '../../prisma/client';
+import { getPrisma } from '../../prisma/client';
+function prismaClient() { return getPrisma(); }
 import { logAudit } from '../../models/Audit';
 export const restoreAssetController = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
@@ -22,7 +23,7 @@ export const restoreAssetController = async (req: Request, res: Response): Promi
   }
   try {
     // Fetch asset to check ownership
-    const existing = await prisma.assets.findUnique({
+    const existing = await prismaClient().assets.findUnique({
       where: { id: assetId },
       select: { 
         clientGroupId: true, 

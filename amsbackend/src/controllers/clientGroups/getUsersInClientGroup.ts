@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function getUsersInClientGroup(req: Request, res: Response) {
   try {
@@ -19,7 +20,7 @@ export async function getUsersInClientGroup(req: Request, res: Response) {
     const actor = req.user;
 
     // Fetch group
-    const group = await prisma.clientGroup.findUnique({
+    const group = await prismaClient().clientGroup.findUnique({
       where: { id: Number(clientGroupId) },
     });
 
@@ -36,7 +37,7 @@ export async function getUsersInClientGroup(req: Request, res: Response) {
     }
 
     // Fetch users in this group
-    const users = await prisma.users.findMany({
+    const users = await prismaClient().users.findMany({
       where: { clientGroupId: Number(clientGroupId) },
       select: {
         id: true,

@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUsers = getUsers;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 async function getUsers(req, res) {
     const user = req.user;
     const role = String(user.role).toLowerCase();
@@ -38,13 +36,13 @@ async function getUsers(req, res) {
     if (status === "disabled")
         where.disabled = true;
     const [users, total] = await Promise.all([
-        client_1.default.users.findMany({
+        prismaClient().users.findMany({
             where,
             skip,
             take,
             orderBy: { id: "asc" }
         }),
-        client_1.default.users.count({ where })
+        prismaClient().users.count({ where })
     ]);
     res.json({
         success: true,

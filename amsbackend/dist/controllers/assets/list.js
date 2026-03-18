@@ -5,7 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAssetLocations = exports.getAssets = void 0;
 const axios_1 = __importDefault(require("axios"));
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const normalizeLocation_1 = require("../../utils/normalizeLocation");
 const getAssets = async (req, res) => {
     try {
@@ -170,8 +171,8 @@ const getAssets = async (req, res) => {
         const sortBy = allowedSortFields.includes(sortByRaw) ? sortByRaw : "id";
         const sortOrder = sortOrderRaw === "asc" ? "asc" : "desc";
         // ⭐ TOTAL COUNT (for pagination)
-        const total = await client_1.default.assets.count({ where });
-        const result = await client_1.default.assets.findMany({
+        const total = await prismaClient().assets.count({ where });
+        const result = await prismaClient().assets.findMany({
             where,
             skip,
             take: limit,
@@ -254,7 +255,7 @@ const getAssetLocations = async (req, res) => {
             }
             where.clientGroupId = req.user.clientGroupId;
         }
-        const rows = await client_1.default.assets.findMany({
+        const rows = await prismaClient().assets.findMany({
             where,
             select: {
                 id: true,
@@ -282,7 +283,7 @@ const getAssetLocations = async (req, res) => {
                         const lon = geoRes.data[0].lon;
                         asset.latitude = lat;
                         asset.longitude = lon;
-                        await client_1.default.assets.update({
+                        await prismaClient().assets.update({
                             where: { id: asset.id },
                             data: {
                                 latitude: lat,

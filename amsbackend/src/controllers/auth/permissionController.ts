@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import  prisma  from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 
 export async function getPermissions(req: Request, res: Response): Promise<void> 
@@ -9,7 +10,7 @@ export async function getPermissions(req: Request, res: Response): Promise<void>
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
-    const user = await prisma.users.findUnique({
+    const user = await prismaClient().users.findUnique({
       where: { id: req.user.id },
       include: {
         roleRef: {

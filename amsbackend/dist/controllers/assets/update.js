@@ -5,7 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateAsset = void 0;
 const axios_1 = __importDefault(require("axios"));
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const normalizeLocation_1 = require("../../utils/normalizeLocation");
 const Audit_1 = require("../../models/Audit");
 const coordinateUtils_1 = require("../../utils/coordinateUtils");
@@ -48,7 +49,7 @@ const updateAsset = async (req, res) => {
             ? await (0, storageService_1.saveFile)(files.records[0], "records")
             : null;
         // 1) Fetch existing asset + ownership validation
-        const existing = await client_1.default.assets.findUnique({
+        const existing = await prismaClient().assets.findUnique({
             where: { id: assetId },
             select: {
                 latitude: true,
@@ -151,7 +152,7 @@ const updateAsset = async (req, res) => {
             return !Number.isNaN(n) && n >= -2147483648 && n <= 2147483647 ? n : null;
         })();
         // ✅ 6) Perform update using Prisma
-        const updated = await client_1.default.assets.update({
+        const updated = await prismaClient().assets.update({
             where: {
                 id: assetId,
             },

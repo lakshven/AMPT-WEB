@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function setDefaultFile(req: Request, res: Response) {
   try {
@@ -34,7 +35,7 @@ export async function setDefaultFile(req: Request, res: Response) {
 
 
     // Save "default" as the chosen file
-    const updated = await prisma.assets.update({
+    const updated = await prismaClient().assets.update({
       where: { id: Number(rowId) },
       data: { [column]: "default" },
     });

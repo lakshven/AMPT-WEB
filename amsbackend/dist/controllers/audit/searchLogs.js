@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.searchAuditLogs = searchAuditLogs;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 async function searchAuditLogs(req, res) {
     try {
         const q = String(req.query.q || "").trim();
@@ -12,7 +10,7 @@ async function searchAuditLogs(req, res) {
             return res.json({ logs: [] });
         }
         // Step 1: Search fields Prisma CAN filter
-        const logs = await client_1.default.audit.findMany({
+        const logs = await prismaClient().audit.findMany({
             where: {
                 OR: [
                     { action: { contains: q, mode: "insensitive" } },
@@ -22,7 +20,7 @@ async function searchAuditLogs(req, res) {
             orderBy: { createdAt: "desc" }
         });
         // Step 2: Search metadata manually (Prisma cannot do this)
-        const metadataMatches = await client_1.default.audit.findMany({
+        const metadataMatches = await prismaClient().audit.findMany({
             orderBy: { createdAt: "desc" }
         });
         const filteredMetadata = metadataMatches.filter((log) => {

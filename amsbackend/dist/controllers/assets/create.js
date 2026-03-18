@@ -5,7 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addAsset = void 0;
 const axios_1 = __importDefault(require("axios"));
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const normalizeLocation_1 = require("../../utils/normalizeLocation");
 const Audit_1 = require("../../models/Audit");
 const coordinateUtils_1 = require("../../utils/coordinateUtils");
@@ -86,7 +87,7 @@ const addAsset = async (req, res) => {
         else if (isAppAdmin) {
             finalGroupId = asset.clientGroupId ?? null;
         }
-        const last = await client_1.default.assets.findFirst({
+        const last = await prismaClient().assets.findFirst({
             where: { routeOrder: { not: null } },
             orderBy: { routeOrder: "desc" },
             select: { routeOrder: true }
@@ -103,7 +104,7 @@ const addAsset = async (req, res) => {
                 parsedRiskRating = null; // ignore invalid/huge values
             }
         }
-        const newAsset = await client_1.default.assets.create({
+        const newAsset = await prismaClient().assets.create({
             data: {
                 elr,
                 structure_no,

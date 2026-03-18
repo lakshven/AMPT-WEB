@@ -1,4 +1,5 @@
-import  prisma  from "../prisma/client";
+import { getPrisma } from "../prisma/client";
+function prismaClient() { return getPrisma(); }
 import crypto from "crypto";
 
 // ✅ Generate a secure token
@@ -11,7 +12,7 @@ export async function requestPasswordReset(userId: number) {
   const token = generateToken();
   const expiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 minutes
 
-  await prisma.passwordReset.upsert({
+  await prismaClient().passwordReset.upsert({
     where: { userId },
     update: { token, expiresAt },
     create: { userId, token, expiresAt }
@@ -22,7 +23,7 @@ export async function requestPasswordReset(userId: number) {
 
 // ✅ Verify token
 export async function verifyPasswordResetToken(userId: number, token: string) {
-  return prisma.passwordReset.findFirst({
+  return prismaClient().passwordReset.findFirst({
     where: {
       userId,
       token,
@@ -34,13 +35,13 @@ export async function verifyPasswordResetToken(userId: number, token: string) {
 // ✅ Reset password (after verifying token)
 export async function resetPassword(userId: number, newHashedPassword: string) {
   // Update user password
-  await prisma.users.update({
+  await prismaClient().users.update({
     where: { id: userId },
     data: { password: newHashedPassword }
   });
 
   // Clear token
-  await prisma.passwordReset.deleteMany({
+  await prismaClient().passwordReset.deleteMany({
     where: { userId }
   });
 
@@ -49,7 +50,7 @@ export async function resetPassword(userId: number, newHashedPassword: string) {
 
 // ✅ Clear token manually (optional)
 export async function clearPasswordResetToken(userId: number) {
-  await prisma.passwordReset.deleteMany({
+  await prismaClient().passwordReset.deleteMany({
     where: { userId }
   });
 }

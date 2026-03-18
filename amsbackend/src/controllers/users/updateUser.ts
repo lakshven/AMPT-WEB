@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 
 export async function updateUser(req: Request, res: Response): Promise<void> {
@@ -16,7 +17,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
   const { firstname, lastname, username, email, role: newRole, clientGroupId } = req.body;
 
   try {
-    const existingUser = await prisma.users.findUnique({
+    const existingUser = await prismaClient().users.findUnique({
       where: { id: userId }
     });
 
@@ -39,7 +40,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     let finalRoleId = existingUser.role_id;
 
     if (newRole) {
-      const roleRow = await prisma.role.findUnique({ where: { name: newRole } });
+      const roleRow = await prismaClient().role.findUnique({ where: { name: newRole } });
       if (!roleRow) {
         res.status(400).json({ success: false, message: "Role not found" });
         return;
@@ -54,7 +55,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     let finalCompanyId = existingUser.companyId;
 
     if (clientGroupId !== undefined) {
-      const group = await prisma.clientGroup.findUnique({
+      const group = await prismaClient().clientGroup.findUnique({
         where: { id: Number(clientGroupId) }
       });
 
@@ -77,7 +78,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     }
 
     // Update user
-    const updatedUser = await prisma.users.update({
+    const updatedUser = await prismaClient().users.update({
       where: { id: userId },
       data: {
         firstname: firstname ?? existingUser.firstname,

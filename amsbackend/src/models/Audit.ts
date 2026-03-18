@@ -1,6 +1,5 @@
 // models/Audit.ts
-import prisma from "../prisma/client";               // ✅ Correct import
-import { recordUserActivity } from "./UserActivity"; // ⭐ Analytics tracking
+import { recordUserActivity } from "./UserActivity"; // Analytics tracking
 
 export async function logAudit({
   action,
@@ -23,7 +22,9 @@ export async function logAudit({
   details?: any;
   metadata?: Record<string, any>;
 }) {
-  // ⭐ 1. Create the audit log (unchanged)
+  // 1. Create the audit log
+  const { getPrisma } = await import("../prisma/client");
+  const prisma = getPrisma(); 
   const audit = await prisma.audit.create({
     data: {
       action,
@@ -38,12 +39,12 @@ export async function logAudit({
     }
   });
 
-  // ⭐ 2. Record analytics (only when user + company exist)
+  // 2. Record analytics (only when user + company exist)
   if (actorUserId && companyId) {
     await recordUserActivity({
       userId: actorUserId,
       companyId,
-      category: action, // category = audit action
+      category: action
     });
   }
 

@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.exportAssetController = exportAssetController;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 async function exportAssetController(req, res) {
     try {
@@ -14,15 +12,15 @@ async function exportAssetController(req, res) {
         const user = req.user;
         let asset;
         if (isAppAdmin) {
-            asset = await client_1.default.assets.findUnique({ where: { id } });
+            asset = await prismaClient().assets.findUnique({ where: { id } });
         }
         else if (req.user?.accountType === "single") {
-            asset = await client_1.default.assets.findFirst({
+            asset = await prismaClient().assets.findFirst({
                 where: { id, clientGroupId: null }
             });
         }
         else {
-            asset = await client_1.default.assets.findFirst({
+            asset = await prismaClient().assets.findFirst({
                 where: { id, clientGroupId: userGroup }
             });
         }

@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.moveUserToAnotherGroup = moveUserToAnotherGroup;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 async function moveUserToAnotherGroup(req, res) {
     try {
@@ -20,7 +18,7 @@ async function moveUserToAnotherGroup(req, res) {
         }
         const actor = req.user;
         // Fetch user
-        const user = await client_1.default.users.findUnique({
+        const user = await prismaClient().users.findUnique({
             where: { id: userId },
         });
         if (!user) {
@@ -34,7 +32,7 @@ async function moveUserToAnotherGroup(req, res) {
             });
         }
         // Fetch old group
-        const oldGroup = await client_1.default.clientGroup.findUnique({
+        const oldGroup = await prismaClient().clientGroup.findUnique({
             where: { id: previousGroupId },
         });
         if (!oldGroup) {
@@ -44,7 +42,7 @@ async function moveUserToAnotherGroup(req, res) {
             });
         }
         // Fetch new group
-        const newGroup = await client_1.default.clientGroup.findUnique({
+        const newGroup = await prismaClient().clientGroup.findUnique({
             where: { id: newGroupId },
         });
         if (!newGroup) {
@@ -63,7 +61,7 @@ async function moveUserToAnotherGroup(req, res) {
             }
         }
         // Update user assignment
-        const updatedUser = await client_1.default.users.update({
+        const updatedUser = await prismaClient().users.update({
             where: { id: userId },
             data: { clientGroupId: newGroupId },
         });

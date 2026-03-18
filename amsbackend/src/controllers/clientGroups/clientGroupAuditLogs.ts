@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export const getClientGroupAuditLogs = async (req: Request, res: Response) => {
   try {
     const groupId = Number(req.params.groupId);
 
     // Fetch the group to verify company ownership
-    const group = await prisma.clientGroup.findUnique({
+    const group = await prismaClient().clientGroup.findUnique({
       where: { id: groupId },
       select: { companyId: true }
     });
@@ -23,7 +24,7 @@ export const getClientGroupAuditLogs = async (req: Request, res: Response) => {
       return res.status(403).json({ success: false, message: "Access denied" });
     }
 
-    const logs = await prisma.audit.findMany({
+    const logs = await prismaClient().audit.findMany({
       where: {
         targetType: "client_group",
         targetId: groupId,

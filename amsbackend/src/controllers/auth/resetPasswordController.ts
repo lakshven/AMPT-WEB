@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { hash } from "bcryptjs";
-import prisma  from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 
 export async function resetPassword(req: Request, res: Response): Promise<void> {
@@ -19,7 +20,7 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
       return;
     }
     // ✅ Find user with valid (non-expired) token
-    const resetRecord  = await prisma.passwordReset.findFirst({
+    const resetRecord  = await prismaClient().passwordReset.findFirst({
       where: {
         token,
         expiresAt: { gt: new Date() }
@@ -50,13 +51,13 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
     const hashed = await hash(password, 10);
 
     // ✅ Update user password
-    await prisma.users.update({
+    await prismaClient().users.update({
       where: { id: resetRecord.user.id },
       data: { password: hashed }
     });
 
     // ✅ Clear reset token
-    await prisma.passwordReset.deleteMany({
+    await prismaClient().passwordReset.deleteMany({
       where: { userId: resetRecord.user.id }
     });
     await logAudit({

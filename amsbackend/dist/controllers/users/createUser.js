@@ -1,11 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createUser = createUser;
 const bcryptjs_1 = require("bcryptjs");
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 async function createUser(req, res) {
     const user = req.user;
@@ -20,19 +18,19 @@ async function createUser(req, res) {
         return;
     }
     const finalRoleName = invitedRole;
-    const existing = await client_1.default.users.findFirst({
+    const existing = await prismaClient().users.findFirst({
         where: { OR: [{ username }, { email }] }
     });
     if (existing) {
         res.status(400).json({ success: false, message: "Username or email already exists" });
         return;
     }
-    const roleRow = await client_1.default.role.findUnique({ where: { name: finalRoleName } });
+    const roleRow = await prismaClient().role.findUnique({ where: { name: finalRoleName } });
     if (!roleRow) {
         res.status(400).json({ success: false, message: "Role not found" });
         return;
     }
-    const accountTypeRow = await client_1.default.accountTypeOption.findUnique({
+    const accountTypeRow = await prismaClient().accountTypeOption.findUnique({
         where: { value: user.accountType }
     });
     if (!accountTypeRow) {
@@ -42,7 +40,7 @@ async function createUser(req, res) {
     // ⭐ Determine final clientGroupId
     const finalClientGroupId = clientGroupId ?? user.clientGroupId;
     // ⭐ Fetch group to validate company ownership
-    const group = await client_1.default.clientGroup.findUnique({
+    const group = await prismaClient().clientGroup.findUnique({
         where: { id: finalClientGroupId },
         select: { id: true, companyId: true }
     });
@@ -62,7 +60,7 @@ async function createUser(req, res) {
     const rawPassword = password ?? Math.random().toString(36).slice(2, 10);
     const hashedPassword = await (0, bcryptjs_1.hash)(rawPassword, 10);
     // ⭐ Create user with correct companyId
-    const newUser = await client_1.default.users.create({
+    const newUser = await prismaClient().users.create({
         data: {
             firstname,
             lastname,

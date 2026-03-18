@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export const getUserAuditLogs = async (req: Request, res: Response) => {
   try {
     const userId = Number(req.params.userId);
 
     // Fetch the user to verify company ownership
-    const userRecord = await prisma.users.findUnique({
+    const userRecord = await prismaClient().users.findUnique({
       where: { id: userId },
       select: { companyId: true }
     });
@@ -26,7 +27,7 @@ export const getUserAuditLogs = async (req: Request, res: Response) => {
       }
     }
 
-    const logs = await prisma.audit.findMany({
+    const logs = await prismaClient().audit.findMany({
       where: {
         targetType: "user",
         targetId: userId

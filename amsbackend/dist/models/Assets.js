@@ -1,7 +1,4 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAssets = getAssets;
 exports.getAssetById = getAssetById;
@@ -9,7 +6,8 @@ exports.createAsset = createAsset;
 exports.updateAsset = updateAsset;
 exports.deleteAsset = deleteAsset;
 exports.restoreAsset = restoreAsset;
-const client_1 = __importDefault(require("../prisma/client"));
+const client_1 = require("../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 // Helper: build correct where clause
 function buildWhere(clientGroupId, isDeleted, isAppAdmin) {
     if (isAppAdmin) {
@@ -34,14 +32,14 @@ function buildWhere(clientGroupId, isDeleted, isAppAdmin) {
 }
 // GET ALL ASSETS
 async function getAssets(clientGroupId, isAppAdmin) {
-    return client_1.default.assets.findMany({
+    return prismaClient().assets.findMany({
         where: buildWhere(clientGroupId, false, isAppAdmin),
         orderBy: { id: "desc" }
     });
 }
 // GET ASSET BY ID
 async function getAssetById(id, clientGroupId, isAppAdmin) {
-    const asset = await client_1.default.assets.findFirst({
+    const asset = await prismaClient().assets.findFirst({
         where: {
             id,
             ...buildWhere(clientGroupId, false, isAppAdmin)
@@ -60,7 +58,7 @@ async function getAssetById(id, clientGroupId, isAppAdmin) {
 }
 // CREATE ASSET
 async function createAsset(assetData, clientGroupId, isAppAdmin) {
-    return client_1.default.assets.create({
+    return prismaClient().assets.create({
         data: {
             elr: assetData.elr,
             structure_no: assetData.structure_no,
@@ -99,7 +97,7 @@ async function createAsset(assetData, clientGroupId, isAppAdmin) {
 }
 // UPDATE ASSET
 async function updateAsset(id, assetData, clientGroupId, isAppAdmin) {
-    const asset = await client_1.default.assets.findFirst({
+    const asset = await prismaClient().assets.findFirst({
         where: {
             id,
             ...buildWhere(clientGroupId, false, isAppAdmin)
@@ -107,7 +105,7 @@ async function updateAsset(id, assetData, clientGroupId, isAppAdmin) {
     });
     if (!asset)
         return null;
-    return client_1.default.assets.update({
+    return prismaClient().assets.update({
         where: { id },
         data: {
             structure_no: assetData.structure_no,
@@ -145,7 +143,7 @@ async function updateAsset(id, assetData, clientGroupId, isAppAdmin) {
 }
 // DELETE ASSET (SOFT DELETE)
 async function deleteAsset(id, deletedBy, clientGroupId, isAppAdmin) {
-    const asset = await client_1.default.assets.findFirst({
+    const asset = await prismaClient().assets.findFirst({
         where: {
             id,
             ...buildWhere(clientGroupId, false, isAppAdmin)
@@ -153,18 +151,18 @@ async function deleteAsset(id, deletedBy, clientGroupId, isAppAdmin) {
     });
     if (!asset)
         return null;
-    await client_1.default.assets.update({
+    await prismaClient().assets.update({
         where: { id },
         data: { is_deleted: true }
     });
-    await client_1.default.asset_deletion_log.create({
+    await prismaClient().asset_deletion_log.create({
         data: {
             asset_id: id,
             deleted_by: deletedBy,
             asset_snapshot: asset
         }
     });
-    const updatedAsset = await client_1.default.assets.findUnique({ where: { id } });
+    const updatedAsset = await prismaClient().assets.findUnique({ where: { id } });
     return {
         success: true,
         message: "Soft deleted successfully",
@@ -173,7 +171,7 @@ async function deleteAsset(id, deletedBy, clientGroupId, isAppAdmin) {
 }
 // RESTORE ASSET
 async function restoreAsset(id, clientGroupId, isAppAdmin) {
-    const asset = await client_1.default.assets.findFirst({
+    const asset = await prismaClient().assets.findFirst({
         where: {
             id,
             ...buildWhere(clientGroupId, true, isAppAdmin)
@@ -181,11 +179,11 @@ async function restoreAsset(id, clientGroupId, isAppAdmin) {
     });
     if (!asset)
         return null;
-    await client_1.default.assets.update({
+    await prismaClient().assets.update({
         where: { id },
         data: { is_deleted: false }
     });
-    const updatedAsset = await client_1.default.assets.findUnique({ where: { id } });
+    const updatedAsset = await prismaClient().assets.findUnique({ where: { id } });
     return {
         success: true,
         message: "Asset restored successfully",

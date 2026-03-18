@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 // index.ts
 // ⭐ Load Key Vault FIRST — and WAIT for it before anything else
-const keyvault_1 = require("../keyvault");
+const keyvault_1 = require("./keyvault");
 const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
@@ -30,12 +30,16 @@ const auditRoutes_1 = __importDefault(require("./routes/auditRoutes"));
 const companyAdminRoutes_1 = __importDefault(require("./routes/companyAdminRoutes"));
 const auth_1 = require("./middleware/auth");
 const systemCron_1 = require("./scheduler/systemCron");
+// ⭐ ADD THIS — lazy Prisma initialization
+const client_1 = require("./prisma/client");
 // ⭐ Wrap everything in an async bootstrap function
 async function bootstrap() {
     dotenv_1.default.config();
     // ⭐ WAIT for Key Vault secrets BEFORE Prisma loads anywhere
     await (0, keyvault_1.loadSecrets)();
     console.log("🔥 DATABASE_URL LOADED:", process.env.DATABASE_URL);
+    // ⭐ Initialize Prisma AFTER secrets load
+    function prismaClient() { return (0, client_1.getPrisma)(); }
     const app = (0, express_1.default)();
     app.set("trust proxy", 1);
     // ⭐ Use ONLY corsOptions
@@ -96,7 +100,6 @@ async function bootstrap() {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
         console.log(`✅ Backend running on port ${PORT}`);
-        // ⭐ Start cron AFTER server + Key Vault + Prisma are ready
         (0, systemCron_1.startCronJobs)();
     });
     return app;

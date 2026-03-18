@@ -1,6 +1,7 @@
 // controllers/audit/searchLogs.ts
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function searchAuditLogs(req: Request, res: Response) {
   try {
@@ -11,7 +12,7 @@ export async function searchAuditLogs(req: Request, res: Response) {
     }
 
     // Step 1: Search fields Prisma CAN filter
-    const logs = await prisma.audit.findMany({
+    const logs = await prismaClient().audit.findMany({
       where: {
         OR: [
           { action: { contains: q, mode: "insensitive" } },
@@ -22,7 +23,7 @@ export async function searchAuditLogs(req: Request, res: Response) {
     });
 
     // Step 2: Search metadata manually (Prisma cannot do this)
-    const metadataMatches = await prisma.audit.findMany({
+    const metadataMatches = await prismaClient().audit.findMany({
       orderBy: { createdAt: "desc" }
     });
 

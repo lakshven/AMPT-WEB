@@ -1,6 +1,7 @@
 // controllers/assets/updateRouteOrder.ts
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 // ⭐ NEW: Haversine distance (for metadata only — does NOT affect route order)
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -43,7 +44,7 @@ export async function updateRouteOrder(req: Request, res: Response): Promise<voi
       return;
     }
         // ⭐ NEW: Fetch coordinates for distance metadata
-    const fullAssets = await prisma.assets.findMany({
+    const fullAssets = await prismaClient().assets.findMany({
       where: { id: { in: sanitized.map((s) => s.id) } },
       select: {
         id: true,
@@ -81,9 +82,9 @@ export async function updateRouteOrder(req: Request, res: Response): Promise<voi
     }
    
     // Bulk update in a transaction
-    await prisma.$transaction(
+    await prismaClient().$transaction(
       sanitized.map((item) =>
-        prisma.assets.update({
+        prismaClient().assets.update({
           where: { id: item.id },
           data: { routeOrder: item.routeOrder },
         })

@@ -1,15 +1,17 @@
-import prisma from "../prisma/client";
-
 // ⭐ Existing function (kept exactly as you wrote it)
-export const fetchUserActivity = () => {
-  return prisma.userActivity.findMany({
+export const fetchUserActivity = async() => {
+  const {getPrisma} = await import("../prisma/client");
+  function prismaClient() { return getPrisma(); }
+  return prismaClient().userActivity.findMany({
     orderBy: { createdAt: "asc" }
   });
 };
 
 // ⭐ 1. Hourly activity (for 24-hour heatmap)
-export const fetchHourlyActivity = () => {
-  return prisma.userActivity.groupBy({
+export const fetchHourlyActivity = async() => {
+  const {getPrisma} = await import("../prisma/client");
+  function prismaClient() { return getPrisma(); }
+  return prismaClient().userActivity.groupBy({
     by: ["hour"],
     _sum: { count: true },
     orderBy: { hour: "asc" }
@@ -17,8 +19,10 @@ export const fetchHourlyActivity = () => {
 };
 
 // ⭐ 2. Weekly activity (7×24 heatmap)
-export const fetchWeeklyActivity = () => {
-  return prisma.userActivity.groupBy({
+export const fetchWeeklyActivity = async() => {
+  const {getPrisma} = await import("../prisma/client");
+  function prismaClient() { return getPrisma(); }
+  return prismaClient().userActivity.groupBy({
     by: ["dayOfWeek", "hour"],
     _sum: { count: true },
     _min: {createdAt: true}, // to get date for each day
@@ -30,8 +34,10 @@ export const fetchWeeklyActivity = () => {
 };
 
 // ⭐ 3. Activity by category (pie chart)
-export const fetchActivityByCategory = () => {
-  return prisma.userActivity.groupBy({
+export const fetchActivityByCategory = async() => {
+  const {getPrisma} = await import("../prisma/client");
+  function prismaClient() { return getPrisma(); }
+  return prismaClient().userActivity.groupBy({
     by: ["category"],
     _sum: { count: true },
     orderBy: { category: "asc" }
@@ -39,8 +45,10 @@ export const fetchActivityByCategory = () => {
 };
 
 // ⭐ 4. Top active users (bar chart)
-export const fetchTopActiveUsers = () => {
-  return prisma.userActivity.groupBy({
+export const fetchTopActiveUsers = async() => {
+  const {getPrisma} = await import("../prisma/client");
+  function prismaClient() { return getPrisma(); }
+  return prismaClient().userActivity.groupBy({
     by: ["userId"],
     _sum: { count: true },
     orderBy: { _sum: { count: "desc" } },
@@ -49,8 +57,10 @@ export const fetchTopActiveUsers = () => {
 };
 
 // ⭐ 5. Per-user analytics (user detail page)
-export const fetchUserActivityByUserId = (userId: number) => {
-  return prisma.userActivity.findMany({
+export const fetchUserActivityByUserId = async(userId: number) => {
+   const {getPrisma} = await import("../prisma/client");
+   function prismaClient() { return getPrisma(); }
+   return prismaClient().userActivity.findMany({
     where: { userId },
     orderBy: [
       { dayOfWeek: "asc" },

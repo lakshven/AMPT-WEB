@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.archiveAssetController = archiveAssetController;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit"); // ⭐ ADDED
 async function archiveAssetController(req, res) {
     try {
@@ -17,7 +15,7 @@ async function archiveAssetController(req, res) {
         const isSingle = req.user?.accountType === "single";
         const userGroup = req.user?.clientGroupId;
         // Fetch asset
-        const asset = await client_1.default.assets.findUnique({
+        const asset = await prismaClient().assets.findUnique({
             where: { id },
             select: { id: true, clientGroupId: true, companyId: true } // select for audit log
         });
@@ -36,7 +34,7 @@ async function archiveAssetController(req, res) {
             }
         }
         // ⭐ Archive asset
-        await client_1.default.assets.update({
+        await prismaClient().assets.update({
             where: { id },
             data: { archived_at: new Date() }
         });

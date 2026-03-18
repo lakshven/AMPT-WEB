@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteClientGroup = deleteClientGroup;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 async function deleteClientGroup(req, res) {
     const { id } = req.body;
@@ -16,7 +14,7 @@ async function deleteClientGroup(req, res) {
         });
     }
     try {
-        const deleted = await client_1.default.clientGroup.update({
+        const deleted = await prismaClient().clientGroup.update({
             where: { id },
             data: { isDeleted: true, deletedAt: new Date() },
             select: {

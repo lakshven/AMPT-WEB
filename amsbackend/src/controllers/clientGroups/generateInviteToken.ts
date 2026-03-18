@@ -1,7 +1,8 @@
 // src/controllers/clientGroups/generateInviteToken.ts
 
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import crypto from "crypto";
 import { logAudit } from "../../models/Audit";
 import sendMail from "../../utils/sendEmail";
@@ -25,7 +26,7 @@ export async function generateInviteToken(req: Request, res: Response) {
     }
 
     // Validate group exists
-    const group = await prisma.clientGroup.findUnique({
+    const group = await prismaClient().clientGroup.findUnique({
       where: { id: Number(groupId) },
     });
 
@@ -43,7 +44,7 @@ export async function generateInviteToken(req: Request, res: Response) {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     // Save token
-    const invite = await prisma.inviteToken.create({
+    const invite = await prismaClient().inviteToken.create({
       data: {
         token,
         role,

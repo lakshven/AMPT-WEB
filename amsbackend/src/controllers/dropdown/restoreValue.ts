@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import getStaticOptions from "./dropDownController";
 import { logAudit } from "../../models/Audit";
 
@@ -14,7 +15,7 @@ export default async function restoreValue(req: Request, res: Response) {
       ? req.params.value[0]
       : req.params.value;
     // 1️⃣ Validate category
-    const cat = await prisma.dropdownCategory.findUnique({
+    const cat = await prismaClient().dropdownCategory.findUnique({
       where: { name: category }
     });
 
@@ -23,7 +24,7 @@ export default async function restoreValue(req: Request, res: Response) {
     }
 
     // 2️⃣ Find soft-deleted value
-    const existing = await prisma.dropdownValue.findFirst({
+    const existing = await prismaClient().dropdownValue.findFirst({
       where: {
         categoryId: cat.id,
         value: value,
@@ -36,7 +37,7 @@ export default async function restoreValue(req: Request, res: Response) {
     }
 
     // 3️⃣ Restore it
-    const restored = await prisma.dropdownValue.update({
+    const restored = await prismaClient().dropdownValue.update({
       where: { id: existing.id },
       data: { isDeleted: false }
     });
@@ -64,7 +65,7 @@ export default async function restoreValue(req: Request, res: Response) {
 
 
     // 4️⃣ Return updated dropdowns
-    const categories = await prisma.dropdownCategory.findMany({
+    const categories = await prismaClient().dropdownCategory.findMany({
       include: {
         values: { where: { isDeleted: false }, orderBy: { value: "asc" } }
       }

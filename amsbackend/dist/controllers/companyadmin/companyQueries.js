@@ -1,21 +1,19 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updatePreferencesQuery = exports.updateBrandingQuery = exports.updateCompanyInfoQuery = exports.getCompanySettingsQuery = exports.getCompanyAnalyticsQuery = exports.getCompanyActivityLogsQuery = exports.getCompanyAlertsQuery = exports.getCompanyStatsQuery = void 0;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 // Dashboard Stats
 // Dashboard Stats
 const getCompanyStatsQuery = async (companyId) => {
     // ⭐ Total Users (already correct)
-    const totalUsers = await client_1.default.users.count({ where: { companyId } });
+    const totalUsers = await prismaClient().users.count({ where: { companyId } });
     // ⭐ Total Activity (new)
-    const totalActivity = await client_1.default.audit.count({
+    const totalActivity = await prismaClient().audit.count({
         where: { companyId },
     });
     // ⭐ Active Users (new) — last 7 days
-    const activeUsers = await client_1.default.audit.groupBy({
+    const activeUsers = await prismaClient().audit.groupBy({
         by: ["actorUserId"],
         where: {
             companyId,
@@ -34,7 +32,7 @@ const getCompanyStatsQuery = async (companyId) => {
 exports.getCompanyStatsQuery = getCompanyStatsQuery;
 // Alerts
 const getCompanyAlertsQuery = async (companyId) => {
-    const alerts = await client_1.default.systemAlert.findMany({
+    const alerts = await prismaClient().systemAlert.findMany({
         where: { companyId, isRead: false },
         orderBy: { createdAt: "desc" },
         take: 10,
@@ -72,13 +70,13 @@ const getCompanyActivityLogsQuery = async (companyId, filters) => {
     const orderBy = {};
     orderBy[filters.sort] = filters.order;
     const [logs, total] = await Promise.all([
-        client_1.default.audit.findMany({
+        prismaClient().audit.findMany({
             where,
             orderBy,
             skip,
             take,
         }),
-        client_1.default.audit.count({ where }),
+        prismaClient().audit.count({ where }),
     ]);
     return {
         data: logs, // ⭐ FIXED
@@ -94,7 +92,7 @@ exports.getCompanyActivityLogsQuery = getCompanyActivityLogsQuery;
 // Analytics
 const getCompanyAnalyticsQuery = async (companyId) => {
     // ⭐ Top Users (with firstname + lastname)
-    const topUsersRaw = await client_1.default.userActivity.groupBy({
+    const topUsersRaw = await prismaClient().userActivity.groupBy({
         by: ["userId"],
         where: { companyId },
         _count: { userId: true },
@@ -104,7 +102,7 @@ const getCompanyAnalyticsQuery = async (companyId) => {
     const topUsers = (await Promise.all(topUsersRaw.map(async (u) => {
         if (!u.userId)
             return null; // ⭐ Prevent null errors
-        const user = await client_1.default.users.findUnique({
+        const user = await prismaClient().users.findUnique({
             where: { id: u.userId },
             select: {
                 firstname: true,
@@ -121,7 +119,7 @@ const getCompanyAnalyticsQuery = async (companyId) => {
         };
     }))).filter(Boolean); // ⭐ Remove nulls
     // ⭐ Weekly Activity (sorted Monday → Sunday)
-    const weeklyActivityRaw = await client_1.default.userActivity.groupBy({
+    const weeklyActivityRaw = await prismaClient().userActivity.groupBy({
         by: ["dayOfWeek"],
         where: { companyId },
         _count: { dayOfWeek: true },
@@ -133,7 +131,7 @@ const getCompanyAnalyticsQuery = async (companyId) => {
     }))
         .sort((a, b) => a.dayOfWeek - b.dayOfWeek);
     // ⭐ Hourly Activity (sorted 00:00 → 23:00)
-    const hourlyActivityRaw = await client_1.default.userActivity.groupBy({
+    const hourlyActivityRaw = await prismaClient().userActivity.groupBy({
         by: ["hour"],
         where: { companyId },
         _count: { hour: true },
@@ -153,11 +151,11 @@ const getCompanyAnalyticsQuery = async (companyId) => {
 exports.getCompanyAnalyticsQuery = getCompanyAnalyticsQuery;
 // Settings
 const getCompanySettingsQuery = async (companyId) => {
-    let settings = await client_1.default.companySettings.findUnique({
+    let settings = await prismaClient().companySettings.findUnique({
         where: { companyId },
     });
     if (!settings) {
-        settings = await client_1.default.companySettings.create({
+        settings = await prismaClient().companySettings.create({
             data: {
                 companyId,
                 companyInfo: {},
@@ -195,7 +193,7 @@ exports.getCompanySettingsQuery = getCompanySettingsQuery;
 ;
 // Update Company Info
 const updateCompanyInfoQuery = async (companyId, data) => {
-    return await client_1.default.companySettings.update({
+    return await prismaClient().companySettings.update({
         where: { companyId },
         data: { companyInfo: data },
     });
@@ -203,7 +201,7 @@ const updateCompanyInfoQuery = async (companyId, data) => {
 exports.updateCompanyInfoQuery = updateCompanyInfoQuery;
 // Update Branding
 const updateBrandingQuery = async (companyId, data) => {
-    return await client_1.default.companySettings.update({
+    return await prismaClient().companySettings.update({
         where: { companyId },
         data: { branding: data },
     });
@@ -211,7 +209,7 @@ const updateBrandingQuery = async (companyId, data) => {
 exports.updateBrandingQuery = updateBrandingQuery;
 // Update Preferences
 const updatePreferencesQuery = async (companyId, data) => {
-    return await client_1.default.companySettings.update({
+    return await prismaClient().companySettings.update({
         where: { companyId },
         data: { preferences: data },
     });

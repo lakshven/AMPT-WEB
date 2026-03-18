@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { getAlerts, markAlertsRead } from "../../services/alertsService";
 
 export const createAlert = async (req: Request, res: Response) => {
   try {
     const { type, message, severity } = req.body;
 
-    const alert = await prisma.systemAlert.create({
+    const alert = await prismaClient().systemAlert.create({
       data: { type, message, severity }
     });
 

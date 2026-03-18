@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import axios from "axios";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { normalizeLocation } from "../../utils/normalizeLocation";
 import { logAudit } from "../../models/Audit";
 import { detectNorthingEasting } from "../../utils/coordinateUtils";
@@ -136,7 +137,7 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
       finalGroupId = asset.clientGroupId ?? null;
     }
 
-    const last = await prisma.assets.findFirst({
+    const last = await prismaClient().assets.findFirst({
       where: { routeOrder: { not: null } },
       orderBy: { routeOrder: "desc" },
       select: { routeOrder: true }
@@ -154,7 +155,7 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    const newAsset = await prisma.assets.create({
+    const newAsset = await prismaClient().assets.create({
       data: {
         elr,
         structure_no,

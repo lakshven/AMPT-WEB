@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export const assignRoleToUser = async (req: Request, res: Response) => {
   try {
     const userId = Number(req.params.userId);
     const { roleName } = req.body;
 
-    const role = await prisma.role.findUnique({
+    const role = await prismaClient().role.findUnique({
       where: { name: roleName },
       select: { id: true }
     });
@@ -16,7 +17,7 @@ export const assignRoleToUser = async (req: Request, res: Response) => {
       return;
     }
 
-    await prisma.users.update({
+    await prismaClient().users.update({
       where: { id: userId },
       data: { role_id: role.id }
     });

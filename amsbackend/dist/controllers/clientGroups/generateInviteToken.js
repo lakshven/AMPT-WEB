@@ -5,7 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateInviteToken = generateInviteToken;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const crypto_1 = __importDefault(require("crypto"));
 const Audit_1 = require("../../models/Audit");
 const sendEmail_1 = __importDefault(require("../../utils/sendEmail"));
@@ -25,7 +26,7 @@ async function generateInviteToken(req, res) {
             });
         }
         // Validate group exists
-        const group = await client_1.default.clientGroup.findUnique({
+        const group = await prismaClient().clientGroup.findUnique({
             where: { id: Number(groupId) },
         });
         if (!group || !group.companyId) {
@@ -39,7 +40,7 @@ async function generateInviteToken(req, res) {
         // Token expires in 7 days
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         // Save token
-        const invite = await client_1.default.inviteToken.create({
+        const invite = await prismaClient().inviteToken.create({
             data: {
                 token,
                 role,

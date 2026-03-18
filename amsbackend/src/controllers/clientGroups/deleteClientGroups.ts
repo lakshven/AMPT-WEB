@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 export async function deleteClientGroup(req: Request, res: Response) {
   const { id } = req.body;
@@ -13,7 +14,7 @@ export async function deleteClientGroup(req: Request, res: Response) {
   }
 
   try {
-    const deleted = await prisma.clientGroup.update({
+    const deleted = await prismaClient().clientGroup.update({
       where: { id },
       data: { isDeleted: true, deletedAt: new Date() },
       select: {

@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.optimizeRoute = optimizeRoute;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 // Haversine formula
 function haversine(lat1, lon1, lat2, lon2) {
@@ -23,7 +21,7 @@ async function optimizeRoute(req, res) {
             res.status(400).json({ error: "Invalid assetIds" });
             return;
         }
-        const assets = await client_1.default.assets.findMany({
+        const assets = await prismaClient().assets.findMany({
             where: { id: { in: assetIds } },
             select: { id: true, latitude: true, longitude: true },
         });
@@ -55,7 +53,7 @@ async function optimizeRoute(req, res) {
             visited.push(current.id);
         }
         // Update routeOrder for optimized assets
-        await client_1.default.$transaction(visited.map((id, index) => client_1.default.assets.update({
+        await prismaClient().$transaction(visited.map((id, index) => prismaClient().assets.update({
             where: { id },
             data: { routeOrder: index + 1 },
         })));
@@ -73,7 +71,7 @@ async function optimizeRoute(req, res) {
             },
         });
         // ⭐ FIX: Return ALL assets with coordinates, not only optimized subset
-        const allAssets = await client_1.default.assets.findMany({
+        const allAssets = await prismaClient().assets.findMany({
             where: {
                 latitude: { not: null },
                 longitude: { not: null },

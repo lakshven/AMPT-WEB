@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.viewAssetAuditLogsController = viewAssetAuditLogsController;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 async function viewAssetAuditLogsController(req, res) {
     try {
         const assetId = Number(req.params.id);
@@ -15,7 +13,7 @@ async function viewAssetAuditLogsController(req, res) {
         const isSingle = req.user?.accountType === "single";
         const userGroup = req.user?.clientGroupId;
         // Validate asset ownership
-        const asset = await client_1.default.assets.findUnique({
+        const asset = await prismaClient().assets.findUnique({
             where: { id: assetId },
             select: { clientGroupId: true }
         });
@@ -31,7 +29,7 @@ async function viewAssetAuditLogsController(req, res) {
             }
         }
         // Direct asset logs
-        const directLogs = await client_1.default.audit.findMany({
+        const directLogs = await prismaClient().audit.findMany({
             where: {
                 targetType: "asset",
                 targetId: assetId
@@ -39,7 +37,7 @@ async function viewAssetAuditLogsController(req, res) {
             orderBy: { createdAt: "desc" }
         });
         // Route-order logs
-        const routeOrderLogs = await client_1.default.audit.findMany({
+        const routeOrderLogs = await prismaClient().audit.findMany({
             where: { targetType: "routeOrder" },
             orderBy: { createdAt: "desc" }
         });

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma  from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import sendEmail from "../../utils/sendEmail";
 import { requestPasswordReset } from "../../models/PasswordReset";
 import { logAudit } from "../../models/Audit";
@@ -8,7 +9,7 @@ export async function forgotPassword(req: Request, res: Response): Promise<void>
   const { email } = req.body as { email: string };
 
   try {
-    const user = await prisma.users.findUnique({
+    const user = await prismaClient().users.findUnique({
       where: { email },
     });
     // ✅ Always return success to avoid email enumeration

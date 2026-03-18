@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import prisma from "../prisma/client";
+import { getPrisma } from "../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function attachUserContext(
   req: Request,
@@ -24,7 +25,7 @@ export async function attachUserContext(
     };
 
     // ⭐ Always load fresh user from DB (Prisma-safe)
-    const dbUser = await prisma.users.findUnique({
+    const dbUser = await prismaClient().users.findUnique({
       where: { id: decoded.id },
       include: {
         roleRef: true,

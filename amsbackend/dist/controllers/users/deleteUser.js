@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteUser = deleteUser;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 async function deleteUser(req, res) {
     const admin = req.user;
@@ -16,7 +14,7 @@ async function deleteUser(req, res) {
     }
     const userId = Number(req.params.id);
     try {
-        const targetUser = await client_1.default.users.findUnique({
+        const targetUser = await prismaClient().users.findUnique({
             where: { id: userId }
         });
         if (!targetUser) {
@@ -37,7 +35,7 @@ async function deleteUser(req, res) {
             return;
         }
         // ⭐ Soft delete
-        const deletedUser = await client_1.default.users.update({
+        const deletedUser = await prismaClient().users.update({
             where: { id: userId },
             data: {
                 disabled: true,

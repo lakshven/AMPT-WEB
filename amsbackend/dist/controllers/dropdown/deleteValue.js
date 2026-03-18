@@ -4,7 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = deleteValue;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const dropDownController_1 = __importDefault(require("./dropDownController"));
 const Audit_1 = require("../../models/Audit");
 async function deleteValue(req, res) {
@@ -14,14 +15,14 @@ async function deleteValue(req, res) {
         const category = Array.isArray(rawCategory) ? rawCategory[0] : rawCategory;
         const value = Array.isArray(rawValue) ? rawValue[0] : rawValue;
         // 1️⃣ Validate category
-        const cat = await client_1.default.dropdownCategory.findUnique({
+        const cat = await prismaClient().dropdownCategory.findUnique({
             where: { name: category }
         });
         if (!cat) {
             return res.status(404).json({ error: "Category not found" });
         }
         // 2️⃣ Find active value
-        const existing = await client_1.default.dropdownValue.findFirst({
+        const existing = await prismaClient().dropdownValue.findFirst({
             where: {
                 categoryId: cat.id,
                 value,
@@ -32,7 +33,7 @@ async function deleteValue(req, res) {
             return res.status(404).json({ error: "Value not found or already deleted" });
         }
         // 3️⃣ Check if value is used in assets
-        const assetsUsingValue = await client_1.default.assets.findMany({
+        const assetsUsingValue = await prismaClient().assets.findMany({
             where: {
                 [category]: value
             }
@@ -43,7 +44,7 @@ async function deleteValue(req, res) {
             });
         }
         // 4️⃣ Soft delete
-        const deleted = await client_1.default.dropdownValue.update({
+        const deleted = await prismaClient().dropdownValue.update({
             where: { id: existing.id },
             data: { isDeleted: true }
         });
@@ -66,7 +67,7 @@ async function deleteValue(req, res) {
             }
         });
         // 5️⃣ Load dynamic dropdowns
-        const categories = await client_1.default.dropdownCategory.findMany({
+        const categories = await prismaClient().dropdownCategory.findMany({
             include: {
                 values: {
                     where: { isDeleted: false },

@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.viewAssetDeletionLogsController = viewAssetDeletionLogsController;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 async function viewAssetDeletionLogsController(req, res) {
     try {
         const assetId = Number(req.params.id);
@@ -15,7 +13,7 @@ async function viewAssetDeletionLogsController(req, res) {
         const isSingle = req.user?.accountType === "single";
         const userGroup = req.user?.clientGroupId;
         // Fetch asset to validate ownership
-        const asset = await client_1.default.assets.findUnique({
+        const asset = await prismaClient().assets.findUnique({
             where: { id: assetId },
             select: { clientGroupId: true }
         });
@@ -33,7 +31,7 @@ async function viewAssetDeletionLogsController(req, res) {
                 return res.status(403).json({ message: "Not allowed to view logs for this asset" });
             }
         }
-        const logs = await client_1.default.asset_deletion_log.findMany({
+        const logs = await prismaClient().asset_deletion_log.findMany({
             where: { asset_id: assetId },
             orderBy: { deleted_at: "desc" },
         });

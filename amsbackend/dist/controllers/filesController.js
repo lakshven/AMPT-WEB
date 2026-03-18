@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.streamExcel = void 0;
 const node_path_1 = __importDefault(require("node:path"));
 const fs_1 = __importDefault(require("fs"));
-const client_1 = __importDefault(require("../prisma/client"));
+const client_1 = require("../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const rootDir = process.cwd();
 const TYPE_CONFIG = {
     exam_report: {
@@ -33,7 +34,7 @@ const streamExcel = async (req, res) => {
             res.status(400).json({ message: "Invalid type" });
             return;
         }
-        const asset = await client_1.default.assets.findUnique({
+        const asset = await prismaClient().assets.findUnique({
             where: { id: Number(id) },
             select: { [config.field]: true },
         });

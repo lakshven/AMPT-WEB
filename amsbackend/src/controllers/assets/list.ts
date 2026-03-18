@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
-import  prisma  from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { normalizeLocation } from '../../utils/normalizeLocation';
 
 export const getAssets = async (req: Request, res: Response): Promise<void> => {
@@ -172,9 +173,9 @@ export const getAssets = async (req: Request, res: Response): Promise<void> => {
     const sortBy = allowedSortFields.includes(sortByRaw) ? sortByRaw : "id";
     const sortOrder: "asc" | "desc" = sortOrderRaw === "asc" ? "asc" : "desc";
     // ⭐ TOTAL COUNT (for pagination)
-    const total = await prisma.assets.count({ where });
+    const total = await prismaClient().assets.count({ where });
 
-    const result = await prisma.assets.findMany({
+    const result = await prismaClient().assets.findMany({
       where,
       skip,
       take: limit,
@@ -260,7 +261,7 @@ export const getAssetLocations = async (req: Request, res: Response): Promise<vo
       where.clientGroupId = req.user.clientGroupId;
     }
 
-    const rows = await prisma.assets.findMany({
+    const rows = await prismaClient().assets.findMany({
       where,
       select: {
         id: true,
@@ -298,7 +299,7 @@ export const getAssetLocations = async (req: Request, res: Response): Promise<vo
               asset.latitude = lat;
               asset.longitude = lon;
 
-              await prisma.assets.update({
+              await prismaClient().assets.update({
                 where: { id: asset.id },
                 data: {
                   latitude: lat,

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 export async function updateClientGroup(req: Request, res: Response) {
   const { id, name, department } = req.body;
@@ -14,7 +15,7 @@ export async function updateClientGroup(req: Request, res: Response) {
 
   try {
     // ⭐ Fetch previous state for audit logging
-    const previous = await prisma.clientGroup.findUnique({
+    const previous = await prismaClient().clientGroup.findUnique({
       where: { id },
       select: {
         id: true,
@@ -34,7 +35,7 @@ export async function updateClientGroup(req: Request, res: Response) {
       });
     }
 
-    const updated = await prisma.clientGroup.update({
+    const updated = await prismaClient().clientGroup.update({
       where: { id },
       data: {
         name,

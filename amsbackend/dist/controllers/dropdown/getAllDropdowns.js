@@ -4,7 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = getAllDropdowns;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const dropDownController_1 = __importDefault(require("./dropDownController"));
 async function getAllDropdowns(req, res) {
     try {
@@ -19,7 +20,7 @@ async function getAllDropdowns(req, res) {
             });
         })();
         // 2️⃣ Load DYNAMIC dropdowns (only non-deleted values)
-        const categories = await client_1.default.dropdownCategory.findMany({
+        const categories = await prismaClient().dropdownCategory.findMany({
             include: {
                 values: {
                     where: { isDeleted: false },

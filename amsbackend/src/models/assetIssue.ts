@@ -1,4 +1,5 @@
-import  prisma  from "../prisma/client";
+import { getPrisma } from "../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 // Helper: tenant-aware check
 function canAccessIssue(
@@ -23,7 +24,7 @@ export async function createIssueModel(data: {
   mitigation: string | null;
   clientGroupId: number | null; // allow null for single_user
 }) {
-  return prisma.assetIssue.create({ data });
+  return prismaClient().assetIssue.create({ data });
 }
 
 // ------------------------------------------------------
@@ -35,7 +36,7 @@ export async function listIssuesModel(group: number | null | "ALL") {
       ? {}
       : { clientGroupId: group };
 
-  return prisma.assetIssue.findMany({
+  return prismaClient().assetIssue.findMany({
     where,
     orderBy: { id: "desc" },
     include: {
@@ -53,7 +54,7 @@ export async function getIssueByIdModel(
   id: number,
   group: number | null | "ALL"
 ) {
-  const issue = await prisma.assetIssue.findUnique({ where: { id } });
+  const issue = await prismaClient().assetIssue.findUnique({ where: { id } });
 
   if (!canAccessIssue(issue, group)) return null;
 
@@ -68,11 +69,11 @@ export async function updateIssueModel(
   group: number | null | "ALL",
   data: any
 ) {
-  const existing = await prisma.assetIssue.findUnique({ where: { id } });
+  const existing = await prismaClient().assetIssue.findUnique({ where: { id } });
 
   if (!canAccessIssue(existing, group)) return null;
 
-  return prisma.assetIssue.update({
+  return prismaClient().assetIssue.update({
     where: { id },
     data
   });
@@ -86,11 +87,11 @@ export async function assignIssueModel(
   group: number | null | "ALL",
   assignedTo: number
 ) {
-  const existing = await prisma.assetIssue.findUnique({ where: { id } });
+  const existing = await prismaClient().assetIssue.findUnique({ where: { id } });
 
   if (!canAccessIssue(existing, group)) return null;
 
-  return prisma.assetIssue.update({
+  return prismaClient().assetIssue.update({
     where: { id },
     data: {
       assignedTo,
@@ -107,11 +108,11 @@ export async function completeIssueModel(
   group: number | null | "ALL",
   completedBy: number
 ) {
-  const existing = await prisma.assetIssue.findUnique({ where: { id } });
+  const existing = await prismaClient().assetIssue.findUnique({ where: { id } });
 
   if (!canAccessIssue(existing, group)) return null;
 
-  return prisma.assetIssue.update({
+  return prismaClient().assetIssue.update({
     where: { id },
     data: {
       status: "completed",
@@ -128,11 +129,11 @@ export async function deleteIssueModel(
   id: number,
   group: number | null | "ALL"
 ) {
-  const existing = await prisma.assetIssue.findUnique({ where: { id } });
+  const existing = await prismaClient().assetIssue.findUnique({ where: { id } });
 
   if (!canAccessIssue(existing, group)) return null;
 
-  return prisma.assetIssue.update({
+  return prismaClient().assetIssue.update({
     where: { id },
     data: { status: "deleted" }
   });

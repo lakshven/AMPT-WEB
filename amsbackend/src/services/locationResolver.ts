@@ -1,6 +1,4 @@
 // src/services/locationResolver.ts
-
-import prisma from "../prisma/client";
 import { detectNorthingEasting } from "../utils/coordinateUtils";
 import { osgb36ToWgs84 } from "../utils/osgb36";
 
@@ -88,8 +86,9 @@ async function resolveReferenceCode(input: string): Promise<ResolvedLocation> {
 export async function resolveLocation(rawInput: string) {
   const type = detectType(rawInput);
   const result = await convertToLatLong(rawInput, type);
-
-  const saved = await prisma.referenceLocation.create({
+  const {getPrisma} = await import("../prisma/client");
+  function prismaClient() { return getPrisma(); }
+  const saved = await prismaClient().referenceLocation.create({
     data: {
       rawInput,
       type,

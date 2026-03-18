@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAssignableUsers = void 0;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const getAssignableUsers = async (req, res) => {
     try {
         const actor = req.user;
@@ -18,7 +16,7 @@ const getAssignableUsers = async (req, res) => {
         if (actor.role !== "app_admin") {
             where.companyId = actor.companyId;
         }
-        const users = await client_1.default.users.findMany({
+        const users = await prismaClient().users.findMany({
             where,
             select: {
                 id: true,

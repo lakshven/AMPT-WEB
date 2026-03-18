@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateRouteOrder = updateRouteOrder;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 // ⭐ NEW: Haversine distance (for metadata only — does NOT affect route order)
 function haversine(lat1, lon1, lat2, lon2) {
@@ -39,7 +37,7 @@ async function updateRouteOrder(req, res) {
             return;
         }
         // ⭐ NEW: Fetch coordinates for distance metadata
-        const fullAssets = await client_1.default.assets.findMany({
+        const fullAssets = await prismaClient().assets.findMany({
             where: { id: { in: sanitized.map((s) => s.id) } },
             select: {
                 id: true,
@@ -65,7 +63,7 @@ async function updateRouteOrder(req, res) {
             }
         }
         // Bulk update in a transaction
-        await client_1.default.$transaction(sanitized.map((item) => client_1.default.assets.update({
+        await prismaClient().$transaction(sanitized.map((item) => prismaClient().assets.update({
             where: { id: item.id },
             data: { routeOrder: item.routeOrder },
         })));

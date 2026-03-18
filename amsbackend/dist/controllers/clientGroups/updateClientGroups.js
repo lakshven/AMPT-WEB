@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateClientGroup = updateClientGroup;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 async function updateClientGroup(req, res) {
     const { id, name, department } = req.body;
@@ -17,7 +15,7 @@ async function updateClientGroup(req, res) {
     }
     try {
         // ⭐ Fetch previous state for audit logging
-        const previous = await client_1.default.clientGroup.findUnique({
+        const previous = await prismaClient().clientGroup.findUnique({
             where: { id },
             select: {
                 id: true,
@@ -35,7 +33,7 @@ async function updateClientGroup(req, res) {
                 message: "Client group not found",
             });
         }
-        const updated = await client_1.default.clientGroup.update({
+        const updated = await prismaClient().clientGroup.update({
             where: { id },
             data: {
                 name,

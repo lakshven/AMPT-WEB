@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import getStaticOptions from "./dropDownController";
 import { logAudit } from "../../models/Audit";
 export default async function deleteValue(req: Request, res: Response) {
@@ -11,7 +12,7 @@ export default async function deleteValue(req: Request, res: Response) {
     const value = Array.isArray(rawValue) ? rawValue[0] : rawValue;
 
     // 1️⃣ Validate category
-    const cat = await prisma.dropdownCategory.findUnique({
+    const cat = await prismaClient().dropdownCategory.findUnique({
       where: { name: category }
     });
 
@@ -20,7 +21,7 @@ export default async function deleteValue(req: Request, res: Response) {
     }
 
     // 2️⃣ Find active value
-    const existing = await prisma.dropdownValue.findFirst({
+    const existing = await prismaClient().dropdownValue.findFirst({
       where: {
         categoryId: cat.id,
         value,
@@ -33,7 +34,7 @@ export default async function deleteValue(req: Request, res: Response) {
     }
 
     // 3️⃣ Check if value is used in assets
-    const assetsUsingValue = await prisma.assets.findMany({
+    const assetsUsingValue = await prismaClient().assets.findMany({
       where: {
         [category]: value
       }
@@ -46,7 +47,7 @@ export default async function deleteValue(req: Request, res: Response) {
     }
 
     // 4️⃣ Soft delete
-    const deleted = await prisma.dropdownValue.update({
+    const deleted = await prismaClient().dropdownValue.update({
       where: { id: existing.id },
       data: { isDeleted: true }
     });
@@ -71,7 +72,7 @@ export default async function deleteValue(req: Request, res: Response) {
       }
     })
     // 5️⃣ Load dynamic dropdowns
-    const categories = await prisma.dropdownCategory.findMany({
+    const categories = await prismaClient().dropdownCategory.findMany({
       include: {
         values: {
           where: { isDeleted: false },

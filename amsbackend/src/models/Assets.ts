@@ -1,4 +1,5 @@
-import prisma  from "../prisma/client";
+import { getPrisma } from "../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 // Helper: build correct where clause
 function buildWhere(clientGroupId: number | null, isDeleted: boolean, isAppAdmin: boolean) {
@@ -25,7 +26,7 @@ function buildWhere(clientGroupId: number | null, isDeleted: boolean, isAppAdmin
 } 
 // GET ALL ASSETS
 export async function getAssets(clientGroupId: number | null, isAppAdmin: boolean) {
-  return prisma.assets.findMany({
+  return prismaClient().assets.findMany({
     where: buildWhere(clientGroupId, false, isAppAdmin),
     orderBy: { id: "desc" }
   });
@@ -33,7 +34,7 @@ export async function getAssets(clientGroupId: number | null, isAppAdmin: boolea
 
 // GET ASSET BY ID
 export async function getAssetById(id: number, clientGroupId: number | null, isAppAdmin: boolean) {
-  const asset = await prisma.assets.findFirst({
+  const asset = await prismaClient().assets.findFirst({
     where: {
       id,
       ...buildWhere(clientGroupId, false, isAppAdmin)
@@ -52,7 +53,7 @@ export async function getAssetById(id: number, clientGroupId: number | null, isA
 }
 // CREATE ASSET
 export async function createAsset(assetData: any, clientGroupId: number | null, isAppAdmin: boolean) {
-  return prisma.assets.create({
+  return prismaClient().assets.create({
     data: {
       elr: assetData.elr,
       structure_no: assetData.structure_no,
@@ -91,7 +92,7 @@ export async function createAsset(assetData: any, clientGroupId: number | null, 
 }
 // UPDATE ASSET
 export async function updateAsset(id: number, assetData: any, clientGroupId: number | null, isAppAdmin: boolean) {
-  const asset = await prisma.assets.findFirst({
+  const asset = await prismaClient().assets.findFirst({
     where: {
       id,
       ...buildWhere(clientGroupId, false, isAppAdmin)
@@ -100,7 +101,7 @@ export async function updateAsset(id: number, assetData: any, clientGroupId: num
 
   if (!asset) return null;
 
-  return prisma.assets.update({
+  return prismaClient().assets.update({
     where: { id },
     data: {
 
@@ -139,7 +140,7 @@ export async function updateAsset(id: number, assetData: any, clientGroupId: num
 }
 // DELETE ASSET (SOFT DELETE)
 export async function deleteAsset(id: number, deletedBy: string, clientGroupId: number | null, isAppAdmin: boolean) {
-  const asset = await prisma.assets.findFirst({
+  const asset = await prismaClient().assets.findFirst({
     where: { 
       id, 
       ...buildWhere(clientGroupId, false, isAppAdmin)
@@ -148,12 +149,12 @@ export async function deleteAsset(id: number, deletedBy: string, clientGroupId: 
 
   if (!asset) return null;
 
-  await prisma.assets.update({
+  await prismaClient().assets.update({
     where: { id },
     data: { is_deleted: true }
   });
 
-  await prisma.asset_deletion_log.create({
+  await prismaClient().asset_deletion_log.create({
     data: {
       asset_id: id,
       deleted_by: deletedBy,
@@ -161,7 +162,7 @@ export async function deleteAsset(id: number, deletedBy: string, clientGroupId: 
     }
   });
 
-  const updatedAsset = await prisma.assets.findUnique({ where: { id } });
+  const updatedAsset = await prismaClient().assets.findUnique({ where: { id } });
 
   return {
     success: true,
@@ -171,7 +172,7 @@ export async function deleteAsset(id: number, deletedBy: string, clientGroupId: 
 }
 // RESTORE ASSET
 export async function restoreAsset(id: number, clientGroupId: number | null, isAppAdmin: boolean) {
-  const asset = await prisma.assets.findFirst({
+  const asset = await prismaClient().assets.findFirst({
     where: {
       id,
       ...buildWhere(clientGroupId, true, isAppAdmin)
@@ -180,12 +181,12 @@ export async function restoreAsset(id: number, clientGroupId: number | null, isA
 
   if (!asset) return null;
 
-  await prisma.assets.update({
+  await prismaClient().assets.update({
     where: { id },
     data: { is_deleted: false }
   });
 
-  const updatedAsset = await prisma.assets.findUnique({ where: { id } });
+  const updatedAsset = await prismaClient().assets.findUnique({ where: { id } });
 
   return {
     success: true,

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma  from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";   // ⭐ ADDED
 
 export async function archiveAssetController(req: Request, res: Response) {
@@ -14,7 +15,7 @@ export async function archiveAssetController(req: Request, res: Response) {
     const isSingle = req.user?.accountType === "single";
     const userGroup = req.user?.clientGroupId;
     // Fetch asset
-    const asset = await prisma.assets.findUnique({
+    const asset = await prismaClient().assets.findUnique({
       where: { id },
       select: { id: true, clientGroupId: true, companyId: true }   // select for audit log
     });
@@ -34,7 +35,7 @@ export async function archiveAssetController(req: Request, res: Response) {
       }
     }
     // ⭐ Archive asset
-    await prisma.assets.update({
+    await prismaClient().assets.update({
       where: { id },
       data: { archived_at: new Date() }
     });

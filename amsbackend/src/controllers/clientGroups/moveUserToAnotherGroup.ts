@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import prisma from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 
 export async function moveUserToAnotherGroup(req: Request, res: Response) {
@@ -20,7 +21,7 @@ export async function moveUserToAnotherGroup(req: Request, res: Response) {
     const actor = req.user;
 
     // Fetch user
-    const user = await prisma.users.findUnique({
+    const user = await prismaClient().users.findUnique({
       where: { id: userId },
     });
 
@@ -38,7 +39,7 @@ export async function moveUserToAnotherGroup(req: Request, res: Response) {
     }
 
     // Fetch old group
-    const oldGroup = await prisma.clientGroup.findUnique({
+    const oldGroup = await prismaClient().clientGroup.findUnique({
       where: { id: previousGroupId },
     });
 
@@ -50,7 +51,7 @@ export async function moveUserToAnotherGroup(req: Request, res: Response) {
     }
 
     // Fetch new group
-    const newGroup = await prisma.clientGroup.findUnique({
+    const newGroup = await prismaClient().clientGroup.findUnique({
       where: { id: newGroupId },
     });
 
@@ -72,7 +73,7 @@ export async function moveUserToAnotherGroup(req: Request, res: Response) {
     }
 
     // Update user assignment
-    const updatedUser = await prisma.users.update({
+    const updatedUser = await prismaClient().users.update({
       where: { id: userId },
       data: { clientGroupId: newGroupId },
     });

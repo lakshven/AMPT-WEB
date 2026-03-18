@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateUser = updateUser;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 async function updateUser(req, res) {
     const admin = req.user;
@@ -17,7 +15,7 @@ async function updateUser(req, res) {
     const userId = Number(req.params.id);
     const { firstname, lastname, username, email, role: newRole, clientGroupId } = req.body;
     try {
-        const existingUser = await client_1.default.users.findUnique({
+        const existingUser = await prismaClient().users.findUnique({
             where: { id: userId }
         });
         if (!existingUser) {
@@ -36,7 +34,7 @@ async function updateUser(req, res) {
         let finalRoleName = existingUser.role;
         let finalRoleId = existingUser.role_id;
         if (newRole) {
-            const roleRow = await client_1.default.role.findUnique({ where: { name: newRole } });
+            const roleRow = await prismaClient().role.findUnique({ where: { name: newRole } });
             if (!roleRow) {
                 res.status(400).json({ success: false, message: "Role not found" });
                 return;
@@ -48,7 +46,7 @@ async function updateUser(req, res) {
         let finalClientGroupId = existingUser.clientGroupId;
         let finalCompanyId = existingUser.companyId;
         if (clientGroupId !== undefined) {
-            const group = await client_1.default.clientGroup.findUnique({
+            const group = await prismaClient().clientGroup.findUnique({
                 where: { id: Number(clientGroupId) }
             });
             if (!group) {
@@ -67,7 +65,7 @@ async function updateUser(req, res) {
             finalCompanyId = group.companyId; // ⭐ CRITICAL FIX
         }
         // Update user
-        const updatedUser = await client_1.default.users.update({
+        const updatedUser = await prismaClient().users.update({
             where: { id: userId },
             data: {
                 firstname: firstname ?? existingUser.firstname,

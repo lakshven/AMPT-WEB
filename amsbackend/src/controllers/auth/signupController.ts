@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { hash } from "bcryptjs";
-import prisma  from "../../prisma/client";
+import { getPrisma } from "../../prisma/client";
+function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 export async function signup(req: Request, res: Response): Promise<Response | void> {
   try {
@@ -20,7 +21,7 @@ export async function signup(req: Request, res: Response): Promise<Response | vo
       inviteToken   // ⭐ NEW: role from invite link (viewer/editor)
     } = req.body;
     // Check if username or email already exists
-    const existingUser = await prisma.users.findFirst({
+    const existingUser = await prismaClient().users.findFirst({
       where: { OR: [{ username }, { email }] }
     });
 
@@ -33,7 +34,7 @@ export async function signup(req: Request, res: Response): Promise<Response | vo
 
       const hashedPassword = await hash(password, 10);
       // Resolve accountTypeId from AccountTypeOption
-    const accountTypeRow = await prisma.accountTypeOption.findUnique({
+    const accountTypeRow = await prismaClient().accountTypeOption.findUnique({
       where: { value: accountType }
     });
 
@@ -46,7 +47,7 @@ export async function signup(req: Request, res: Response): Promise<Response | vo
     // ⭐ NEW INVITE TOKEN FLOW (inviteToken)
 if (inviteToken) {
   // 1. Find token
-  const token = await prisma.inviteToken.findUnique({
+  const token = await prismaClient().inviteToken.findUnique({
     where: { token: inviteToken },
   });
 
@@ -58,7 +59,7 @@ if (inviteToken) {
   }
 
   // 2. Fetch group
-  const group = await prisma.clientGroup.findUnique({
+  const group = await prismaClient().clientGroup.findUnique({
     where: { id: token.groupId },
     include: { company: true },
   });
@@ -75,7 +76,7 @@ if (inviteToken) {
     ? token.role
     : "viewer";
 
-  const role = await prisma.role.findUnique({
+  const role = await prismaClient().role.findUnique({
     where: { name: finalRoleName },
   });
 
@@ -87,7 +88,7 @@ if (inviteToken) {
   }
 
   // 4. Create user
-  const newUser = await prisma.users.create({
+  const newUser = await prismaClient().users.create({
     data: {
       firstname: firstName,
       lastname: lastName,
@@ -103,7 +104,7 @@ if (inviteToken) {
   });
 
   // 5. Mark token as used
-  await prisma.inviteToken.update({
+  await prismaClient().inviteToken.update({
     where: { token: inviteToken },
     data: { used: true, usedAt: new Date() },
   });
@@ -133,7 +134,7 @@ if (inviteToken) {
    // 1️⃣ SINGLE USER SIGNUP (Option B: Single User belongs to a Company)
 if (accountType === "single") {
   // Single users never belong to a company
-  const role = await prisma.role.findUnique({
+  const role = await prismaClient().role.findUnique({
     where: { name: "single_user" }
   });
 
@@ -145,7 +146,7 @@ if (accountType === "single") {
   }
   
   // Step 2: Create the user inside that group
-  const newUser = await prisma.users.create({
+  const newUser = await prismaClient().users.create({
     data: {
       firstname: firstName,
       lastname: lastName,
@@ -188,14 +189,14 @@ if (accountType === "single") {
         });
       }
 
-      const role = await prisma.role.findUnique({ where: { name: "company_admin" } });
+      const role = await prismaClient().role.findUnique({ where: { name: "company_admin" } });
       if (!role) return res.status(400).json({ success: false, message: "Role not found" });
       // ⭐ STEP 1 — Create Company
-      const newCompany = await prisma.company.create({
+      const newCompany = await prismaClient().company.create({
       data: { name: companyName }
      });
       // Create client group
-      const newGroup = await prisma.clientGroup.create({
+      const newGroup = await prismaClient().clientGroup.create({
         data: {
           name: companyName,
           accessCode: accessCode || Math.random().toString(36).substring(2, 10).toUpperCase(),
@@ -203,7 +204,7 @@ if (accountType === "single") {
         }
       });
       // Create admin user
-      const newUser = await prisma.users.create({
+      const newUser = await prismaClient().users.create({
         data: {
           firstname: firstName,
           lastname: lastName,
@@ -252,7 +253,7 @@ if (accountType === "single") {
         });
       }
 
-      const group = await prisma.clientGroup.findUnique({
+      const group = await prismaClient().clientGroup.findUnique({
         where: { id: Number(clientGroupId) },
         include: { company: true }
       });
@@ -274,10 +275,10 @@ if (accountType === "single") {
       const allowedRoles = ["viewer", "editor"];
       const finalRoleName = allowedRoles.includes(invitedRole) ? invitedRole : "viewer";
 
-      const role = await prisma.role.findUnique({ where: { name: finalRoleName } });
+      const role = await prismaClient().role.findUnique({ where: { name: finalRoleName } });
       if (!role) return res.status(400).json({ success: false, message: "Role not found" });
 
-      const newUser = await prisma.users.create({
+      const newUser = await prismaClient().users.create({
         data: {
           firstname: firstName,
           lastname: lastName,

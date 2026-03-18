@@ -1,11 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.restoreAssetController = void 0;
 const Assets_1 = require("../../models/Assets"); // ✅ must be .js for ESM
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const Audit_1 = require("../../models/Audit");
 const restoreAssetController = async (req, res) => {
     const { id } = req.params;
@@ -27,7 +25,7 @@ const restoreAssetController = async (req, res) => {
     }
     try {
         // Fetch asset to check ownership
-        const existing = await client_1.default.assets.findUnique({
+        const existing = await prismaClient().assets.findUnique({
             where: { id: assetId },
             select: {
                 clientGroupId: true,

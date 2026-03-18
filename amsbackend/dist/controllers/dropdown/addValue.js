@@ -4,7 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = addValue;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const dropDownController_1 = __importDefault(require("./dropDownController"));
 const Audit_1 = require("../../models/Audit");
 async function addValue(req, res) {
@@ -16,7 +17,7 @@ async function addValue(req, res) {
             return res.status(400).json({ error: "Missing category or value" });
         }
         // 1️⃣ Validate category
-        const cat = await client_1.default.dropdownCategory.findUnique({
+        const cat = await prismaClient().dropdownCategory.findUnique({
             where: { name: category }
         });
         if (!cat) {
@@ -29,7 +30,7 @@ async function addValue(req, res) {
         const clientGroupId = req.user?.clientGroupId || null;
         const companyId = req.user?.companyId ?? null; // ← REQUIRED
         // 2️⃣ Prevent duplicates (active)
-        const existingActive = await client_1.default.dropdownValue.findFirst({
+        const existingActive = await prismaClient().dropdownValue.findFirst({
             where: {
                 categoryId: cat.id,
                 value,
@@ -40,7 +41,7 @@ async function addValue(req, res) {
             return res.status(400).json({ error: "Value already exists" });
         }
         // 3️⃣ If soft‑deleted → restore instead of creating new
-        const existingDeleted = await client_1.default.dropdownValue.findFirst({
+        const existingDeleted = await prismaClient().dropdownValue.findFirst({
             where: {
                 categoryId: cat.id,
                 value,
@@ -50,7 +51,7 @@ async function addValue(req, res) {
         let finalValueId = null;
         let operation = "create";
         if (existingDeleted) {
-            const updated = await client_1.default.dropdownValue.update({
+            const updated = await prismaClient().dropdownValue.update({
                 where: { id: existingDeleted.id },
                 data: { isDeleted: false }
             });
@@ -58,7 +59,7 @@ async function addValue(req, res) {
             operation = "restore";
         }
         else {
-            const created = await client_1.default.dropdownValue.create({
+            const created = await prismaClient().dropdownValue.create({
                 data: {
                     value,
                     categoryId: cat.id
@@ -83,7 +84,7 @@ async function addValue(req, res) {
             }
         });
         // 5️⃣ Load dynamic dropdowns
-        const categories = await client_1.default.dropdownCategory.findMany({
+        const categories = await prismaClient().dropdownCategory.findMany({
             include: {
                 values: {
                     where: { isDeleted: false },

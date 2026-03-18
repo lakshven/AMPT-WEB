@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userActivityLogger = void 0;
-const client_1 = __importDefault(require("../prisma/client"));
+const client_1 = require("../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const userActivityLogger = async (req, res, next) => {
     try {
         if (!req.user)
@@ -25,7 +23,7 @@ const userActivityLogger = async (req, res, next) => {
             category = "issue_creation";
         else if (url.includes("/api/admin/analytics"))
             category = "admin_activity";
-        await client_1.default.userActivity.upsert({
+        await prismaClient().userActivity.upsert({
             where: {
                 hour_dayOfWeek_category: {
                     hour,

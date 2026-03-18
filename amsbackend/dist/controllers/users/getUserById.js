@@ -1,17 +1,15 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUserById = getUserById;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 async function getUserById(req, res) {
     const idParam = req.params.id;
     const userId = parseInt(idParam, 10);
     if (isNaN(userId)) {
         return res.status(400).json({ error: "Invalid user ID" });
     }
-    const user = await client_1.default.users.findUnique({
+    const user = await prismaClient().users.findUnique({
         where: { id: userId },
     });
     if (!user) {

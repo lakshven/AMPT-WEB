@@ -4,7 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = restoreAll;
-const client_1 = __importDefault(require("../../prisma/client"));
+const client_1 = require("../../prisma/client");
+function prismaClient() { return (0, client_1.getPrisma)(); }
 const dropDownController_1 = __importDefault(require("./dropDownController"));
 const Audit_1 = require("../../models/Audit");
 async function restoreAll(req, res) {
@@ -13,14 +14,14 @@ async function restoreAll(req, res) {
             ? req.params.category[0]
             : req.params.category;
         // 1️⃣ Validate category
-        const cat = await client_1.default.dropdownCategory.findUnique({
+        const cat = await prismaClient().dropdownCategory.findUnique({
             where: { name: category }
         });
         if (!cat) {
             return res.status(404).json({ error: "Category not found" });
         }
         // 2️⃣ Restore all deleted values
-        const result = await client_1.default.dropdownValue.updateMany({
+        const result = await prismaClient().dropdownValue.updateMany({
             where: {
                 categoryId: cat.id,
                 isDeleted: true
@@ -53,7 +54,7 @@ async function restoreAll(req, res) {
             }
         });
         // 4️⃣ Load updated dropdowns
-        const categories = await client_1.default.dropdownCategory.findMany({
+        const categories = await prismaClient().dropdownCategory.findMany({
             include: {
                 values: {
                     where: { isDeleted: false },
