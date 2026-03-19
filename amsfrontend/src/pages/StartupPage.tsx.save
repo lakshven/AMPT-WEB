@@ -12,12 +12,11 @@ export default function StartupPage() {
   const isSingleUser = role === "single_user";
 
   return (
-    <div
-      className="min-h-screen text-white flex flex-col items-center justify-center px-6 py-12"
-      style={{
-        background: "linear-gradient(135deg, #066A6F 0%, #549E39 100%)",
+    <div className="min-h-screen text-white flex flex-col items-center justify-center px-6 py-12"
+     style={{
+       background: "linear-gradient(135deg, #066A6F 0%, #549E39 100%)",
       }}
-    >
+     >
       <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center text-blue-100">
         Welcome to AMPT
       </h1>
@@ -38,7 +37,7 @@ export default function StartupPage() {
 
         <button
           onClick={() => navigate("/dashboard")}
-          className="px-6 py-3 rounded-xl bg-[#0989B1] hover:bg-[#0A6F8A] text-white font-semibold shadow-md transition duration-200"
+          className="px-6 py-3 rounded-xl bg-[#0989B1] hover:bg-[#0] text-white font-semibold shadow-md transition duration-200"
         >
           Go to Dashboard
         </button>
@@ -52,7 +51,7 @@ export default function StartupPage() {
           <div className="flex justify-center gap-4 mt-4">
             <button
               onClick={() => navigate("/onboarding/create-group")}
-              className="bg-[#549E39] text-white px-4 py-2 rounded hover:bg-[#447f2f]"
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
             >
               Yes, Continue
             </button>
@@ -62,7 +61,7 @@ export default function StartupPage() {
                 setShowConfirm(false);
                 navigate("/dashboard");
               }}
-              className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
+              className="bg-gray-400 text-black px-4 py-2 rounded hover:bg-gray-500"
             >
               No, Go to Dashboard
             </button>
