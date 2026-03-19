@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   MapContainer,
   TileLayer,
-  Polyline,
   useMap,
 } from "react-leaflet";
 import L, { LatLngTuple } from "leaflet";
@@ -145,10 +144,6 @@ const MapView: React.FC<MapViewProps> = ({
         />
 
         <FitBounds assets={geoAssets} />
-
-        {routePoints.length > 1 && (
-          <Polyline positions={routePoints} color="blue" weight={4} />
-        )}
 
         <ClusteredMarkers
           assets={geoAssets}

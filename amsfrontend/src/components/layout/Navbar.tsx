@@ -1,5 +1,5 @@
-import React, { useMemo } from "react";
-import { NavLink, Link, useNavigate } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { normalizeRole } from "../../utils/normalizeRole";
 import { getManualForRole } from "../../utils/manualPaths";
@@ -21,6 +21,7 @@ const Navbar: React.FC<NavbarProps> = ({ mode = "default" }) => {
   };
 
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -40,117 +41,203 @@ const Navbar: React.FC<NavbarProps> = ({ mode = "default" }) => {
 
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? "px-3 py-1 rounded-md font-semibold bg-[#549E39] text-white  text-[20px]"
-      : "px-3 py-1 rounded-md text-white hover:bg-[#098B91]/70 transition  text-[20px]";
+      ? "px-3 py-1 rounded-md font-semibold bg-[#549E39] text-white text-[20px]"
+      : "px-3 py-1 rounded-md text-white hover:bg-[#098B91]/70 transition text-[20px]";
 
   return (
-    <header className="flex justify-between items-center px-10 py-0 bg-[#0989B1] text-white shadow-md">
-      {/* LEFT SIDE: Logo + Navigation */}
-      <div className="flex items-center gap-14">
+    <header className="bg-[#0989B1] text-white shadow-md overflow-x-auto whitespace-nowrap">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* TOP BAR */}
+        <div className="flex justify-between items-center h-20">
 
-      <img
-         src="/images/AMPT5.png"
-         alt="AMPT Logo"
-         className="mx-auto mb-6 w-60 opacity-90"
-        /> 
-      <NavLink to="/startup" className={(props) => navLinkClasses(props)}>
-        Home
-      </NavLink>
-      
-      {mode === "landing" && (
-        <>
-          <NavLink
-            to="/login"
-            className="px-3 py-1 rounded-md bg-[#549E39] hover:bg-[#447f2f] transition font-semibold text-base text-[20px]"
-          >
-            Sign In
-          </NavLink>
+          {/* LEFT: Logo */}
+          <div className="flex items-center gap-4 flex-shrink-0">
+            <img
+              src="/images/AMPT5.png"
+              alt="AMPT Logo"
+              className="w-32 md:w-48"
+            />
+          </div>
 
-          <NavLink
-            to="/signup"
-            className="px-3 py-1 rounded-md bg-white/20 hover:bg-white/30 transition font-semibold text-base text-[20px]"
-          >
-            Sign Up
-          </NavLink>
-
-          {user && (
+          {/* HAMBURGER (Mobile Only) */}
           <button
-            onClick={handleLogout}
-            className="px-4 py-1 rounded-md bg-[#549E39] hover:bg-[#447f2f] transition font-semibold text-[20px]"
+            className="md:hidden text-white"
+            onClick={() => setOpen(!open)}
           >
-            Logout
+            {open ? (
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2"
+                viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2"
+                viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
           </button>
-        )}
-        </>
-      )}
-     </div>
-     {/* RIGHT SIDE: User + Role-Based Links + Logout */}
-     <div className="flex items-center gap-14">
-      {mode === "default" && user && (
-        <>
-          {manualUrl && (
-            <a
-              href={manualUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-gray text-[20px]"
-            >
-              Help / Manual
-            </a>
-          )}
 
-          <NavLink to="/issues" className={(props) => navLinkClasses(props)}>
-            Issues
-          </NavLink>
-
-          {isAdmin && (
-            <NavLink to="/users" className={(props) => navLinkClasses(props)}>
-              Users
+          {/* DESKTOP MENU */}
+          <nav className="hidden md:flex items-center gap-8 flex-shrink min-w-0">
+            <NavLink to="/startup" className={navLinkClasses}>
+              Home
             </NavLink>
-          )}         
 
-          {normalizedRole === "app_admin" && (
-            <NavLink to="/admin/client-groups" className={(props) => navLinkClasses(props)}>
-              Client Groups
-            </NavLink>
-          )}
-        </>
-      )}
-        {/* Username + Role */}    
-        {user && (
+            {mode === "landing" && (
+              <>
+                <NavLink
+                  to="/login"
+                  className="px-3 py-1 rounded-md bg-[#549E39] hover:bg-[#447f2f] transition font-semibold text-[20px]"
+                >
+                  Sign In
+                </NavLink>
 
-          <span className="font-medium  text-[20px]">
-            {user.username} ({normalizedRole})
-          </span>
-        )}
+                <NavLink
+                  to="/signup"
+                  className="px-3 py-1 rounded-md bg-white/20 hover:bg-white/30 transition font-semibold text-[20px]"
+                >
+                  Sign Up
+                </NavLink>
+              </>
+            )}
 
-        {user && (
-          <button
-            onClick={handleLogout}
-            className="px-4 py-1 rounded-md bg-[#549E39] hover:bg-[#447f2f] transition font-semibold text-[20px]"
-          >
-            Logout
-          </button>
-        )}
-       {/* Login / Signup when logged out */} 
-      {!user && mode === "default" && (
-        <>
-          <NavLink
-            to="/login"
-            className="px-3 py-1 rounded-md bg-[#549E39] hover:bg-[#447f2f] transition font-semibold text-[20px]"
-          >
-            Login
-          </NavLink>
+            {mode === "default" && user && (
+              <>
+                {manualUrl && (
+                  <a
+                    href={manualUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-gray text-[20px]"
+                  >
+                    Help / Manual
+                  </a>
+                )}
 
-          <NavLink
-            to="/signup"
-            className="px-3 py-1 rounded-md bg-white/20 hover:bg-white/30 transition font-semibold text-base text-[20px]"
-          >
-            Signup
-          </NavLink>
-        </>
-      )}
+                <NavLink to="/issues" className={navLinkClasses}>
+                  Issues
+                </NavLink>
+
+                {isAdmin && (
+                  <NavLink to="/users" className={navLinkClasses}>
+                    Users
+                  </NavLink>
+                )}
+
+                {normalizedRole === "app_admin" && (
+                  <NavLink to="/admin/client-groups" className={navLinkClasses}>
+                    Client Groups
+                  </NavLink>
+                )}
+              </>
+            )}
+
+            {user && (
+              <span className="font-medium text-[20px]">
+                {user.username} ({normalizedRole})
+              </span>
+            )}
+
+            {user && (
+              <button
+                onClick={handleLogout}
+                className="px-4 py-1 rounded-md bg-[#549E39] hover:bg-[#447f2f] transition font-semibold text-[20px]"
+              >
+                Logout
+              </button>
+            )}
+
+            {!user && mode === "default" && (
+              <>
+                <NavLink
+                  to="/login"
+                  className="px-3 py-1 rounded-md bg-[#549E39] hover:bg-[#447f2f] transition font-semibold text-[20px]"
+                >
+                  Login
+                </NavLink>
+
+                <NavLink
+                  to="/signup"
+                  className="px-3 py-1 rounded-md bg-white/20 hover:bg-white/30 transition font-semibold text-[20px]"
+                >
+                  Signup
+                </NavLink>
+              </>
+            )}
+          </nav>
+        </div>
       </div>
+
+      {/* MOBILE MENU */}
+      {open && (
+        <div className="md:hidden bg-[#0A6F8A] px-6 py-4 space-y-4">
+          <NavLink to="/startup" className={navLinkClasses}>
+            Home
+          </NavLink>
+
+          {mode === "landing" && (
+            <>
+              <NavLink
+                to="/login"
+                className="block px-3 py-2 rounded-md bg-[#549E39] text-[20px]"
+              >
+                Sign In
+              </NavLink>
+
+              <NavLink
+                to="/signup"
+                className="block px-3 py-2 rounded-md bg-white/20 text-[20px]"
+              >
+                Sign Up
+              </NavLink>
+            </>
+          )}
+
+          {mode === "default" && user && (
+            <>
+              {manualUrl && (
+                <a
+                  href={manualUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block py-2 text-[20px]"
+                >
+                  Help / Manual
+                </a>
+              )}
+
+              <NavLink to="/issues" className={navLinkClasses}>
+                Issues
+              </NavLink>
+
+              {isAdmin && (
+                <NavLink to="/users" className={navLinkClasses}>
+                  Users
+                </NavLink>
+              )}
+
+              {normalizedRole === "app_admin" && (
+                <NavLink to="/admin/client-groups" className={navLinkClasses}>
+                  Client Groups
+                </NavLink>
+              )}
+
+              <span className="block font-medium text-[20px]">
+                {user.username} ({normalizedRole})
+              </span>
+
+              <button
+                onClick={handleLogout}
+                className="block w-full px-4 py-2 rounded-md bg-[#549E39] text-[20px]"
+              >
+                Logout
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </header>
   );
 };
