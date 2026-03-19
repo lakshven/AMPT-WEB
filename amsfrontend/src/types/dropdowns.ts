@@ -2,6 +2,7 @@ export interface DropdownOptions {
   structure_type?: string[];
   spans?: string[];
   carries?: string[];
+  over?: string[];
   material_type?: string[];
   work_item?: string[];
   possible_consequence?: string[];
