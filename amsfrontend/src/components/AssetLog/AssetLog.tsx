@@ -39,7 +39,6 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
     filters,
     setFilters,
 
-    message,
     editingId,
     editedAsset,
     setEditedAsset,
@@ -188,6 +187,3 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
       </div>
     </div>
   );
-};
-
-export default AssetLog;
