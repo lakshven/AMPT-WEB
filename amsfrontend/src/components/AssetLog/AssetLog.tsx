@@ -51,7 +51,6 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
     handleAdd,
     handleSaveNew,
     setEditingId,
-    isNewAsset,
   } = useAssets();
 
   const dropdownOptions = useDropdownOptions();
@@ -91,7 +90,6 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
         <RoleBadge role={String(effectiveRole ?? "")} />
       </div>
 
-      {message && <MessageBanner type="success" text={message} />}
 
       {/* 🔍 Global Search bar  */}
       <input
@@ -161,7 +159,6 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
         setSortOrder={setSortOrder}
         filters={filters}
         setFilters={setFilters}
-        isNewAsset={isNewAsset}
       />
       {/* 📄 Pagination controls (minimal) */}
       <div className="flex justify-between items-center mt-4">
@@ -187,3 +184,5 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
       </div>
     </div>
   );
+};
+export default AssetLog;

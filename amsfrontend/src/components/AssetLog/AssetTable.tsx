@@ -30,8 +30,6 @@ interface AssetTableProps {
 
   filters: Record<string, any>;
   setFilters: (f: Record<string, any>) => void;
-
-  isNewAsset: boolean;
 }
 
 const AssetTable: React.FC<AssetTableProps> = ({
@@ -57,9 +55,10 @@ const AssetTable: React.FC<AssetTableProps> = ({
   setSortOrder,
   filters,
   setFilters,
-  isNewAsset
 }) => {
   const showActionsColumn = isAdmin || isAssetManager || isEditor;
+
+  const [showMatrix, setShowMatrix] = React.useState(false);
 
   const handleSort = (key: string) => {
     if (sortBy === key) {
@@ -73,137 +72,162 @@ const AssetTable: React.FC<AssetTableProps> = ({
   const handleFilterChange = (key: string, value: string) => {
     setFilters({
       ...filters,
-      [key]: value
+      [key]: value,
     });
   };
 
   return (
-    <table className="w-full border-collapse border border-gray-300">
-      <thead>
-        <tr>
-          {columns.map((col) => (
-            <th
-              key={col.key}
-              className={(col.headerClass || "") + " p-2 border border-gray-300 bg-[#0989B1] text-white font-semibold cursor-pointer select-none border-b-2 border-b-[#549E39] whitespace-normal break-words"}
-              onClick={() => handleSort(col.key)}
+    <>
+      {/* Risk Matrix Button */}
+      <button
+        onClick={() => setShowMatrix(true)}
+        className="mb-4 px-4 py-2 bg-[#0989B1] text-white rounded shadow"
+      >
+        View Risk Scoring Matrix
+      </button>
+
+      {/* Risk Matrix Modal */}
+      {showMatrix && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded shadow-lg max-w-xl">
+            <img src="/risk-matrix.png" alt="Risk Matrix" className="w-full" />
+            <button
+              onClick={() => setShowMatrix(false)}
+              className="mt-4 px-4 py-2 bg-gray-600 text-white rounded"
             >
-              {col.label}
-              {sortBy === col.key && (
-                <span className="ml-1">{sortOrder === "asc" ? "▲" : "▼"}</span>
-              )}
-            </th>
-          ))}
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
-          {showActionsColumn && (
-            <th className="p-2 border border-gray-300 bg-[#0989B1] text-white font-semibold border-b-2 border-b-[#549E39]">
-              Actions
-            </th>
+      <table className="w-full table-fixed border-collapse border border-gray-300">
+        <thead>
+          <tr>
+            {columns.map((col) => (
+              <th
+                key={col.key}
+                className={
+                  (col.headerClass || "") +
+                  " p-2 border border-gray-300 bg-[#0989B1] text-white font-semibold cursor-pointer select-none border-b-2 border-b-[#549E39] whitespace-normal break-words"
+                }
+                onClick={() => handleSort(col.key)}
+              >
+                {col.label}
+                {sortBy === col.key && (
+                  <span className="ml-1">{sortOrder === "asc" ? "▲" : "▼"}</span>
+                )}
+              </th>
+            ))}
+
+            {showActionsColumn && (
+              <th className="p-2 border border-gray-300 bg-[#0989B1] text-white font-semibold border-b-2 border-b-[#549E39] w-[140px]">
+                Actions
+              </th>
+            )}
+          </tr>
+
+          {/* Filters Row */}
+          <tr>
+            {columns.map((col) => (
+              <th key={col.key} className="p-1 border border-gray-300 bg-[#F0F7F9]">
+                {col.filterType === "text" && (
+                  <input
+                    className="border border-[#549E39] p-1 w-full focus:ring-[#0989B1] focus:border-[#0989B1]"
+                    value={filters[col.key] || ""}
+                    onChange={(e) => handleFilterChange(col.key, e.target.value)}
+                  />
+                )}
+
+                {col.filterType === "dropdown" && (
+                  <select
+                    className="border border-[#549E39] p-1 w-full focus:ring-[#0989B1]"
+                    value={filters[col.key] || ""}
+                    onChange={(e) => handleFilterChange(col.key, e.target.value)}
+                  >
+                    <option value="">All</option>
+                    {(dropdownOptions[col.key] || []).map((opt, i) => (
+                      <option key={i} value={typeof opt === "string" ? opt : opt.value ?? opt.id}>
+                        {typeof opt === "string" ? opt : opt.label ?? opt.value ?? opt.id}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {col.filterType === "dateRange" && (
+                  <div className="flex gap-1">
+                    <input
+                      type="date"
+                      className="border border-[#549E39] p-1 w-full focus:ring-[#0989B1]"
+                      value={filters[col.key + "_from"] || ""}
+                      onChange={(e) => handleFilterChange(col.key + "_from", e.target.value)}
+                    />
+                    <input
+                      type="date"
+                      className="border border-[#549E39] p-1 w-full focus:ring-[#0989B1]"
+                      value={filters[col.key + "_to"] || ""}
+                      onChange={(e) => handleFilterChange(col.key + "_to", e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {col.filterType === "none" && <span />}
+              </th>
+            ))}
+
+            {showActionsColumn && <th className="bg-[#F0F7F9] w-[140px]" />}
+          </tr>
+        </thead>
+
+        <tbody>
+          {/* New Asset Row */}
+          {newAsset && (
+            <AssetRow
+              key={newAsset.id}
+              asset={newAsset}
+              editingId={editingId}
+              editedAsset={editedAsset}
+              newAsset={newAsset}
+              setEditedAsset={setEditedAsset}
+              dropdownOptions={dropdownOptions}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onRestore={onRestore}
+              onSave={onSave}
+              onSaveNew={onSaveNew}
+              onCancel={onCancel}
+              isAdmin={isAdmin}
+              isAssetManager={isAssetManager}
+              isEditor={isEditor}
+              isViewer={isViewer}
+            />
           )}
-        </tr>
 
-        <tr>
-          {columns.map((col) => (
-            <th key={col.key} className="p-1 border border-gray-300 bg-[#F0F7F9]">
-              {col.filterType === "text" && (
-                <input
-                  className="border border-[#549E39] p-1 w-full focus:ring-[#0989B1] focus:border-[#0989B1]"
-                  value={filters[col.key] || ""}
-                  onChange={(e) => handleFilterChange(col.key, e.target.value)}
-                />
-              )}
-
-              {col.filterType === "dropdown" && (
-                <select
-                  className="border border-[#549E39] p-1 w-full focus:ring-[#0989B1]"
-                  value={filters[col.key] || ""}
-                  onChange={(e) => handleFilterChange(col.key, e.target.value)}
-                >
-                  <option value="">All</option>
-                  {(dropdownOptions[col.key] || []).map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt.value}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              {col.filterType === "dateRange" && (
-                <div className="flex gap-1">
-                  <input
-                    type="date"
-                    className="border border-[#549E39] p-1 w-full focus:ring-[#0989B1]"
-                    value={filters[col.key + "_from"] || ""}
-                    onChange={(e) =>
-                      handleFilterChange(col.key + "_from", e.target.value)
-                    }
-                  />
-                  <input
-                    type="date"
-                    className="border border-[#549E39] p-1 w-full focus:ring-[#0989B1]"
-                    value={filters[col.key + "_to"] || ""}
-                    onChange={(e) =>
-                      handleFilterChange(col.key + "_to", e.target.value)
-                    }
-                  />
-                </div>
-              )}
-
-              {col.filterType === "none" && <span />}
-            </th>
+          {/* Existing Rows */}
+          {assets.map((asset) => (
+            <AssetRow
+              key={asset.id}
+              asset={asset}
+              editingId={editingId}
+              editedAsset={editedAsset}
+              newAsset={newAsset}
+              setEditedAsset={setEditedAsset}
+              dropdownOptions={dropdownOptions}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onRestore={onRestore}
+              onSave={onSave}
+              onSaveNew={onSaveNew}
+              onCancel={onCancel}
+              isAdmin={isAdmin}
+              isAssetManager={isAssetManager}
+              isEditor={isEditor}
+              isViewer={isViewer}
+            />
           ))}
-
-          {showActionsColumn && <th className="bg-[#F0F7F9]" />}
-        </tr>
-      </thead>
-
-      <tbody>
-        {newAsset && (
-          <AssetRow
-            key={newAsset.id}
-            asset={newAsset}
-            editingId={editingId}
-            editedAsset={editedAsset}
-            newAsset={newAsset}
-            setEditedAsset={setEditedAsset}
-            dropdownOptions={dropdownOptions}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onRestore={onRestore}
-            onSave={onSave}
-            onSaveNew={onSaveNew}
-            onCancel={onCancel}
-            isAdmin={isAdmin}
-            isAssetManager={isAssetManager}
-            isEditor={isEditor}
-            isViewer={isViewer}
-            isNewAsset={isNewAsset}
-          />
-        )}
-
-        {assets.map((asset) => (
-          <AssetRow
-            key={asset.id}
-            asset={asset}
-            editingId={editingId}
-            editedAsset={editedAsset}
-            newAsset={newAsset}
-            setEditedAsset={setEditedAsset}
-            dropdownOptions={dropdownOptions}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onRestore={onRestore}
-            onSave={onSave}
-            onSaveNew={onSaveNew}
-            onCancel={onCancel}
-            isAdmin={isAdmin}
-            isAssetManager={isAssetManager}
-            isEditor={isEditor}
-            isViewer={isViewer}
-            isNewAsset={isNewAsset}
-          />
-        ))}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </>
   );
 };
 
