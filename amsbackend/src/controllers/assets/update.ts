@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import axios from "axios";
-import { getPrisma } from "../../prisma/client";
-function prismaClient() { return getPrisma(); }
+import {getPrisma} from "../../prisma/client";
+function prismaClient(){return getPrisma();}
 import { normalizeLocation } from "../../utils/normalizeLocation";
 import { logAudit } from "../../models/Audit";
 import { detectNorthingEasting } from "../../utils/coordinateUtils";
@@ -15,6 +15,13 @@ type AssetFiles = {
   assessment?: Express.Multer.File[];
   records?: Express.Multer.File[];
 };
+
+const safeDate = (value: any): Date | null => {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
 export const updateAsset = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -35,7 +42,6 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
       req.user?.clientGroupId !== null &&
       req.user?.clientGroupId !== undefined;
 
-    // ⭐ Company users MUST have a clientGroupId (but NOT single_user or app_admin)
     if (isCompany && !isAppAdmin && !hasGroup) {
       res.status(400).json({ error: "Missing client group on user" });
       return;
@@ -43,10 +49,8 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
 
     const asset = req.body;
 
-// ⭐ Add this here
-const files = req.files as AssetFiles | undefined;
+    const files = req.files as AssetFiles | undefined;
 
-// ⭐ Save new files (if uploaded)
     const uploaded_visual_report = files?.visual_report?.[0]
       ? await saveFile(files.visual_report[0], "visual_report")
       : null;
@@ -62,10 +66,8 @@ const files = req.files as AssetFiles | undefined;
     const uploaded_records = files?.records?.[0]
       ? await saveFile(files.records[0], "records")
       : null;
-
-
-    // 1) Fetch existing asset + ownership validation
-    const existing = await prismaClient().assets.findUnique({
+   //const existing = await prismaClient().assets.findUnique({
+    const existing = await prisma.assets.findUnique({
       where: { id: assetId },
       select: {
         latitude: true,
@@ -73,8 +75,8 @@ const files = req.files as AssetFiles | undefined;
         location: true,
         clientGroupId: true,
         companyId: true,
-        routeOrder: true
-      }
+        routeOrder: true,
+      },
     });
 
     if (!existing) {
@@ -83,16 +85,16 @@ const files = req.files as AssetFiles | undefined;
     }
 
     if (!isAppAdmin) {
-      // ⭐ single_user → can only update assets with clientGroupId = null
       if (isSingle && existing.clientGroupId !== null) {
         res.status(403).json({ error: "Not allowed to update this asset" });
         return;
       }
 
-      // ⭐ company users → can only update assets in their own group
-      if (isCompany && 
+      if (
+        isCompany &&
         existing.clientGroupId !== null &&
-        existing.clientGroupId !== req.user!.clientGroupId) {
+        existing.clientGroupId !== req.user!.clientGroupId
+      ) {
         res.status(403).json({ error: "Not allowed to update this asset" });
         return;
       }
@@ -107,6 +109,7 @@ const files = req.files as AssetFiles | undefined;
       structure_name,
       location,
       carries,
+      over,
       material_type,
       work_item,
       possible_consequence,
@@ -129,14 +132,13 @@ const files = req.files as AssetFiles | undefined;
       records,
       risk_rating,
       latitude,
-      longitude
+      longitude,
     } = asset;
 
     const existingLat = existing?.latitude ?? null;
     const existingLon = existing?.longitude ?? null;
     const existingLocation = existing?.location ?? null;
 
-    // ✅ 2) Prepare lat/lon (prefer incoming, fall back to existing)
     let lat: number | null =
       typeof latitude === "string" && latitude.trim() !== ""
         ? Number(latitude)
@@ -146,37 +148,39 @@ const files = req.files as AssetFiles | undefined;
       typeof longitude === "string" && longitude.trim() !== ""
         ? Number(longitude)
         : existingLon;
-    // Detect future NE coordinates (does NOT change behavior now)
-   const ne = detectNorthingEasting(location);
-   if (ne) {
-   console.log("Detected Northing/Easting (future support):", ne);
-  // Future: convert NE → lat/lon
-   }
 
+    if (Number.isNaN(lat as number)) lat = existingLat;
+    if (Number.isNaN(lon as number)) lon = existingLon;
 
-    // ✅ 3) Normalize both new + existing locations (for change detection)
+    const ne = detectNorthingEasting(location);
+    if (ne) {
+      console.log("Detected Northing/Easting (future support):", ne);
+    }
+
     const normalizedLocation = location
       ? await normalizeLocation(location)
       : "";
-    // ⭐ Step A: Resolve and store ReferenceLocation entry
-    if (normalizedLocation && normalizedLocation.trim() !== "") {
-    const resolved = await resolveLocation(normalizedLocation);
 
-    // Only override if resolver produced real coordinates
-    if (resolved.latitude !== null && resolved.longitude !== null) {
-    lat = resolved.latitude;
-    lon = resolved.longitude;
-    }
-   }
     const normalizedExistingLocation = existingLocation
       ? await normalizeLocation(existingLocation)
       : "";
 
-    // ✅ 4) Decide if geocoding is needed
+    if (normalizedLocation && normalizedLocation.trim() !== "") {
+      try {
+        const resolved = await resolveLocation(normalizedLocation);
+        if (resolved.latitude !== null && resolved.longitude !== null) {
+          lat = resolved.latitude;
+          lon = resolved.longitude;
+        }
+      } catch (e) {
+        console.warn("Resolver error during update (non-fatal):", e);
+      }
+    }
+
     const shouldGeocode =
       normalizedLocation &&
       normalizedLocation.trim() !== "" &&
-      (normalizedLocation !== normalizedExistingLocation);
+      normalizedLocation !== normalizedExistingLocation;
 
     if (shouldGeocode) {
       try {
@@ -185,44 +189,42 @@ const files = req.files as AssetFiles | undefined;
           {
             params: { q: normalizedLocation, format: "json", limit: 1 },
             headers: {
-              "User-Agent": "AssetManager/1.0 (lakshmiangular8@gmail.com)"
-            }
+              "User-Agent": "AssetManager/1.0 (lakshmiangular8@gmail.com)",
+            },
           }
         );
 
         const geoData = geoRes.data?.[0];
 
         if (geoData) {
-          lat = Number(geoData.lat) || null;
-          lon = Number(geoData.lon) || null;
+          const parsedLat = Number(geoData.lat);
+          const parsedLon = Number(geoData.lon);
+          lat = Number.isNaN(parsedLat) ? lat : parsedLat;
+          lon = Number.isNaN(parsedLon) ? lon : parsedLon;
         } else {
           geocodeWarning = true;
           console.warn(`No geocoding result for: ${normalizedLocation}`);
         }
       } catch (e: any) {
-        console.warn("Geocoding failed during update:", e.message);
+        console.warn("Geocoding failed during update:", e?.message ?? e);
       }
     }
-     // ✅ 4.5) Final decision: is this location invalid?
+
     geocodeWarning = lat === null || lon === null;
-    // ✅ 5) Build a map URL that frontend can use
+
     let mapUrl =
       "https://www.google.com/maps/embed?pb=!2m3!1f0!2f0!3f0";
 
-    // 📍 If we have coordinates, center map on the asset
     if (lat !== null && lon !== null) {
       mapUrl = `https://www.google.com/maps?q=${lat},${lon}&z=14&output=embed`;
     }
+
     const safeRiskRating =
       (() => {
         if (risk_rating === undefined || risk_rating === null || risk_rating === "") return null;
         const n = Number(risk_rating);
         return !Number.isNaN(n) && n >= -2147483648 && n <= 2147483647 ? n : null;
       })();
-
-
-
-    // ✅ 6) Perform update using Prisma
     const updated = await prismaClient().assets.update({
       where: {
         id: assetId,
@@ -236,47 +238,41 @@ const files = req.files as AssetFiles | undefined;
         structure_name,
         location,
         carries,
+        over,
         material_type,
         work_item,
         possible_consequence,
         current_likelihood,
         current_severity,
         current_rating,
-        current_date_logged: current_date_logged
-          ? new Date(current_date_logged)
-          : null,
+        current_date_logged: safeDate(current_date_logged),
         risk_mitigation_proposals,
         mitigation_likelihood,
         mitigation_severity,
         mitigation_rating,
-        mitigation_completion: mitigation_completion
-          ? new Date(mitigation_completion)
-          : null,
+        mitigation_completion: safeDate(mitigation_completion),
         status,
         detailed_exam_years,
-        last_exam: last_exam ? new Date(last_exam) : null,
-        next_exam: next_exam ? new Date(next_exam) : null,
-        // ⭐ Correct file update logic
+        last_exam: safeDate(last_exam),
+        next_exam: safeDate(next_exam),
         visual_report: uploaded_visual_report ?? visual_report,
         detailed_report: uploaded_detailed_report ?? detailed_report,
         assessment: uploaded_assessment ?? assessment,
         records: uploaded_records ?? records,
-
-        // ✅ FIXED — safe risk_rating
         riskRating: safeRiskRating,
         latitude: lat,
         longitude: lon,
-        geocodeWarning
-      }
+        geocodeWarning,
+      },
     });
-    // ⭐⭐⭐ AUDIT LOGGING ADDED HERE ⭐⭐⭐
+
     await logAudit({
       action: "update",
       targetType: "asset",
       targetId: assetId,
       performedBy: user.username,
       actorUserId: user.id,
-      clientGroupId: existing.clientGroupId,   // correct for all roles
+      clientGroupId: existing.clientGroupId,
       companyId: existing.companyId ?? null,
       details: {
         geocodeWarning,
@@ -285,23 +281,21 @@ const files = req.files as AssetFiles | undefined;
         oldLat: existingLat,
         oldLon: existingLon,
         newLat: lat,
-        newLon: lon
+        newLon: lon,
       },
-
       metadata: {
         updatedFields: Object.keys(req.body),
         role: user.role,
-        accountType: user.accountType
-      }
+        accountType: user.accountType,
+      },
     });
-
 
     res.json({
       success: true,
       message: "Asset updated successfully",
       asset: updated,
       mapUrl,
-      geocodeWarning
+      geocodeWarning,
     });
   } catch (err) {
     console.error("Update asset error:", err);
