@@ -5,9 +5,18 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export async function loadSecrets() {
+  // Local environment → skip Key Vault
+  if (process.env.NODE_ENV !== "production") {
+    console.log("🔧 Skipping Azure Key Vault in local development");
+    return;
+  }
   try {
     console.log("🔑 Loading secrets from Azure Key Vault...");
-
+   const vaultUrl = process.env.KEYVAULT_URL;
+    if (!vaultUrl) {
+      console.error("❌ KEYVAULT_URL missing in production environment");
+      return;
+    }
     const credential = new DefaultAzureCredential();
     const client = new SecretClient(process.env.KEYVAULT_URL!, credential);
 
