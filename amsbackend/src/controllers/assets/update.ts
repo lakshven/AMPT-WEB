@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import axios from "axios";
+// import prisma from "../../prisma/client";
 import {getPrisma} from "../../prisma/client";
 function prismaClient(){return getPrisma();}
 import { normalizeLocation } from "../../utils/normalizeLocation";
@@ -66,8 +67,7 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
     const uploaded_records = files?.records?.[0]
       ? await saveFile(files.records[0], "records")
       : null;
-   //const existing = await prismaClient().assets.findUnique({
-    const existing = await prisma.assets.findUnique({
+   const existing = await prismaClient().assets.findUnique({
       where: { id: assetId },
       select: {
         latitude: true,
