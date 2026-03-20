@@ -92,6 +92,7 @@ model assets {
   structure_name            String?
   location                  String?
   carries                   String?
+  over                      String?
   material_type             String?
   work_item                 String?
   possible_consequence      String?

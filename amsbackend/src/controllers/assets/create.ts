@@ -1,15 +1,13 @@
 import { Request, Response } from "express";
 import axios from "axios";
-import { getPrisma } from "../../prisma/client";
-function prismaClient() { return getPrisma(); }
+import {getPrisma} from "../../prisma/client";
+function prismaClient() {getPrisma();}
 import { normalizeLocation } from "../../utils/normalizeLocation";
 import { logAudit } from "../../models/Audit";
 import { detectNorthingEasting } from "../../utils/coordinateUtils";
 import { resolveLocation } from "../../services/locationResolver";
 import { saveFile } from "../../services/storageService";
 
-
-// Extend Multer typing
 type AssetFiles = {
   visual_report?: Express.Multer.File[];
   detailed_report?: Express.Multer.File[];
@@ -30,6 +28,7 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
     structure_name,
     location,
     carries,
+    over,
     material_type,
     work_item,
     possible_consequence,
@@ -46,12 +45,11 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
     detailed_exam_years,
     last_exam,
     next_exam,
-    risk_rating
+    risk_rating,
   } = req.body;
 
   const files = req.files as AssetFiles | undefined;
 
-  // ⭐ Save files using storageService (individual folders)
   const visual_report = files?.visual_report?.[0]
     ? await saveFile(files.visual_report[0], "visual_report")
     : null;
@@ -68,8 +66,6 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
     ? await saveFile(files.records[0], "records")
     : null;
 
-
-
   try {
     let lat: number | null = null;
     let lon: number | null = null;
@@ -79,43 +75,50 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
       console.log("Detected Northing/Easting (future support):", ne);
     }
 
+    // Geocoding is best-effort; it must not break asset creation
     if (location) {
-      const normalizedLocation = await normalizeLocation(location);
+      try {
+        const normalizedLocation = await normalizeLocation(location);
 
-      // Step A: Resolve and store ReferenceLocation entry
-      const resolved = await resolveLocation(normalizedLocation);
+        const resolved = await resolveLocation(normalizedLocation);
 
-      if (resolved.latitude !== null && resolved.longitude !== null) {
-        lat = resolved.latitude;
-        lon = resolved.longitude;
-      }
-
-      // Only run Nominatim if resolver did NOT return coordinates
-      if (lat === null || lon === null) {
-        const geoRes = await axios.get(
-          "https://nominatim.openstreetmap.org/search",
-          {
-            params: {
-              q: normalizedLocation,
-              format: "json",
-              limit: 1
-            },
-            headers: {
-              "User-Agent": "AssetManager/1.0 (lakshmiangular8@gmail.com)"
-            }
-          }
-        );
-
-        const geoData = geoRes.data?.[0];
-        if (geoData) {
-          lat = Number(geoData.lat) || null;
-          lon = Number(geoData.lon) || null;
-        } else {
-          console.warn(`No geocoding result for: ${normalizedLocation}`);
+        if (resolved.latitude !== null && resolved.longitude !== null) {
+          lat = resolved.latitude;
+          lon = resolved.longitude;
         }
+
+        if (lat === null || lon === null) {
+          const geoRes = await axios.get(
+            "https://nominatim.openstreetmap.org/search",
+            {
+              params: {
+                q: normalizedLocation,
+                format: "json",
+                limit: 1,
+              },
+              headers: {
+                "User-Agent": "AssetManager/1.0 (lakshmiangular8@gmail.com)",
+              },
+            }
+          );
+
+          const geoData = geoRes.data?.[0];
+          if (geoData) {
+            const parsedLat = Number(geoData.lat);
+            const parsedLon = Number(geoData.lon);
+            lat = Number.isNaN(parsedLat) ? null : parsedLat;
+            lon = Number.isNaN(parsedLon) ? null : parsedLon;
+          } else {
+            console.warn(`No geocoding result for: ${normalizedLocation}`);
+          }
+        }
+      } catch (geoErr) {
+        console.error("Geocoding error (non-fatal):", geoErr);
       }
     }
-        const geocodeWarning = lat === null || lon === null;
+
+    const geocodeWarning = lat === null || lon === null;
+
     const isSingle = req.user?.accountType === "single";
     const isCompany = req.user?.accountType === "company";
     const isAppAdmin = req.user?.role === "app_admin";
@@ -137,25 +140,31 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
       finalGroupId = asset.clientGroupId ?? null;
     }
 
-    const last = await prismaClient().assets.findFirst({
+    const last = await prisma.assets.findFirst({
       where: { routeOrder: { not: null } },
       orderBy: { routeOrder: "desc" },
-      select: { routeOrder: true }
+      select: { routeOrder: true },
     });
 
     const nextRouteOrder = last?.routeOrder ? last.routeOrder + 1 : 1;
-        // ✅ Safe parsing for risk_rating → riskRating (Int?)
+
+    // Safe parsing for risk_rating → riskRating (Int?)
     let parsedRiskRating: number | null = null;
     if (risk_rating !== undefined && risk_rating !== null && risk_rating !== "") {
       const n = Number(risk_rating);
       if (!Number.isNaN(n) && n >= -2147483648 && n <= 2147483647) {
         parsedRiskRating = n;
       } else {
-        parsedRiskRating = null; // ignore invalid/huge values
+        parsedRiskRating = null;
       }
     }
 
-    const newAsset = await prismaClient().assets.create({
+    const safeDate = (value: any): Date | null => {
+      if (!value) return null;
+      const d = new Date(value);
+      return Number.isNaN(d.getTime()) ? null : d;
+    };
+    const newAsset = await prismaClient().create({
       data: {
         elr,
         structure_no,
@@ -165,33 +174,35 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
         structure_name,
         location,
         carries,
+        over,
         material_type,
         work_item,
         possible_consequence,
         current_likelihood,
         current_severity,
         current_rating,
-        current_date_logged: current_date_logged ? new Date(current_date_logged) : null,
+        current_date_logged: safeDate(current_date_logged),
         risk_mitigation_proposals,
         mitigation_likelihood,
         mitigation_severity,
         mitigation_rating,
-        mitigation_completion: mitigation_completion ? new Date(mitigation_completion) : null,
+        mitigation_completion: safeDate(mitigation_completion),
         status,
         detailed_exam_years,
-        last_exam: last_exam ? new Date(last_exam) : null,
-        next_exam: next_exam ? new Date(next_exam) : null,
+        last_exam: safeDate(last_exam),
+        next_exam: safeDate(next_exam),
         visual_report,
         detailed_report,
         assessment,
         records,
-        riskRating: risk_rating ? Number(risk_rating) : null,
+        riskRating: parsedRiskRating,
         latitude: lat,
         longitude: lon,
         geocodeWarning,
         clientGroupId: finalGroupId,
-        routeOrder: nextRouteOrder
-      }
+        routeOrder: nextRouteOrder,
+        companyId: user.companyId ?? null,
+      },
     });
 
     await logAudit({
@@ -202,11 +213,10 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
       actorUserId: user.id,
       clientGroupId: finalGroupId,
       companyId: user.companyId ?? null,
-      
       details: {
         location: asset.location,
         geocoded: { latitude: lat, longitude: lon },
-        routeOrder: nextRouteOrder
+        routeOrder: nextRouteOrder,
       },
       metadata: {
         createdFields: Object.keys(req.body),
@@ -214,17 +224,17 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
           visual_report,
           detailed_report,
           assessment,
-          records
+          records,
         },
         role: user.role,
-        accountType: user.accountType
-      }
+        accountType: user.accountType,
+      },
     });
 
     res.json({
       success: true,
       message: "Asset added successfully",
-      asset: newAsset
+      asset: newAsset,
     });
   } catch (err) {
     console.error("Add asset error:", err);
