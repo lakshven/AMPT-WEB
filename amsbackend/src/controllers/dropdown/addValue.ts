@@ -2,7 +2,6 @@
 import { Request, Response } from "express";
 import { getPrisma } from "../../prisma/client";
 function prismaClient() { return getPrisma(); }
-import getStaticOptions from "./dropDownController";
 import { logAudit } from "../../models/Audit";
 
 export default async function addValue(req: Request, res: Response) {
@@ -107,22 +106,10 @@ export default async function addValue(req: Request, res: Response) {
       dynamicOptions[c.name] = c.values.map((v) => v.value);
     });
 
-    // 6️⃣ Load static dropdowns
-    const staticOptions = await (async (): Promise<Record<string, any>> => {
-      return new Promise((resolve) => {
-        const fakeReq = {} as Request;
-        const fakeRes = {
-          json: (data: any) => resolve(data)
-        } as unknown as Response;
-
-        getStaticOptions(fakeReq, fakeRes);
-      });
-    })();
 
     res.json({
       success: true,
       dropdowns: {
-        ...staticOptions,
         ...dynamicOptions
       }
     });

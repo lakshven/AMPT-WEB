@@ -1,22 +1,9 @@
 import { Request, Response } from "express";
 import { getPrisma } from "../../prisma/client";
 function prismaClient() { return getPrisma(); }
-import getStaticOptions from "./dropDownController";
 
 export default async function getAllDropdowns(req: Request, res: Response) {
   try {
-    // 1️⃣ Load STATIC dropdowns
-    const staticOptions = await (async (): Promise<Record<string, any>> => {
-      return new Promise((resolve) => {
-        const fakeReq = {} as Request;
-        const fakeRes = {
-          json: (data: any) => resolve(data)
-        } as unknown as Response;
-
-        getStaticOptions(fakeReq, fakeRes);
-      });
-    })();
-
     // 2️⃣ Load DYNAMIC dropdowns (only non-deleted values)
     const categories = await prismaClient().dropdownCategory.findMany({
       include: {
@@ -34,9 +21,8 @@ export default async function getAllDropdowns(req: Request, res: Response) {
       dynamicOptions[cat.name] = cat.values.map((v) => v.value);
     }));
 
-    // 3️⃣ Merge STATIC + DYNAMIC
+    // 3️⃣  DYNAMIC DROP DOWN
     const finalDropdowns = {
-      ...staticOptions,
       ...dynamicOptions
     };
 

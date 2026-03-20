@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { getPrisma } from "../../prisma/client";
 function prismaClient() { return getPrisma(); }
-import getStaticOptions from "./dropDownController";
 import { logAudit } from "../../models/Audit";
 export default async function deleteValue(req: Request, res: Response) {
   try {
@@ -90,21 +89,9 @@ export default async function deleteValue(req: Request, res: Response) {
       }
     );
 
-    // 6️⃣ Load static dropdowns
-    const staticOptions = await (async (): Promise<Record<string, any>> => {
-      return new Promise((resolve) => {
-        const fakeReq = {} as Request;
-        const fakeRes = {
-          json: (data: any) => resolve(data)
-        } as unknown as Response;
-
-        getStaticOptions(fakeReq, fakeRes);
-      });
-    })();
 
     // 7️⃣ Merge static + dynamic
     const finalDropdowns: Record<string, any> = {
-      ...staticOptions,
       ...dynamicOptions
     };
 

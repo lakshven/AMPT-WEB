@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { getPrisma } from "../../prisma/client";
 function prismaClient() { return getPrisma(); }
-import getStaticOptions from "./dropDownController";
 import { logAudit } from "../../models/Audit";
 export default async function restoreAll(req: Request, res: Response) {
   try {
@@ -30,15 +29,18 @@ export default async function restoreAll(req: Request, res: Response) {
     });
 
     if (result.count === 0) {
-      return res
-        .status(404)
-        .json({ error: "No deleted values to restore for this category" });
+      return res.status(404).json({
+       error: "No deleted values to restore for this category"
+       });
     }
 
     const actor =
       (req as any).user?.username ||
       (req as any).user?.email ||
       "system";
+    const actorUserId = (req as any).user?.id || null;
+    const clientGroupId = (req as any).user?.clientGroupId || null;
+    const companyId = (req as any).user?.companyId ?? null;
 
     // 3️⃣ Audit log
     await logAudit({
@@ -46,9 +48,9 @@ export default async function restoreAll(req: Request, res: Response) {
       targetType: "dropdown_category",
       targetId: cat.id,
       performedBy: actor,
-      actorUserId: (req as any).user?.id || null,
-      clientGroupId: (req as any).user?.clientGroupId || null,
-      companyId: (req as any).user?.companyId ?? null,   // ← REQUIRED
+      actorUserId,
+      clientGroupId,
+      companyId,   // ← REQUIRED
       details: {
         category,
         operation: "restore_all",
@@ -73,22 +75,9 @@ export default async function restoreAll(req: Request, res: Response) {
       dynamicOptions[c.name] = c.values.map((v) => v.value);
     });
 
-    // Load static dropdowns
-    const staticOptions = await (async (): Promise<Record<string, any>> => {
-      return new Promise((resolve) => {
-        const fakeReq = {} as Request;
-        const fakeRes = {
-          json: (data: any) => resolve(data)
-        } as unknown as Response;
-
-        getStaticOptions(fakeReq, fakeRes);
-      });
-    })();
-
     res.json({
       success: true,
       dropdowns: {
-        ...staticOptions,
         ...dynamicOptions
       }
     });

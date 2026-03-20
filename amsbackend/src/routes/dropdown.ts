@@ -12,7 +12,7 @@ import { attachUserContext } from "../middleware/auth";
 
 const router = Router();
 router.use(attachUserContext);
-router.get("/static", getStaticOptions);
+//router.get("/static", getStaticOptions);
 router.get("/all", getAllDropdowns);
 
 router.post("/:category", requireRole("app_admin"), addValue);
