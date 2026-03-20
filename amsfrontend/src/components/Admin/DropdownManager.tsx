@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 
 export default function DropdownManager() {
@@ -7,23 +7,6 @@ export default function DropdownManager() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [deletedValues, setDeletedValues] = useState<string[]>([]);
   const [showDeleted, setShowDeleted] = useState(false);
-   // ⭐ STATIC categories (NOT editable)
-  const STATIC_DROPDOWN_KEYS = [
-    "structure_type",
-    "material_type",
-    "work_item",
-    "current_likelihood",
-    "current_severity",
-    "current_rating",
-    "mitigation_likelihood",
-    "mitigation_severity",
-    "mitigation_rating",
-    "status",
-    "carries",
-    "possible_consequence",
-    "detailed_exam_years",
-    "spans"
-  ];
 
   // Load dropdown categories + values
   useEffect(() => {
@@ -38,13 +21,11 @@ export default function DropdownManager() {
 
         setData(res.data);
 
-        // ⭐ Pick first DYNAMIC category only
-        const dynamicCategories = Object.keys(res.data).filter(
-          (cat) => !STATIC_DROPDOWN_KEYS.includes(cat)
-        );
-
-        if (dynamicCategories.length > 0) {
-          setSelectedCategory(dynamicCategories[0]);
+        const categories = Object.keys(res.data);
+        if (categories.length > 0) {
+          setSelectedCategory((prev) =>
+            prev && categories.includes(prev) ? prev : categories[0]
+          );
         }
       } catch (err: any) {
         console.error(
@@ -57,20 +38,42 @@ export default function DropdownManager() {
     load();
   }, []);
 
-  // Load deleted values whenever category changes
+  // FIXED: Wrap fetchDeletedValues in useCallback
+  const fetchDeletedValues = useCallback(async () => {
+    if (!selectedCategory) return;
+
+    try {
+      const res = await axiosInstance.get(
+        `/dropdown/${selectedCategory}/deleted`
+      );
+
+      const deleted = res.data.deleted || [];
+      setDeletedValues(deleted);
+
+      if (!deleted || deleted.length === 0) {
+        setShowDeleted(false);
+      }
+    } catch (err: any) {
+      console.error(
+        "Error fetching deleted values",
+        err.response?.data || err.message
+      );
+    }
+  }, [selectedCategory]);
+
+  // FIXED: Now safe to include fetchDeletedValues
   useEffect(() => {
     if (selectedCategory) {
       fetchDeletedValues();
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, fetchDeletedValues]);
 
-  // Add new dropdown value
   const handleAdd = async () => {
     if (!newValue.trim() || !selectedCategory) return;
 
     try {
       const res = await axiosInstance.post(`/dropdown/${selectedCategory}`, {
-        value: newValue.trim()
+        value: newValue.trim(),
       });
 
       setData(res.data.dropdowns);
@@ -84,7 +87,6 @@ export default function DropdownManager() {
     }
   };
 
-  // Delete dropdown value
   const handleDelete = async (category: string, value: string) => {
     try {
       const res = await axiosInstance.delete(`/dropdown/${category}/${value}`);
@@ -99,29 +101,6 @@ export default function DropdownManager() {
     }
   };
 
-  // Fetch deleted values
-  const fetchDeletedValues = async () => {
-    if (!selectedCategory) return;
-
-    try {
-      const res = await axiosInstance.get(
-        `/dropdown/${selectedCategory}/deleted`
-      );
-
-      setDeletedValues(res.data.deleted || []);
-
-      if (!res.data.deleted || res.data.deleted.length === 0) {
-        setShowDeleted(false);
-      }
-    } catch (err: any) {
-      console.error(
-        "Error fetching deleted values",
-        err.response?.data || err.message
-      );
-    }
-  };
-
-  // Restore single deleted value
   const restoreValue = async (value: string) => {
     try {
       const res = await axiosInstance.post(
@@ -138,7 +117,6 @@ export default function DropdownManager() {
     }
   };
 
-  // Restore all deleted values
   const restoreAll = async () => {
     if (!selectedCategory) return;
     if (deletedValues.length === 0) return;
@@ -158,6 +136,8 @@ export default function DropdownManager() {
     }
   };
 
+  const categories = Object.keys(data);
+
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h2 className="text-2xl font-bold mb-6" style={{ color: "#0989B1" }}>
@@ -174,7 +154,7 @@ export default function DropdownManager() {
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
-          {Object.keys(data).map((cat) => (
+          {categories.map((cat) => (
             <option key={cat} value={cat}>
               {cat}
             </option>
@@ -238,10 +218,7 @@ export default function DropdownManager() {
         <div className="bg-white shadow rounded-lg p-5 border border-gray-200 mt-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <h3
-                className="font-semibold"
-                style={{ color: "#B14A09" }}
-              >
+              <h3 className="font-semibold" style={{ color: "#B14A09" }}>
                 Deleted Values
               </h3>
               <span className="px-2 py-1 text-xs rounded bg-red-100 text-red-700">
