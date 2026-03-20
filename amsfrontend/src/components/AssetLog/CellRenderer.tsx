@@ -2,13 +2,11 @@ import React from "react";
 import { API_BASE } from "../../constants/api";
 import FileLink from "../common/FileLink";
 
-// ✅ Asset type (flexible for Prisma)
 export interface Asset {
   id?: number | string;
   [key: string]: any;
 }
 
-// ✅ Props for CellRenderer
 interface CellRendererProps {
   field: string;
   type: string;
@@ -17,7 +15,7 @@ interface CellRendererProps {
   editedAsset: Record<string, any>;
   setEditedAsset: (updater: (prev: any) => any) => void;
   dropdownOptions: Record<string, any[]>;
-  disabled?: boolean;   // ⭐ ADDED — fixes your TypeScript error
+  disabled?: boolean;
 }
 
 const CellRenderer: React.FC<CellRendererProps> = ({
@@ -28,66 +26,64 @@ const CellRenderer: React.FC<CellRendererProps> = ({
   editedAsset,
   setEditedAsset,
   dropdownOptions,
-  disabled = false,  // ⭐ ADDED default value
+  disabled = false,
 }) => {
   const isEditing = editingId === asset.id;
-  // ⭐ FIXED — frontend keys map to frontend dropdown keys
-  const fieldToCategoryMap: Record<string, string> = {
-  structure_type: "structure_type",
-    material_type: "material_type",
-    work_item: "work_item",
-    possible_consequence: "possible_consequence",
 
-    current_likelihood: "current_likelihood",
-    current_severity: "current_severity",
-    current_rating: "current_rating",
+  const options = dropdownOptions[field] || [];
 
-    mitigation_likelihood: "mitigation_likelihood",
-    mitigation_severity: "mitigation_severity",
-    mitigation_rating: "mitigation_rating",
+  const getOptionValue = (opt: any) =>
+    typeof opt === "string" || typeof opt === "number"
+      ? opt
+      : opt?.value ?? opt?.id ?? "";
 
-    detailed_exam_years: "detailed_exam_years",
+  const getOptionLabel = (opt: any) =>
+    typeof opt === "string" || typeof opt === "number"
+      ? opt
+      : opt?.label ?? opt?.value ?? opt?.id ?? "";
 
-    spans: "spans",
-    carries: "carries",
-    status: "status",
-};
-  // ✅ EDIT MODE
+  const normalizeValue = (val: any) => {
+    if (val === null || val === undefined) return "";
+    return typeof val === "string" || typeof val === "number"
+      ? val
+      : val.label ?? val.value ?? val.id ?? "";
+  };
+
+  const mergedValue =
+    editedAsset[field] !== undefined ? editedAsset[field] : asset[field];
+
   if (isEditing) {
-    // If disabled (e.g., viewer), just show value read-only
-    if (disabled) {
-      const value = asset[field];
-      return <span className="text-[#333]">{typeof value === "object" ? value?.value : value ?? ""}</span>;
+    if (disabled)
+      return <span className="text-[#333]">{normalizeValue(asset[field])}</span>;
 
-    }
-    // ✅ Dropdown fields
+    // ⭐ FIXED: dropdowns now ALWAYS store strings (Prisma-safe)
     if (type === "dropdown") {
-      const key = fieldToCategoryMap[field] || field;
-      const options = dropdownOptions[key] || [];
       return (
         <select
-          value={editedAsset[field] ?? asset[field] ?? ""}
-          onChange={(e) =>
+          value={normalizeValue(mergedValue)}
+          onChange={(e) => {
+            const raw = e.target.value;
+
             setEditedAsset((prev) => ({
               ...prev,
-              [field]: e.target.value,
-            }))
-          }
+              [field]: raw, // ALWAYS string — no Number() conversion
+            }));
+          }}
           className="border border-[#549E39] rounded px-2 py-1 w-full focus:ring-[#0989B1] focus:border-[#0989B1] text-[#333]"
+          style={{ minWidth: "60px" }}
         >
           {options.map((opt, i) => (
-            <option key={i} value={opt}>
-              {opt}
+            <option key={i} value={getOptionValue(opt)}>
+              {getOptionLabel(opt)}
             </option>
           ))}
         </select>
       );
     }
 
-    // ✅ Date fields
     if (type === "date") {
-      const rawValue = editedAsset[field] ?? asset[field] ?? "";
-      const dateValue = typeof rawValue === "string" ? rawValue.slice(0, 10) : "";
+      const raw = mergedValue;
+      const dateValue = typeof raw === "string" ? raw.slice(0, 10) : "";
 
       return (
         <input
@@ -104,10 +100,9 @@ const CellRenderer: React.FC<CellRendererProps> = ({
       );
     }
 
-    // ✅ Default text input
     return (
       <input
-        value={editedAsset[field] ?? asset[field] ?? ""}
+        value={mergedValue ?? ""}
         onChange={(e) =>
           setEditedAsset((prev) => ({
             ...prev,
@@ -119,7 +114,6 @@ const CellRenderer: React.FC<CellRendererProps> = ({
     );
   }
 
-  // ✅ FILE LINK RENDERING
   if (type === "file") {
     const value = asset[field];
     const filename =
@@ -131,8 +125,7 @@ const CellRenderer: React.FC<CellRendererProps> = ({
 
     if (filename) {
       const isFullUrl =
-        filename.startsWith("/public") || filename.startsWith("http");
-
+        filename.startsWith("http") || filename.startsWith("/");
       const fileUrl = isFullUrl
         ? filename
         : `${API_BASE}/uploads/${field}/${filename}`;
@@ -150,13 +143,12 @@ const CellRenderer: React.FC<CellRendererProps> = ({
 
     return <span className="text-gray-500">No file uploaded</span>;
   }
-  const value = asset[field];
-  // ✅ DEFAULT READ MODE
-  // Fix React crash: if value is object, show .value
-  if (value && typeof value === "object") {
-    return <span className="text-[#333] whitespace-normal break-words">{value.value ?? ""}</span>;
-  }
-  return <span className="text-[#333] whitespace-normal break-words">{value ?? ""}</span>;
+
+  return (
+    <span className="text-[#333] whitespace-normal break-words">
+      {normalizeValue(asset[field])}
+    </span>
+  );
 };
 
 export default CellRenderer;

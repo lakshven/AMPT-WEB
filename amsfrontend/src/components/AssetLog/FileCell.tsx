@@ -2,22 +2,37 @@ import { useState } from "react";
 import UploadModal from "./UploadModal";
 import FileChoiceModal from "./FileChoiceModal";
 
+// ⭐ UPDATED — Accept all file column keys used in your table
+export type FileColumn =
+  | "visual_report"
+  | "detailed_report"
+  | "assessment"
+  | "records";
+
 interface FileCellProps {
   fileUrl: string | null;
   rowId: number;
-  column: "exam_report" | "assessment" | "records";
+  column: FileColumn;   // ⭐ FIXED — now supports all file columns
   onRefresh?: () => void;
-  isNewAsset: boolean; // NEW prop to indicate if this is a new asset without backend file
+  isNewAsset: boolean;
 }
 
-export default function FileCell({ fileUrl, rowId, column, onRefresh, isNewAsset }: FileCellProps) {
+export default function FileCell({
+  fileUrl,
+  rowId,
+  column,
+  onRefresh,
+  isNewAsset,
+}: FileCellProps) {
   const [openChoice, setOpenChoice] = useState(false);
   const [openUpload, setOpenUpload] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
   // ⭐ Determine file states
-  const hasDefaultFile = !!fileUrl;        // backend file exists
-  const hasUploadedFile = !!uploadedFile;  // user selected new file
+  const hasDefaultFile = !!fileUrl;
+  const hasUploadedFile = !!uploadedFile;
+
   // ⭐ Compute view button logic
   let showView = false;
   let viewLabel = "";
@@ -32,43 +47,43 @@ export default function FileCell({ fileUrl, rowId, column, onRefresh, isNewAsset
     viewLabel = "View Default File";
     viewHref = `http://localhost:5000/files/excel/${column}/${rowId}`;
   }
-  // ⭐ NEW — Choose File visibility logic
-  // ⭐ Choose File ALWAYS visible (your rule)
+
+  // ⭐ Choose File ALWAYS visible
   const showChooseFile = true;
 
   const handleOpenChoice = () => {
-    // if(!rowId) return; // safety check
     setOpenChoice(true);
   };
+
   const handleSuccess = () => {
-    setShowConfirm(true);   // show confirmation modal
-    if (onRefresh) {
-      onRefresh();
-    }
+    setShowConfirm(true);
+    if (onRefresh) onRefresh();
   };
 
   return (
     <div className="flex items-center gap-3">
       {/* Always show the Choose File button */}
       {showChooseFile && (
-      <button
-        onClick={handleOpenChoice}
-        className="text-sm text-blue-700 underline hover:text-blue-900"
-      >
-        Choose File
-      </button>
+        <button
+          onClick={handleOpenChoice}
+          className="text-sm text-blue-700 underline hover:text-blue-900"
+        >
+          Choose File
+        </button>
       )}
+
       {/* Show View only if default or uploaded file exists */}
       {(hasUploadedFile || hasDefaultFile) && (
-      <a
-        href={viewHref}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-blue-600 underline hover:text-blue-800"
-      >
-        {viewLabel}
-      </a>
+        <a
+          href={viewHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 underline hover:text-blue-800"
+        >
+          {viewLabel}
+        </a>
       )}
+
       {/* Choice modal */}
       {openChoice && (
         <FileChoiceModal
@@ -79,8 +94,8 @@ export default function FileCell({ fileUrl, rowId, column, onRefresh, isNewAsset
             setOpenChoice(false);
             setOpenUpload(true);
           }}
-          onSuccess={handleSuccess} // ⭐ NEW
-          setUploadedFile={setUploadedFile} // ⭐ Pass setter to track uploaded file
+          onSuccess={handleSuccess}
+          setUploadedFile={setUploadedFile}
         />
       )}
 
@@ -91,9 +106,10 @@ export default function FileCell({ fileUrl, rowId, column, onRefresh, isNewAsset
           column={column}
           onClose={() => setOpenUpload(false)}
           onSuccess={handleSuccess}
-          setUploadedFile={setUploadedFile} // ⭐ Pass setter to track uploaded file
+          setUploadedFile={setUploadedFile}
         />
       )}
+
       {/* Confirmation Modal */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -111,7 +127,6 @@ export default function FileCell({ fileUrl, rowId, column, onRefresh, isNewAsset
           </div>
         </div>
       )}
-
     </div>
   );
 }

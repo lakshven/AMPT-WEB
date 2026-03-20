@@ -1,9 +1,9 @@
 import { useState , useEffect} from "react";
 import axiosInstance from "../../utils/axiosInstance";
-
+import { FileColumn } from "./FileCell";
 interface UploadModalProps {
   rowId: number | null; // allow null for new assets that don't have an ID yet
-  column: "exam_report" | "assessment" | "records";
+  column: FileColumn;
   onClose: () => void;
   onSuccess: () => void; // optional callback for successful upload
   setUploadedFile: React.Dispatch<React.SetStateAction<File | null>>;

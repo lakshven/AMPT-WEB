@@ -1,9 +1,9 @@
 import { useState } from "react";
 import axiosInstance from "../../utils/axiosInstance";
-
+import { FileColumn } from "./FileCell";
 interface FileChoiceModalProps {
   rowId: number | null;
-  column: "exam_report" | "assessment" | "records";
+  column: FileColumn;
   onClose: () => void;
   onChooseUpload: () => void; // NEW
   onSuccess: () => void; // NEW
