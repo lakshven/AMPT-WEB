@@ -41,7 +41,31 @@ export async function uploadFile(req: Request, res: Response) {
         message: "Invalid asset ID",
       });
     }
+    // 🔒 Load asset for tenant checks
+    const asset = await prismaClient().assets.findUnique({
+      where: { id: numericRowId },
+      select: { companyId: true, userId: true },
+    });
 
+    if (!asset) {
+      return res.status(404).json({
+        success: false,
+        message: "Asset not found",
+      });
+    }
+
+    // 🔒 Tenant checks
+    if (user.role !== "app_admin") {
+      if (user.accountType === "single") {
+        if (asset.userId !== user.id) {
+          return res.status(403).json({ success: false, message: "Access denied" });
+        }
+      } else if (user.accountType === "company") {
+        if (asset.companyId !== user.companyId) {
+          return res.status(403).json({ success: false, message: "Access denied" });
+        }
+      }
+    }
 
     // Save file to disk (with validation inside)
     const savedPath = await saveFile(file, column);

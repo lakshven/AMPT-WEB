@@ -28,6 +28,11 @@ type AssetField = typeof TYPE_CONFIG[keyof typeof TYPE_CONFIG]["field"];
 
 export const streamExcel = async (req: Request, res: Response): Promise<void> => {
   try {
+    const user = req.user;
+    if(!user){
+     res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
     const { type, id } = req.params as { type: keyof typeof TYPE_CONFIG; id: string };
     const config = TYPE_CONFIG[type];
 
@@ -38,13 +43,31 @@ export const streamExcel = async (req: Request, res: Response): Promise<void> =>
 
     const asset = await prismaClient().assets.findUnique({
       where: { id: Number(id) },
-      select: { [config.field]: true },
+      select: { 
+      companyId: true,
+      userId: true,      
+      [config.field]: true },
     });
 
     if (!asset) {
       res.status(404).json({ message: "Asset not found" });
       return;
     }
+    // 🔒 Tenant checks
+    if (user.role !== "app_admin") {
+      if (user.accountType === "single") {
+        if (asset.userId !== user.id) {
+          res.status(403).json({ message: "Access denied" });
+          return;
+        }
+      } else if (user.accountType === "company") {
+        if (asset.companyId !== user.companyId) {
+          res.status(403).json({ message: "Access denied" });
+          return;
+        }
+      }
+    }
+
 
     const relPath = asset[config.field as keyof typeof asset] as unknown as string | null;
 

@@ -42,6 +42,9 @@ export async function attachUserContext(
     // ⭐ Keep roles EXACTLY as stored in DB
     const role = dbUser.role;
 
+    // ⭐ FIX: accountType is derived ONLY from role
+    const accountType = role === "single_user" ? "single" : "company";
+
     req.user = {
       id: dbUser.id,
       username: dbUser.username,
@@ -50,7 +53,7 @@ export async function attachUserContext(
       permissions: decoded.permissions || [], // frontend expects this
       clientGroupId: dbUser.clientGroupId,
       companyId: dbUser.companyId,
-      accountType: dbUser.accountType?.value || "company"
+      accountType
     };
 
     return next();

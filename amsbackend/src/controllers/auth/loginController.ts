@@ -89,10 +89,8 @@ export async function login(req: Request, res: Response): Promise<void> {
 
     let normalizedRole = user.roleRef?.name?.toLowerCase() ?? "user";
     if (normalizedRole === "personal_owner") normalizedRole = "single_user";
-
-    const rawAccountType = user.accountType?.value?.toLowerCase() ?? "company";
     const normalizedAccountType =
-      rawAccountType === "personal_owner" ? "single" : "company";
+      normalizedRole === "single_user" ? "single" : "company";
 
     const jwtToken = jwt.sign(
       {

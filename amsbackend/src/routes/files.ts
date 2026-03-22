@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { streamExcel } from "../controllers/filesController";
+import { attachUserContext } from "../middleware/auth";
 
 const router = Router();
+router.use(attachUserContext);
 
 // ⭐ Support frontend URL: /files/excel/:type/:id
 router.get("/excel/:type/:id", (req, res) => {
