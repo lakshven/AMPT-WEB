@@ -46,7 +46,6 @@ export const addUserToGroup = async (req: Request, res: Response) => {
     const group = await prismaClient().group.findFirst({
       where: {
           name: groupName, 
-          companyId: currentUser.role === "app_admin" ? undefined : currentUser.companyId
        },
       select: { id: true }
     });

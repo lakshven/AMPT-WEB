@@ -35,7 +35,7 @@ export async function setDefaultFile(req: Request, res: Response) {
    // 🔒 Load asset for tenant checks
     const asset = await prismaClient().assets.findUnique({
       where: { id: numericRowId },
-      select: { companyId: true, userId: true },
+      select: { companyId: true, },
     });
 
     if (!asset) {
@@ -48,10 +48,9 @@ export async function setDefaultFile(req: Request, res: Response) {
     // 🔒 Tenant checks
     if (user.role !== "app_admin") {
       if (user.accountType === "single") {
-        if (asset.userId !== user.id) {
-          return res.status(403).json({ success: false, message: "Access denied" });
-        }
-      } else if (user.accountType === "company") {
+          return res.status(403).json({ success: false, message: "Single Users cannot modify assets" });
+      } 
+     if (user.accountType === "company") {
         if (asset.companyId !== user.companyId) {
           return res.status(403).json({ success: false, message: "Access denied" });
         }

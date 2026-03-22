@@ -24,16 +24,17 @@ const TYPE_CONFIG = {
   },
 } as const;
 
-type AssetField = typeof TYPE_CONFIG[keyof typeof TYPE_CONFIG]["field"];
+type FileTypeKey = keyof typeof TYPE_CONFIG;
 
 export const streamExcel = async (req: Request, res: Response): Promise<void> => {
   try {
     const user = req.user;
-    if(!user){
-     res.status(401).json({ message: "Unauthorized" });
+    if (!user) {
+      res.status(401).json({ message: "Unauthorized" });
       return;
     }
-    const { type, id } = req.params as { type: keyof typeof TYPE_CONFIG; id: string };
+
+    const { type, id } = req.params as { type: FileTypeKey; id: string };
     const config = TYPE_CONFIG[type];
 
     if (!config) {
@@ -41,26 +42,34 @@ export const streamExcel = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const asset = await prismaClient().assets.findUnique({
-      where: { id: Number(id) },
-      select: { 
-      companyId: true,
-      userId: true,      
-      [config.field]: true },
-    });
+    const numericId = Number(id);
+    if (!Number.isInteger(numericId) || numericId <= 0) {
+      res.status(400).json({ message: "Invalid asset ID" });
+      return;
+    }
+
+    // ⭐ FIX: Force TypeScript to treat asset as a single object
+    const asset = await prismaClient().assets.findFirst({
+      where: { id: numericId },
+      select: {
+        companyId: true,
+        [config.field]: true,
+      },
+    }) as { companyId: number | null; [key: string]: any } | null;
 
     if (!asset) {
       res.status(404).json({ message: "Asset not found" });
       return;
     }
+
     // 🔒 Tenant checks
     if (user.role !== "app_admin") {
       if (user.accountType === "single") {
-        if (asset.userId !== user.id) {
-          res.status(403).json({ message: "Access denied" });
-          return;
-        }
-      } else if (user.accountType === "company") {
+        res.status(403).json({ message: "Single users cannot access assets" });
+        return;
+      }
+
+      if (user.accountType === "company") {
         if (asset.companyId !== user.companyId) {
           res.status(403).json({ message: "Access denied" });
           return;
@@ -68,19 +77,15 @@ export const streamExcel = async (req: Request, res: Response): Promise<void> =>
       }
     }
 
-
-    const relPath = asset[config.field as keyof typeof asset] as unknown as string | null;
-
+    const relPath = asset[config.field] as string | null;
     let filePath: string;
 
-    // ⭐ NEW: If user explicitly selected default file
     if (relPath === "default") {
       filePath = config.default;
     } else if (relPath) {
       const safePath = path.join(config.baseDir, path.basename(relPath));
       filePath = fs.existsSync(safePath) ? safePath : config.default;
-    }
-    else {
+    } else {
       filePath = config.default;
     }
 
@@ -91,13 +96,9 @@ export const streamExcel = async (req: Request, res: Response): Promise<void> =>
     res.setHeader("Content-Disposition", `inline; filename="${path.basename(filePath)}"`);
 
     const stream = fs.createReadStream(filePath);
-
-    stream.on("error", (err) => {
-      console.error("Stream error:", err);
-      res.status(500).end();
-    });
-
+    stream.on("error", () => res.status(500).end());
     stream.pipe(res);
+
   } catch (err) {
     console.error("File streaming error:", err);
     res.status(500).json({ message: "Server error" });
