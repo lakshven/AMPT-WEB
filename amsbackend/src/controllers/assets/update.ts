@@ -38,6 +38,7 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
     const isSingle = req.user?.accountType === "single";
     const isCompany = req.user?.accountType === "company";
     const isAppAdmin = req.user?.role === "app_admin";
+    const userCompanyId = req.user?.companyId;
 
     const hasGroup =
       req.user?.clientGroupId !== null &&
@@ -49,7 +50,6 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
     }
 
     const asset = req.body;
-
     const files = req.files as AssetFiles | undefined;
 
     const uploaded_visual_report = files?.visual_report?.[0]
@@ -67,7 +67,7 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
     const uploaded_records = files?.records?.[0]
       ? await saveFile(files.records[0], "records")
       : null;
-   const existing = await prismaClient().assets.findUnique({
+    const existing = await prismaClient().assets.findUnique({
       where: { id: assetId },
       select: {
         latitude: true,
@@ -83,14 +83,20 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
       res.status(404).json({ error: "Asset not found" });
       return;
     }
-
+    // ⭐ Critical tenant isolation: company boundary
+    if (!isAppAdmin) {
+      if (!userCompanyId || existing.companyId !== userCompanyId) {
+        res.status(403).json({ error: "Not allowed to update this asset" });
+        return;
+      }
+    }
     if (!isAppAdmin) {
       if (isSingle && existing.clientGroupId !== null) {
         res.status(403).json({ error: "Not allowed to update this asset" });
         return;
       }
 
-      if (
+    if (
         isCompany &&
         existing.clientGroupId !== null &&
         existing.clientGroupId !== req.user!.clientGroupId
@@ -134,7 +140,7 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
       latitude,
       longitude,
     } = asset;
-
+   
     const existingLat = existing?.latitude ?? null;
     const existingLon = existing?.longitude ?? null;
     const existingLocation = existing?.location ?? null;

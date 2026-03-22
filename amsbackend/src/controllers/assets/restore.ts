@@ -16,11 +16,13 @@ export const restoreAssetController = async (req: Request, res: Response): Promi
   const isCompany = req.user?.accountType === "company";
   const isAppAdmin = req.user?.role === "app_admin";
   const userGroup = req.user?.clientGroupId;
+  const userCompanyId = req.user?.companyId;
   // ⭐ Company users MUST have a group (but NOT app_admin)
   if (!isSingle && !isAppAdmin && (userGroup ===null)) {
     res.status(400).json({ success: false, message: "Missing client group on user" });
     return;
   }
+
   try {
     // Fetch asset to check ownership
     const existing = await prismaClient().assets.findUnique({
@@ -42,7 +44,15 @@ export const restoreAssetController = async (req: Request, res: Response): Promi
       res.status(400).json({ success: false, message: "Asset is not deleted" });
       return;
     }
-// ⭐ Ownership rules
+    // ⭐ Critical tenant isolation: company boundary
+    if (!isAppAdmin) {
+      if (!userCompanyId || existing.companyId !== userCompanyId) {
+        res.status(403).json({ success: false, message: "Not allowed to restore this asset" });
+        return;
+      }
+    }
+    
+   // ⭐ Ownership rules
     if (!isAppAdmin) {
       // single_user → can only restore null-group assets
       if (isSingle && existing.clientGroupId !== null) {
@@ -81,8 +91,6 @@ export const restoreAssetController = async (req: Request, res: Response): Promi
         structure_no: existing.structure_no,
         structure_name: existing.structure_name
       },
-
-
       metadata: {
         restoredFromDeleted: true,
         role: user.role,
@@ -90,8 +98,7 @@ export const restoreAssetController = async (req: Request, res: Response): Promi
       }
     });
 
-
-    res.json(result);
+  res.json(result);
 
   } catch (err) {
     console.error('Restore asset error:', err);

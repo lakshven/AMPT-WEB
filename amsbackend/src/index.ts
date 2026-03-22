@@ -33,7 +33,6 @@ import { getPrisma } from "./prisma/client";
 // ⭐ Wrap everything in an async bootstrap function
 async function bootstrap() {
   dotenv.config();
-
   // ⭐ WAIT for Key Vault secrets BEFORE Prisma loads anywhere
   await loadSecrets();
   console.log("🔥 DATABASE_URL LOADED:", process.env.DATABASE_URL);

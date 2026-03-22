@@ -122,6 +122,15 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
     const isSingle = req.user?.accountType === "single";
     const isCompany = req.user?.accountType === "company";
     const isAppAdmin = req.user?.role === "app_admin";
+    const userCompanyId = req.user?.companyId;
+
+    // ⭐ Critical tenant isolation: company boundary
+    if (!isAppAdmin) {
+    if (!userCompanyId) {
+       res.status(403).json({ error: "User has no company assigned" });
+      return;
+      }
+    }
 
     if (isCompany && !isAppAdmin) {
       if (req.user?.clientGroupId == null) {

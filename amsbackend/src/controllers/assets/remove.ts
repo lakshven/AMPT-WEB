@@ -11,11 +11,10 @@ export const deleteAssetController = async (req: Request, res: Response): Promis
     res.status(400).json({ success: false, message: 'Invalid asset ID' });
     return;
   }
-
   const isSingle = req.user?.accountType === "single";
   const isCompany = req.user?.accountType === "company";
   const isAppAdmin = req.user?.role === "app_admin";
-
+  const userCompanyId = req.user?.companyId;
   const hasGroup =
     req.user?.clientGroupId !== null &&
     req.user?.clientGroupId !== undefined;
@@ -40,7 +39,13 @@ export const deleteAssetController = async (req: Request, res: Response): Promis
       res.status(404).json({ success: false, message: "Asset not found" });
       return;
     }
-
+    // ⭐ Critical tenant isolation: company boundary
+    if (!isAppAdmin) {
+      if (!userCompanyId || existing.companyId !== userCompanyId) {
+        res.status(403).json({ success: false, message: "Not allowed to delete this asset" });
+        return;
+      }
+    }
     // ⭐ Ownership rules
     if (!isAppAdmin) {
       // single_user → can only delete assets with clientGroupId = null

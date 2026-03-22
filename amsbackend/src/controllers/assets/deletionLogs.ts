@@ -15,17 +15,25 @@ export async function viewAssetDeletionLogsController(
     const isAppAdmin = req.user?.role === "app_admin";
     const isSingle = req.user?.accountType === "single";
     const userGroup = req.user?.clientGroupId;
-
+    const userCompanyId = req.user?.companyId;
     // Fetch asset to validate ownership
     const asset = await prismaClient().assets.findUnique({
       where: { id: assetId },
-      select: { clientGroupId: true }
+      select: { clientGroupId: true, companyId: true }
     });
 
     if (!asset) {
       return res.status(404).json({ message: "Asset not found" });
     }
-   
+    // ⭐ Critical tenant isolation: company boundary
+    if (!isAppAdmin) {
+      if (!userCompanyId) {
+        return res.status(403).json({ message: "User has no company assigned" });
+      }
+      if (asset.companyId !== userCompanyId) {
+        return res.status(403).json({ message: "Not allowed to view logs for this asset" });
+      }
+    }
     // Tenant isolation rules
     if (!isAppAdmin) {
       // single_user → only null-group assets

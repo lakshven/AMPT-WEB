@@ -1,78 +1,55 @@
 import bcrypt from "bcryptjs";
-export async function seedUsers(prisma, defaultGroup) {
-  const USERS = [
-    {
+
+export async function seedUsers(prisma) {
+  const adminEmail = "lakshmiangular8@gmail.com";
+
+  // Check if admin already exists
+  const existing = await prisma.users.findUnique({
+    where: { email: adminEmail }
+  });
+
+  if (existing) {
+    console.log("⚠️ App admin already exists. Skipping seeding.");
+    return;
+  }
+
+  // Fetch role
+  const roleRecord = await prisma.role.findUnique({
+    where: { name: "app_admin" }
+  });
+
+  if (!roleRecord) {
+    console.error("❌ Role 'app_admin' not found. Cannot seed admin.");
+    return;
+  }
+
+  // Fetch accountTypeOption
+  const accountTypeOption = await prisma.accountTypeOption.findUnique({
+    where: { value: "company" } // app_admin behaves like company type
+  });
+
+  if (!accountTypeOption) {
+    console.error("❌ AccountTypeOption 'company' not found.");
+    return;
+  }
+
+  const hashedPassword = await bcrypt.hash("AppAdmin@123", 10);
+
+  await prisma.users.create({
+    data: {
       firstname: "System",
       lastname: "Admin",
-      username: "admin_user",
-      email: "admin@example.com",
-      role: "company_admin",
-      accountType: "company"
-    },
-    {
-      firstname: "Field",
-      lastname: "Editor",
-      username: "field_editor",
-      email: "editor@example.com",
-      role: "editor",
-      accountType: "company"
-    },
-    {
-      firstname: "Read",
-      lastname: "Only",
-      username: "viewer_user",
-      email: "viewer@example.com",
-      role: "viewer",
-      accountType: "company"
-    },
-    {
-      firstname: "Personal",
-      lastname: "Owner",
-      username: "personal_owner",
-      email: "owner@example.com",
-      role: "personal_owner",
-      accountType: "single"
+      username: "app_admin",
+      email: adminEmail,
+      password: hashedPassword,
+      role: roleRecord.name,
+      role_id: roleRecord.id,
+      accountTypeId: accountTypeOption.id,
+      clientGroupId: null,
+      companyId: null,
+      disabled: false
     }
-  ];
+  });
 
-  const hashedPassword = await bcrypt.hash("Test@123", 10); // Replace with secure password in prod
-
-  for (const user of USERS) {
-    const roleRecord = await prisma.role.findUnique({
-      where: { name: user.role }
-    });
-
-    if (!roleRecord) {
-      console.warn(`⚠️ Role '${user.role}' not found. Skipping user ${user.email}`);
-      continue;
-    }
-    // ⭐ FIX: define accountTypeOption BEFORE using it
-    const accountTypeOption = await prisma.accountTypeOption.findUnique({
-      where: { value: user.accountType }
-    });
-
-    if (!accountTypeOption) {
-      console.warn(
-        `⚠️ AccountTypeOption '${user.accountType}' not found. Skipping user ${user.email}`
-      );
-      continue;
-    }
-    await prisma.users.upsert({
-      where: { email: user.email },
-      update: {},
-      create: {
-        firstname: user.firstname,
-        lastname: user.lastname,
-        username: user.username,
-        email: user.email,
-        password: hashedPassword,
-        role: roleRecord.name,
-        // ⭐ Correct relation syntax
-        roleRef: { connect: { id: roleRecord.id } },
-        accountType: { connect: { id: accountTypeOption.id } },
-        clientGroup: { connect: { id: defaultGroup.id } }
-      }
-    });
-  }
-  console.log("✅ Users seeded successfully");
+  console.log("✅ App admin seeded successfully");
 }

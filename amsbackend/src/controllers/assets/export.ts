@@ -6,14 +6,16 @@ export async function exportAssetController(req: Request, res: Response) {
   try {
     const id = Number(req.params.id);
     const isAppAdmin = req.user?.role === "app_admin";
+    const isSingle = req.user?.accountType === "single";
     const userGroup = req.user?.clientGroupId;
+    const userCompanyId = req.user?.companyId;
     const user = req.user!;
 
     let asset;
 
     if (isAppAdmin) {
       asset = await prismaClient().assets.findUnique({ where: { id } });
-    } else if (req.user?.accountType === "single") {
+    } else if (isSingle) {
       asset = await prismaClient().assets.findFirst({
         where: { id, clientGroupId: null }
       });
@@ -25,6 +27,15 @@ export async function exportAssetController(req: Request, res: Response) {
     
     if (!asset) {
       return res.status(404).json({ message: "Asset not found" });
+    }
+    // ⭐ Critical tenant isolation: company boundary
+    if (!isAppAdmin) {
+      if (!userCompanyId) {
+        return res.status(403).json({ message: "User has no company assigned" });
+      }
+      if (asset.companyId !== userCompanyId) {
+        return res.status(403).json({ message: "Not allowed to export this asset" });
+      }
     }
     // ⭐⭐⭐ AUDIT LOGGING ADDED HERE ⭐⭐⭐
     await logAudit({

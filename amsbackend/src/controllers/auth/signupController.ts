@@ -144,8 +144,14 @@ if (accountType === "single") {
       message: "Role not found"
     });
   }
-  
-  // Step 2: Create the user inside that group
+  // 2. Create a unique company for this single user (their own tenant)
+  const singleCompany = await prismaClient().company.create({
+    data: {
+      name: companyName || `single_user_${username}`,
+    },
+  });
+
+  // Step 2: Create the user, isolated intheir own company,no group
   const newUser = await prismaClient().users.create({
     data: {
       firstname: firstName,
@@ -157,7 +163,8 @@ if (accountType === "single") {
       role_id: role.id,
       accountTypeId: accountTypeRow.id,
       clientGroupId: null,
-      companyId: null   
+      companyId: singleCompany.id,
+      disabled: false   
     }
   });
 
@@ -169,8 +176,8 @@ if (accountType === "single") {
     performedBy: "anonymous",
     actorUserId: null,
     clientGroupId: null,
-      companyId: null,
-    details: { accountType: "single" },
+    companyId: singleCompany.id,
+    details: { accountType: "single", companyId: singleCompany.id, companyName: singleCompany.name },
     metadata: { accountType: "single" }
   });
 

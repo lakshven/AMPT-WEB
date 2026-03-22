@@ -6,7 +6,13 @@ export async function bulkUploadAssetsController(req: Request, res: Response) {
     const isAppAdmin = req.user?.role === "app_admin";
     const isSingle = req.user?.accountType === "single";
     const userGroup = req.user?.clientGroupId;
-
+    const userCompanyId = req.user?.companyId;
+    // ⭐ Critical tenant isolation: company boundary
+    if (!isAppAdmin) {
+      if (!userCompanyId) {
+        return res.status(403).json({ message: "User has no company assigned" });
+      }
+    }
     // Company users MUST have a clientGroupId
     if (!isAppAdmin && !isSingle && userGroup == null) {
       return res.status(400).json({ message: "Missing client group on user" });

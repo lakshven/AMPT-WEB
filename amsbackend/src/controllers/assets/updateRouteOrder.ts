@@ -51,9 +51,43 @@ export async function updateRouteOrder(req: Request, res: Response): Promise<voi
         latitude: true,
         longitude: true,
         riskRating: true, // ⭐ NEW: risk metadata
+        companyId: true,
+        clientGroupId: true,     
       },
     });
+    // ⭐ Tenant isolation rules
+    const isAppAdmin = user.role === "app_admin";
+    const isSingle = user.accountType === "single";
+    const isCompany = user.accountType === "company";
+    const userCompanyId = user.companyId;
+    const userGroupId = user.clientGroupId;
+    // Company boundary
+    if (!isAppAdmin) {
+      const invalidCompany = fullAssets.some(a => a.companyId !== userCompanyId);
+      if (invalidCompany) {
+        res.status(403).json({ error: "One or more assets do not belong to your company" });
+        return;
+      }
+    }
+    // Single user → only null-group assets
+    if (!isAppAdmin && isSingle) {
+      const invalid = fullAssets.some(a => a.clientGroupId !== null);
+      if (invalid) {
+        res.status(403).json({ error: "Not allowed to reorder these assets" });
+        return;
+      }
+    }
 
+    // Company user → only their group
+    if (!isAppAdmin && isCompany) {
+      const invalid = fullAssets.some(a =>
+        a.clientGroupId !== null && a.clientGroupId !== userGroupId
+      );
+      if (invalid) {
+        res.status(403).json({ error: "Not allowed to reorder these assets" });
+        return;
+      }
+    }
     // ⭐ NEW: Compute distances between consecutive assets (metadata only)
     const sorted = [...sanitized].sort((a, b) => a.routeOrder - b.routeOrder);
     const distances: number[] = [];

@@ -23,6 +23,15 @@ export async function archiveAssetController(req: Request, res: Response) {
     if (!asset) {
       return res.status(404).json({ error: "Asset not found" });
     }
+    // ⭐ Critical tenant isolation: company boundary
+    if (!isAppAdmin) {
+      if (!req.user?.companyId) {
+        return res.status(403).json({ error: "User has no company assigned" });
+      }
+      if (asset.companyId !== req.user.companyId) {
+        return res.status(403).json({ error: "Not allowed to access this asset" });
+      }
+    }
     // Tenant isolation rules
     if (!isAppAdmin) {
       // single_user → only null-group assets

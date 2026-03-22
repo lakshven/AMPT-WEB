@@ -15,9 +15,18 @@ export const getAssets = async (req: Request, res: Response): Promise<void> => {
     const isSingle = req.user?.accountType === "single";
     const isCompany = req.user?.accountType === "company";
     const isAppAdmin = req.user?.role === "app_admin";
-
+    const userCompanyId = req.user?.companyId;
     // ROLE‑BASED FILTERING
     let where: any = {};
+    // ⭐ Critical tenant isolation: company boundary
+    if (!isAppAdmin) {
+    if (!userCompanyId) {
+      res.status(403).json({ message: "User has no company assigned" });
+      return; 
+    }
+     where.companyId = userCompanyId;
+    }
+
 
     if (isAppAdmin) {
       if (!includeDeleted) where.is_deleted = false;
@@ -250,9 +259,16 @@ export const getAssetLocations = async (req: Request, res: Response): Promise<vo
     const isSingle = req.user?.accountType === "single";
     const isCompany = req.user?.accountType === "company";
     const isAppAdmin = req.user?.role === "app_admin";
-
+    const userCompanyId = req.user?.companyId;
     let where: any = { is_deleted: false };
-
+        // ⭐ Critical tenant isolation: company boundary
+    if (!isAppAdmin) {
+      if (!userCompanyId) {
+         res.status(403).json({ message: "User has no company assigned" });
+         return;     
+        }
+      where.companyId = userCompanyId;
+    }
     if (isSingle) {
       where.clientGroupId = null;
     } else if (isCompany) {

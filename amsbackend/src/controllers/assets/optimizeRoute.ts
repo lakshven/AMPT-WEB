@@ -23,12 +23,37 @@ export async function optimizeRoute(req: Request, res: Response): Promise<void> 
       res.status(400).json({ error: "Invalid assetIds" });
       return;
     }
-
+    const isAppAdmin = req.user?.role === "app_admin";
+    const isSingle = req.user?.accountType === "single";
+    const userGroup = req.user?.clientGroupId;
+    const userCompanyId = req.user?.companyId;
+  
+    // ⭐ Critical tenant isolation: company boundary
+    if (!isAppAdmin) {
+      if (!userCompanyId) {
+        res.status(403).json({ error: "User has no company assigned" });
+        return;
+      }
+    }
     const assets = await prismaClient().assets.findMany({
-      where: { id: { in: assetIds } },
+      where: {
+         id: { in: assetIds },
+        ...(isAppAdmin
+          ? {}
+          : {
+            companyId: userCompanyId,
+            clientGroupId: isSingle ? null: userGroup
+          }
+        ) },
       select: { id: true, latitude: true, longitude: true },
     });
-
+    // Reject if any asset is missing or unauthorized
+    if (assets.length !== assetIds.length) {
+       res.status(403).json({
+        error: "One or more assets do not belong to your company/group"
+      });
+      return;
+    }
     const visited: number[] = [];
     const remaining = [...assets];
     let current = remaining.shift();
@@ -96,6 +121,12 @@ export async function optimizeRoute(req: Request, res: Response): Promise<void> 
         latitude: { not: null },
         longitude: { not: null },
         is_deleted: false,
+        ...(isAppAdmin
+          ? {}
+          : {
+            companyId: userCompanyId,
+            clientGroupId: isSingle ? null : userGroup
+          })
       },
       orderBy: { routeOrder: "asc" },
       select: {
