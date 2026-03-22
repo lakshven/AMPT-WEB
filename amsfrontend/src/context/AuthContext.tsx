@@ -61,10 +61,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Normalize decoded token
   const normalizeUser = (decoded: DecodedUser): DecodedUser => {
     let normalizedRole = normalizeRole(decoded.role);
-      // ⭐ Auto-upgrade role on frontend if backend already upgraded
-  if (normalizedRole === "single_user" && decoded.companyId !== null) {
-    normalizedRole = "company_admin";
-  }
+  //     // ⭐ Auto-upgrade role on frontend if backend already upgraded
+  // if (normalizedRole === "single_user" && decoded.companyId !== null) {
+  //   normalizedRole = "company_admin";
+  // }
 
 
     return {
