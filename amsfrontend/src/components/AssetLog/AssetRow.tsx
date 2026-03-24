@@ -88,6 +88,7 @@ const AssetRow: React.FC<AssetRowProps> = ({
             className={(col.cellClass || "") + " p-2 border border-gray-200 text-[#333] whitespace-normal break-words"}
           >
             {col.type === "file" ? (
+              <div className="min-w-[250px]">
               <FileCell
                 fileUrl={asset[col.key] || null}
                 rowId={Number(asset.id)}
@@ -95,6 +96,7 @@ const AssetRow: React.FC<AssetRowProps> = ({
                 isNewAsset={isNew}  // ⭐ FIXED
                 onRefresh={fetchAssets}
               />
+             </div>
             ) : (
               <CellRenderer
                 field={col.key}
