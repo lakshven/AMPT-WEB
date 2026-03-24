@@ -79,12 +79,14 @@ const AssetTable: React.FC<AssetTableProps> = ({
   return (
     <>
       {/* Risk Matrix Button */}
+       <div className="flex w-full mb-4">
       <button
         onClick={() => setShowMatrix(true)}
         className="mb-4 px-4 py-2 bg-[#0989B1] text-white rounded shadow"
       >
         View Risk Scoring Matrix
       </button>
+     </div>
 
       {/* Risk Matrix Modal */}
       {showMatrix && (

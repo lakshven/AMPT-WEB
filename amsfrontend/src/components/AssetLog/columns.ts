@@ -49,8 +49,8 @@ export const columns: ColumnDefinition[] = [
   { key: "last_exam", label: "Last Exam", type: "date", filterType: "dateRange", headerClass: "w-[320px]", cellClass: "w-[250px]" },
   { key: "next_exam", label: "Next Exam", type: "date", filterType: "dateRange", headerClass: "w-[320px]", cellClass: "w-[250px]" },
 
-  { key: "visual_report", label: "Visual Report", type: "file", filterType: "none",  headerClass: "w-[100px]" },
-  { key: "detailed_report", label: "Detailed Report", type: "file", filterType: "none", headerClass: "w-[100px]" },
-  { key: "assessment", label: "Assessment", type: "file", filterType: "none", headerClass: "w-[120px]"},
-  { key: "records", label: "Records", type: "file", filterType: "none" , headerClass: "w-[100px]"}
+  { key: "visual_report", label: "Visual Report", type: "file", filterType: "none",  headerClass: "w-[250px] whitespace-nowrap", cellClass: "w-[230px]" },
+  { key: "detailed_report", label: "Detailed Report", type: "file", filterType: "none", headerClass: "w-[250px] whitespace-nowrap", cellClass: "w-[230px]"  },
+  { key: "assessment", label: "Assessment", type: "file", filterType: "none", headerClass: "w-[250px] whitespace-nowrap", cellClass: "w-[230px]"},
+  { key: "records", label: "Records", type: "file", filterType: "none" , headerClass: "w-[250px] whitespace-nowrap", cellClass: "w-[230px]"}
 ];
