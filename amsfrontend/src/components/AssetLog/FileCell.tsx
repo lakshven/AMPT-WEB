@@ -34,16 +34,13 @@ export default function FileCell({
   const hasUploadedFile = !!uploadedFile;
 
   // ⭐ Compute view button logic
-  let showView = false;
   let viewLabel = "";
   let viewHref = "";
 
   if (hasUploadedFile) {
-    showView = true;
     viewLabel = "View Uploaded File";
     viewHref = URL.createObjectURL(uploadedFile!);
   } else if (hasDefaultFile) {
-    showView = true;
     viewLabel = "View Default File";
     viewHref = `http://localhost:5000/files/excel/${column}/${rowId}`;
   }

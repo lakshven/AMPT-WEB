@@ -50,7 +50,7 @@ const CellRenderer: React.FC<CellRendererProps> = ({
   };
 
   const mergedValue =
-    editedAsset[field] !== undefined ? editedAsset[field] : asset[field];
+    editedAsset[field] !== undefined ? editedAsset[field] : asset[field] ?? "";
 
   if (isEditing) {
     if (disabled)
@@ -60,7 +60,7 @@ const CellRenderer: React.FC<CellRendererProps> = ({
     if (type === "dropdown") {
       return (
         <select
-          value={normalizeValue(mergedValue)}
+          value={mergedValue}
           onChange={(e) => {
             const raw = e.target.value;
 
@@ -72,7 +72,8 @@ const CellRenderer: React.FC<CellRendererProps> = ({
           className="border border-[#549E39] rounded px-2 py-1 w-full focus:ring-[#0989B1] focus:border-[#0989B1] text-[#333]"
           style={{ minWidth: "60px" }}
         >
-          {options.map((opt, i) => (
+            <option value = ""> --Select--</option>
+            {options.map((opt, i) => (
             <option key={i} value={getOptionValue(opt)}>
               {getOptionLabel(opt)}
             </option>

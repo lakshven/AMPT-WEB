@@ -170,7 +170,10 @@ export function useAssets() {
         ...original,
         ...editedAsset,
       };
-
+      // ⭐ FIX: ensure Prisma-safe values (no undefined)
+      Object.keys(payload).forEach((key) => {
+        if (payload[key] === undefined) payload[key] = "";
+      });
       if (isCompanyAccount && clientGroupId != null && !isAppAdmin) {
         payload.clientGroupId = Number(clientGroupId);
       }
@@ -254,7 +257,10 @@ export function useAssets() {
         ...newAsset,
         ...editedAsset,
       };
-
+      // ⭐ FIX: ensure Prisma-safe values (no undefined)
+      Object.keys(payload).forEach((key) => {
+        if (payload[key] === undefined) payload[key] = "";
+      });
       if (isCompanyAccount && clientGroupId != null && !isAppAdmin) {
         payload.clientGroupId = Number(clientGroupId);
       }
@@ -316,3 +322,4 @@ export function useAssets() {
     setTempDefaultSelected,
   };
 }
+

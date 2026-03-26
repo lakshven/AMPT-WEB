@@ -21,8 +21,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 import RoleGuard from "./components/auth/RoleGuard";
 import RedirectAfterLogin from "./components/auth/RedirectAfterLogin";
 
-import AuditLogList from "./components/AuditLogs/AuditLogList";
-
 import IssueListPage from "./pages/issues/IssueListPage";
 import CreateIssue from "./pages/issues/CreateIssue";
 import IssueDetails from "./pages/issues/IssueDetails";
@@ -45,7 +43,6 @@ import { adminSections } from "./config/adminSections";
 import CreateClientGroupPage from "./pages/ClientGroups/CreateClientGroupPage";
 import ClientGroupListPage from "./pages/ClientGroups/ClientGroupListPage";
 import VerifyInvitePage from "./pages/VerifyInvitePage";
-import ClientGroupListNew from "./components/ClientGroups/table/ClientGroupListNew";
 import ClientGroupManagementNew from "./pages/ClientGroups/ClientGroupManagementNew";
 
 // ⭐ Company Admin Pages

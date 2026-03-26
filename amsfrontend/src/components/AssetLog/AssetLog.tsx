@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useContext } from "react";
 import { useAssets } from "../../hooks/useAssets";
 import { useDropdownOptions } from "../../hooks/useDropdownOptions";
 import AssetTable from "./AssetTable";
-import MessageBanner from "../common/MessageBanner";
 import { AuthContext } from "../../context/AuthContext";
 import RoleBadge from "../common/RoleBadge";
 import { useRBAC } from "../../hooks/useRBAC";
@@ -28,11 +27,10 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
     showDeleted,
 
     setPage,
-    setLimit,
     setSearch,
     setShowDeleted,
     sortBy,
-     sortOrder,
+    sortOrder,
     setSortBy,
     setSortOrder,
 

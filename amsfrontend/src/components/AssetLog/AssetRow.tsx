@@ -116,7 +116,10 @@ const AssetRow: React.FC<AssetRowProps> = ({
           <ActionButtons
             isEditing={isEditing}
             isNew={isNew}
-            onEdit={() => onEdit(asset)}
+            onEdit={() =>{ 
+              onEdit(asset);
+             setEditedAsset({...asset})
+          }}
             onDelete={() => asset.id !== undefined && onDelete(asset.id)}
             onRestore={() => asset.id !== undefined && onRestore(asset.id)}
             onSave={onSave}
