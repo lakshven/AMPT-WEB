@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import { Issue } from "../../types/IssueTypes";
 import { useRBAC } from "../../hooks/useRBAC";
@@ -31,7 +31,7 @@ const IssueListPage: React.FC = () => {
 
   const [showDeleted, setShowDeleted] = useState(false);
 
-  const fetchIssues = () => {
+  const fetchIssues = useCallback(() => {
     setLoading(true);
 
     axiosInstance
@@ -42,11 +42,11 @@ const IssueListPage: React.FC = () => {
       })
       .catch(() => setError("Failed to load issues"))
       .finally(() => setLoading(false));
-  };
+  }, [page, pageSize, showDeleted];
 
   useEffect(() => {
     fetchIssues();
-  }, [page, showDeleted]);
+  }, [fetchIssues]);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {

@@ -49,7 +49,8 @@ const CompanyAdminDashboard: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-8">
+   <div className="p-6 overflow-x-auto"> 
+    <div className="min-w-[900px] space-y-8">
       <h1 className="text-3xl font-bold text-[#0989B1] mb-6">
         Company Admin Dashboard
       </h1>
@@ -57,7 +58,8 @@ const CompanyAdminDashboard: React.FC = () => {
       <CompanyStatsCard stats={stats} />
       <CompanyAlertsCard alerts={alerts} />
     </div>
+  </div>   
   );
-};
+ };
 
 export default CompanyAdminDashboard;

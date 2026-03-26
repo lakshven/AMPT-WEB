@@ -25,7 +25,7 @@ export default function UploadModal({ rowId, column, onClose, onSuccess, setUplo
    // ⭐ Reset uploaded file preview when modal opens
   useEffect(() => {
     setUploadedFile(null);
-  }, []);
+  }, [setUploadedFile]);
 
   const handleUpload = async () => {
     if (!file) {

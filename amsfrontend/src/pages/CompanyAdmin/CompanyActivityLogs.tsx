@@ -28,14 +28,12 @@ const CompanyActivityLogs: React.FC = () => {
     };
   };
 
-  const debouncedUserSearch = useCallback(
-    debounce((value: string) => {
-      setFilters((prev) => ({ ...prev, performedBy: value, page: 1 }));
-    }),
-    []
-  );
-
-  const loadLogs = async () => {
+  const debouncedUserSearch = React.useMemo(() => {
+  return debounce((value: string) => {
+    setFilters((prev) => ({ ...prev, performedBy: value, page: 1 }));
+  });
+  }, []);
+  const loadLogs = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -49,11 +47,11 @@ const CompanyActivityLogs: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     loadLogs();
-  }, [filters]);
+  }, [loadLogs]);
 
   // ⭐ Sorting handler — fixed type
   const handleSort = (field: string) => {

@@ -121,12 +121,6 @@ const MapView: React.FC<MapViewProps> = ({
 
   const defaultCenter: [number, number] = [0, 0];
 
-  const routePoints: LatLngTuple[] = geoAssets
-    .filter((a) => a.latitude !== null && a.longitude !== null)
-    .map(
-      (a) => [Number(a.latitude), Number(a.longitude)] as LatLngTuple
-    );
-
   return (
     <div className="col-span-2 p-6 rounded-lg shadow-md bg-white">
       <h2 className="text-xl font-bold text-blue-700 mb-4">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import ClientGroupsTable from "../../components/ClientGroups/table/ClientGroupsTable";
@@ -22,9 +22,9 @@ export default function ClientGroupListPage() {
   const [pagination, setPagination] = useState(null);
 
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [success] = useState("");
 
-  const loadGroups = async () => {
+  const loadGroups = useCallback(async () => {
     
     try {
       let query= `/client-groups?filter=${filter}&sort=${sort}&order=${order}&page=${page}&limit=${limit}`;
@@ -41,11 +41,11 @@ export default function ClientGroupListPage() {
     } catch {
       setError("Failed to load client groups");
     }
-  };
+  }, [filter, sort, order, page, role, companyId, limit]);
 
   useEffect(() => {
     loadGroups();
-  }, [filter, sort, order, page, role, companyId]);
+  }, [loadGroups]);
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-8">

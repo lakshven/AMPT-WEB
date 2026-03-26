@@ -12,6 +12,7 @@ interface SignupForm {
   isCompanyAdmin?: boolean;
   companyName?: string;
 }
+
 const Signup: React.FC = () => {
   const [form, setForm] = useState<SignupForm>({
     firstName: "",
@@ -20,15 +21,15 @@ const Signup: React.FC = () => {
     email: "",
     password: "",
     accountType: "single",
-    isCompanyAdmin: true, // default for company
+    isCompanyAdmin: true,
   });
-// ⭐ NEW: inviteToken flow state
+
   const location = useLocation();
   const inviteState = location.state as any;
-  console.log("🔥 INVITE STATE FROM NAVIGATION:", inviteState);
   const [error, setError] = useState<string>("");
+
   const navigate = useNavigate();
-  // ⭐ NEW INVITE TOKEN FLOW — detect token from VerifyInvitePage
+
   useEffect(() => {
     if (inviteState?.token) {
       setForm(prev => ({
@@ -49,7 +50,6 @@ const Signup: React.FC = () => {
     setError("");
 
     try {
-      console.log("🔥 SUBMITTING SIGNUP FORM");
       let payload: any = {
         firstName: form.firstName,
         lastName: form.lastName,
@@ -57,27 +57,22 @@ const Signup: React.FC = () => {
         email: form.email,
         password: form.password,
       };
-      // ⭐ NEW INVITE TOKEN FLOW
+
       if (inviteState?.token) {
         payload.inviteToken = inviteState.token;
         payload.accountType = "company";
         payload.isCompanyAdmin = false;
       } else {
-        // Normal signup
         payload.accountType = form.accountType;
         payload.isCompanyAdmin = form.isCompanyAdmin;
-        // ⭐ SINGLE USER → MUST SEND companyId
-        if (form.accountType === "single") {
-         // Single users do NOT send companyId or isCompanyAdmin
-        }
+
         if (form.accountType === "company") {
-           payload.isCompanyAdmin = form.isCompanyAdmin;
           if (form.isCompanyAdmin) {
             payload.companyName = form.companyName;
-          } 
+          }
         }
       }
-      console.log("🔥 PAYLOAD SENT TO BACKEND:", payload);
+
       const res = await axiosInstance.post("/auth/signup", payload);
       const data = res.data;
 
@@ -94,47 +89,49 @@ const Signup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
+
+      {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/images/amsimage.png')" }}
-      ></div>
-      {/* Company brand gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r 
-                      from-[#549E39]/40 
-                      via-[#549E39]/10 
-                      to-[#0989B1]/40 
-                      mix-blend-multiply">
-      </div>
+      />
 
-      {/* Slight darkening for readability */}
-      <div className="absolute inset-0 bg-black/10"></div>
-      {/* Signup container */}
-      <div className="relative z-10 w-full max-w-4xl p-8 rounded-lg">
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r
+                      from-[#549E39]/60
+                      via-[#549E39]/20
+                      to-[#0989B1]/60
+                      mix-blend-multiply" />
 
-        <div className="flex justify-end mb-4">
+      {/* Dark Overlay */}
+      <div className="absolute inset-0 bg-black/10" />
+
+      {/* MAIN CONTAINER */}
+      <div className="relative z-10 p-6 rounded shadow-md h-full min-h-[700px] w-[700px]">
+
+        {/* ⭐ WELCOME + AMPT ICON (same as login) */}
+        <div className="flex items-center justify-center gap-6 mb-6">
+          <div className="text-center whitespace-nowrap animate-pulse">
+            <h4 className="text-3xl font-bold text-white">WELCOME</h4>
+            <h2 className="text-2xl font-bold text-white">AMPT</h2>
+          </div>
+
           <img
             src="/images/AMPT5.png"
             alt="Logo"
-            className="h-12 w-auto ml-auto mb-4"
+            className="h-16 w-auto animate-pulse"
           />
         </div>
 
-        <div className="text-left text-white mb-6">
-          <h4 className="text-lg font-semiblod tracking-wide">WELCOME</h4>
-          <h2 className="text-3xl font-bold leading-tight">
-            ASSET MANAGEMENT PRIORITISATION TOOL
-          </h2>
-        </div>
-
-        <div className="bg-white/90 backdrop-blur-md p-6 rounded-lg shadow-md w-full max-w-md mx-auto">
-          <h3 className="text-center text-base font-medium text-gray-700 mb-6">
-            USER SIGNUP
-          </h3>
+        {/* SIGNUP BOX */}
+        <div className="bg-blue-100 p-6 rounded shadow-md w-[350px] mx-auto z-20">
+          <h3 className="text-center text-sm text-gray-500 mb-6">USER SIGNUP</h3>
 
           {error && <p className="text-red-600 mb-3 text-center">{error}</p>}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+
             <input
               name="firstName"
               placeholder="First Name"
@@ -158,6 +155,7 @@ const Signup: React.FC = () => {
               required
               className="w-full border px-3 py-2 rounded-md text-black"
             />
+
             <input
               name="email"
               type="email"
@@ -166,6 +164,7 @@ const Signup: React.FC = () => {
               required
               className="w-full border px-3 py-2 rounded-md text-black"
             />
+
             <input
               name="password"
               type="password"
@@ -174,10 +173,10 @@ const Signup: React.FC = () => {
               required
               className="w-full border px-3 py-2 rounded-md text-black"
             />
+
             {/* Hide company fields if invited */}
             {!inviteState?.token && (
               <>
-                {/* ACCOUNT TYPE */}
                 <select
                   name="accountType"
                   value={form.accountType}
@@ -188,7 +187,6 @@ const Signup: React.FC = () => {
                   <option value="company">Company</option>
                 </select>
 
-                {/* COMPANY ACCOUNT */}
                 {form.accountType === "company" && (
                   <>
                     <select

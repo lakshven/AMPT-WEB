@@ -16,7 +16,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-   const handleLogin = useHandleLogin(); // ⭐ NEW centralized login handler
+  const handleLogin = useHandleLogin(); // ⭐ Centralized login handler
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +28,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         password,
         rememberMe,
       });
+
       localStorage.setItem("token", response.data.token);
       const data = response.data;
 
@@ -35,15 +36,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         setError(data.message || "Invalid credentials");
         return;
       }
- // ⭐ Centralized login + role-based redirect
-      handleLogin(data);
 
+      handleLogin(data);
       if (onLogin) onLogin(data.user);
 
-          // ⭐ Redirect to centralized role-based routing
-    navigate("/redirect");
-
-
+      navigate("/redirect");
     } catch (err: any) {
       console.error("Login error:", err.response?.data || err.message);
       setError("Server error. Please try again.");
@@ -52,39 +49,42 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
+
+      {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/images/amsimage.png')" }}
-      >
-  
+      />
 
-      </div>
-      {/* Company brand gradient overlay */}
+      {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-r 
                       from-[#549E39]/60 
                       via-[#549E39]/20 
                       to-[#0989B1]/60 
-                      mix-blend-multiply">
-      </div>
+                      mix-blend-multiply" />
 
-      {/* Dark layer for readability */}
-      <div className="absolute inset-0 bg-black/10"></div>
-      <img
-          src="/images/AMPT5.png" 
-          alt="Logo"
-          className="absolute top-6 left-[40px] h-14 w-auto z-20"
-        />
+      {/* Dark Overlay */}
+      <div className="absolute inset-0 bg-black/10" />
 
-        <div className="relative z-10 p-6 rounded shadow-md h-full min-h-[700px] w-[700px]">
-        
+      {/* MAIN CONTAINER */}
+      <div className="relative z-10 p-6 rounded shadow-md h-full min-h-[700px] w-[700px]">
 
-        <div className="text-left mb-6">
-          <h4 className="text-3xl font-bold text-white">WELCOME</h4>
-          <h2 className="text-2xl font-bold text-white">
-            ASSET MANAGEMENT PRIORITISATION TOOL
-          </h2>
+        {/* ⭐ WELCOME + AMPT ICON SIDE BY SIDE */}
+        <div className="flex items-center justify-center gap-6 mb-6">
+          {/* Left: WELCOME AMPT */}
+          <div className="text-center whitespace-nowrap animate-pulse">
+            <h4 className="text-3xl font-bold text-white">WELCOME</h4>
+          </div>
+
+          {/* Right: AMPT Icon */}
+          <img
+            src="/images/AMPT5.png"
+            alt="Logo"
+            className="h-16 w-auto animate-pulse"
+          />
         </div>
 
+        {/* LOGIN BOX */}
         <div className="bg-blue-100 p-6 rounded shadow-md w-[350px] mx-auto z-20">
           <div className="flex justify-center mb-4 text-white-600">
             <HiUserCircle size={64} />
@@ -95,6 +95,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           {error && <p className="text-red-600 mb-3 text-center">{error}</p>}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+
             {/* Identifier */}
             <div className="relative">
               <input
@@ -174,7 +175,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </form>
 
           {/* Signup link */}
-          <div className="mt-4 text-sm text-center">
+          {/* <div className="mt-4 text-sm text-center">
             <span className="text-white">New user? </span>
             <button
               type="button"
@@ -183,7 +184,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             >
               Sign up
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

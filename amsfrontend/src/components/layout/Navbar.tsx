@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { normalizeRole } from "../../utils/normalizeRole";
 import { getManualForRole } from "../../utils/manualPaths";
-
+import { getHomeRoute } from "../../utils/getHomeRoute";
 interface AuthUser {
   username?: string;
   role?: string;
@@ -81,9 +81,13 @@ const Navbar: React.FC<NavbarProps> = ({ mode = "default" }) => {
 
           {/* DESKTOP MENU */}
           <nav className="hidden md:flex items-center gap-8 flex-shrink min-w-0">
-            <NavLink to="/startup" className={navLinkClasses}>
+            {/* ⭐ UPDATED HOME BUTTON USING getHomeRoute */}
+            <button
+              onClick={() => navigate(getHomeRoute(normalizedRole))}
+              className="px-3 py-1 rounded-md text-white hover:bg-[#098B91]/70 transition text-[20px]"
+            >
               Home
-            </NavLink>
+            </button>
 
             {mode === "landing" && (
               <>
@@ -93,13 +97,13 @@ const Navbar: React.FC<NavbarProps> = ({ mode = "default" }) => {
                 >
                   Sign In
                 </NavLink>
-
+       {/* // we reset back this button in future
                 <NavLink
                   to="/signup"
                   className="px-3 py-1 rounded-md bg-white/20 hover:bg-white/30 transition font-semibold text-[20px]"
                 >
                   Sign Up
-                </NavLink>
+                </NavLink> */}
               </>
             )}
 
@@ -125,7 +129,12 @@ const Navbar: React.FC<NavbarProps> = ({ mode = "default" }) => {
                     Users
                   </NavLink>
                 )}
-
+                {/* ONLY APP ADMIN CAN CREATE USERS */}
+                {normalizedRole === "app_admin" && (
+                  <NavLink to="/signup" className={navLinkClasses}>
+                    Signup
+                  </NavLink>
+                )}
                 {normalizedRole === "app_admin" && (
                   <NavLink to="/admin/client-groups" className={navLinkClasses}>
                     Client Groups
@@ -157,13 +166,13 @@ const Navbar: React.FC<NavbarProps> = ({ mode = "default" }) => {
                 >
                   Login
                 </NavLink>
-
+              {/* //once we reset back in future
                 <NavLink
                   to="/signup"
                   className="px-3 py-1 rounded-md bg-white/20 hover:bg-white/30 transition font-semibold text-[20px]"
                 >
                   Signup
-                </NavLink>
+                </NavLink> */}
               </>
             )}
           </nav>
@@ -185,13 +194,13 @@ const Navbar: React.FC<NavbarProps> = ({ mode = "default" }) => {
               >
                 Sign In
               </NavLink>
-
+        {/* //we rest back this button in future
               <NavLink
                 to="/signup"
                 className="block px-3 py-2 rounded-md bg-white/20 text-[20px]"
               >
                 Sign Up
-              </NavLink>
+              </NavLink> */}
             </>
           )}
 

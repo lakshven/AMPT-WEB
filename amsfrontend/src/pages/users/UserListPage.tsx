@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { getUsers, deleteUser, restoreUser } from "../../services/userService";
 import { useNavigate, Link } from "react-router-dom";
 import UserTable from "./UserTable";
@@ -13,13 +13,12 @@ const UserListPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
-  const [error, setError] = useState("");
   const [showCreateAdmin, setShowCreateAdmin] = useState(false); // ⭐ NEW
 
   const navigate = useNavigate();
   const rbac = useRBAC();
 
-  const loadUsers = () => {
+  const loadUsers = useCallback(() => {
     getUsers({
       page,
       pageSize,
@@ -31,19 +30,19 @@ const UserListPage: React.FC = () => {
         setUsers(res.data.data);
         setTotal(res.data.pagination.total);
       })
-      .catch(() => setError("Failed to load users"));
-  };
+      .catch(() => console.error("Failed to load users"));
+  }, [page, pageSize, search, roleFilter, statusFilter]);
 
   useEffect(() => {
     loadUsers();
-  }, [page, search, roleFilter, statusFilter]);
+  }, [loadUsers]);
 
   const handleDelete = (id: string) => {
     if (!window.confirm("Disable this user?")) return;
 
     deleteUser(id)
       .then(() => loadUsers())
-      .catch(() => setError("Failed to disable user"));
+      .catch(() => console.error("Failed to disable user"));
   };
 
   const handleRestore = (id: string) => {
@@ -51,7 +50,7 @@ const UserListPage: React.FC = () => {
 
     restoreUser(id)
       .then(() => loadUsers())
-      .catch(() => setError("Failed to restore user"));
+      .catch(() => console.error("Failed to restore user"));
   };
 
   const totalPages = Math.ceil(total / pageSize);

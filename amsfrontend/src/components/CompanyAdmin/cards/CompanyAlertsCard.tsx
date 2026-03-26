@@ -17,33 +17,33 @@ const CompanyAlertsCard: React.FC<Props> = ({ alerts }) => {
     switch (severity) {
       case "high":
         return {
-          container: "bg-red-50 border-red-300",
-          text: "text-red-700",
+          container: "bg-red-100 border-red-300 shadow-sm",
+          text: "text-red-800",
           icon: "❗",
         };
       case "medium":
         return {
-          container: "bg-yellow-50 border-yellow-300",
-          text: "text-yellow-700",
+          container: "bg-amber-100 border-amber-300 shadow-sm",
+          text: "text-amber-800",
           icon: "⚠️",
         };
       case "low":
         return {
-          container: "bg-blue-50 border-blue-300",
-          text: "text-blue-700",
+          container: "bg-blue-100 border-blue-300 shadow-sm",
+          text: "text-blue-800",
           icon: "ℹ️",
         };
       default:
         return {
-          container: "bg-gray-50 border-gray-300",
-          text: "text-gray-700",
+          container: "bg-gray-100 border-gray-300 shadow-sm",
+          text: "text-gray-800",
           icon: "🔔",
         };
     }
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
       <h2 className="text-xl font-semibold text-[#0989B1] mb-4">
         Company Alerts
       </h2>
@@ -51,14 +51,14 @@ const CompanyAlertsCard: React.FC<Props> = ({ alerts }) => {
       {alerts.length === 0 ? (
         <p className="text-gray-600">No alerts for your company.</p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-4">
           {alerts.map((alert) => {
             const style = getSeverityStyle(alert.severity);
 
-            return (
+            return ( 
               <li
                 key={alert.id}
-                className={`p-3 border rounded-lg flex flex-col ${style.container}`}
+                className={`p-4 border rounded-lg flex flex-col ${style.container}`}
               >
                 <p className={`font-medium flex items-center gap-2 ${style.text}`}>
                   <span>{style.icon}</span>

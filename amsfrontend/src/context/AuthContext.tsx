@@ -129,7 +129,7 @@ if (typeof window !== "undefined") {
     };
 
     loadUser();
-  }, []);
+  }, [refreshUser]);
   // Login stores token and decodes user
   const login = (token: string) => {
     localStorage.setItem("token", token);

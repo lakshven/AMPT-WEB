@@ -53,7 +53,7 @@ import CompanyAnalytics from "./pages/CompanyAdmin/CompanyAnalytics";
 import CompanySettings from "./pages/CompanyAdmin/CompanySettings";
 
 const AppContent: React.FC = () => {
-  const { role, isAuthenticated, loading } = useAuth();
+  const { user, role, isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
@@ -74,7 +74,10 @@ const AppContent: React.FC = () => {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          {/* <Route path="/signup" element={<Signup />} /> */}
+          {user?.role === "app_admin" && (
+           <Route path="/signup" element={<Signup />} />
+          )}
           {/* ⭐ NEW: Invite Token Route */}
           <Route path="/invite" element={<VerifyInvitePage />} />
 

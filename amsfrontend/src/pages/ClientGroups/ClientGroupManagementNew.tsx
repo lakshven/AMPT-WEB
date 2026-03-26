@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import ClientGroupListNew from "../../components/ClientGroups/table/ClientGroupListNew";
@@ -13,7 +13,7 @@ export default function ClientGroupManagementNew() {
   const [inviteGroupId, setInviteGroupId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
 
-  const loadGroups = async () => {
+  const loadGroups = useCallback(async () => {
     try {
       let query = `/client-groups?filter=active`;
       // ⭐ company_admin → restrict to their company (backend-safe, optional)
@@ -32,11 +32,11 @@ export default function ClientGroupManagementNew() {
     } catch {
       setMessage("Failed to load client groups");
     }
-  };
+  }, [role, companyId];
 
   useEffect(() => {
     loadGroups();
-  }, [role, companyId]);
+  }, [loadGroups]);
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-8">
