@@ -42,7 +42,7 @@ const IssueListPage: React.FC = () => {
       })
       .catch(() => setError("Failed to load issues"))
       .finally(() => setLoading(false));
-  }, [page, pageSize, showDeleted];
+  }, [page, pageSize, showDeleted]);
 
   useEffect(() => {
     fetchIssues();

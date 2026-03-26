@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useState,
-  useContext,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useState, useContext, useEffect, useCallback, ReactNode, } from "react";
 import { jwtDecode } from "jwt-decode";
 import { normalizeRole } from "../utils/normalizeRole";
 import axiosInstance from "../utils/axiosInstance";
@@ -77,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   };
   // ⭐ FIXED refreshUser with logging
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     try {
       const res = await axiosInstance.get("/me");
 
@@ -89,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("refreshUser error:", err);
     }
-  };
+  }, []);
  // Debug helper for console testing
 if (typeof window !== "undefined") {
   (window as any).__auth = { refreshUser };

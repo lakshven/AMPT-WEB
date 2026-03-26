@@ -32,7 +32,7 @@ export default function ClientGroupManagementNew() {
     } catch {
       setMessage("Failed to load client groups");
     }
-  }, [role, companyId];
+  }, [role, companyId]);
 
   useEffect(() => {
     loadGroups();

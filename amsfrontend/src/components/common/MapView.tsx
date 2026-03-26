@@ -4,7 +4,7 @@ import {
   TileLayer,
   useMap,
 } from "react-leaflet";
-import L, { LatLngTuple } from "leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
