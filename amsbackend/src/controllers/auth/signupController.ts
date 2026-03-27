@@ -5,6 +5,13 @@ function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 export async function signup(req: Request, res: Response): Promise<Response | void> {
   try {
+    // ⭐ ADD THIS BLOCK HERE
+    if (!req.user || req.user.role !== "app_admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Only app_admin can create users."
+      });
+    }
     console.log("🔥 SIGNUP BODY RECEIVED:", req.body);  // ⭐ ADD THIS
     const {
       firstName,
@@ -100,8 +107,9 @@ if (inviteToken) {
       accountTypeId: accountTypeRow.id,
       clientGroupId: group.id,
       companyId: group.companyId ,
-    },
-  });
+      disabled: false
+     },
+    });
 
   // 5. Mark token as used
   await prismaClient().inviteToken.update({
@@ -114,8 +122,8 @@ if (inviteToken) {
     action: "signup_invite_token",
     targetType: "user",
     targetId: newUser.id,
-    performedBy: "anonymous",
-    actorUserId: null,
+    performedBy: req.user.username,
+    actorUserId: req.user.id,
     clientGroupId: group.id,
     companyId: group.companyId,
     details: {
@@ -173,8 +181,8 @@ if (accountType === "single") {
     action: "signup_single_user",
     targetType: "user",
     targetId: newUser.id,
-    performedBy: "anonymous",
-    actorUserId: null,
+    performedBy: req.user.username,
+    actorUserId: req.user.id,
     clientGroupId: null,
     companyId: singleCompany.id,
     details: { accountType: "single", companyId: singleCompany.id, companyName: singleCompany.name },
@@ -222,7 +230,8 @@ if (accountType === "single") {
           role_id: role.id, // admin role ID
           accountTypeId: accountTypeRow.id, // ✅ use scalar FK
           clientGroupId: newGroup.id,
-          companyId: newCompany.id
+          companyId: newCompany.id,
+          disabled: false
         }
       });
      // Audit
@@ -230,8 +239,8 @@ if (accountType === "single") {
         action: "signup_company_admin",
         targetType: "user",
         targetId: newUser.id,
-        performedBy: "anonymous",
-        actorUserId: null,
+        performedBy: req.user.username,
+        actorUserId: req.user.id,
         clientGroupId: newGroup.id,
         companyId: newCompany.id,
         details: {
@@ -296,7 +305,8 @@ if (accountType === "single") {
           role_id: role.id,     // viewer role ID
           accountTypeId: accountTypeRow.id, // ✅ use scalar FK
           clientGroupId: group.id,
-          companyId: group.companyId
+          companyId: group.companyId,
+          disabled: false
         }
       });
       // Audit
@@ -304,8 +314,8 @@ if (accountType === "single") {
         action: "signup_company_user",
         targetType: "user",
         targetId: newUser.id,
-        performedBy: "anonymous",
-        actorUserId: null,
+        performedBy: req.user.username,
+        actorUserId: req.user.id,
         clientGroupId: group.id,
           companyId: group.companyId,
         details: {
@@ -334,8 +344,8 @@ if (accountType === "single") {
       action: "signup_error",
       targetType: "system",
       targetId: null,
-      performedBy: "anonymous",
-      actorUserId: null,
+      performedBy: req.user?.username || "anonymous",
+      actorUserId: req.user?.id || null,
       clientGroupId: null,
       companyId: null,
       details: { error: String(err) },
