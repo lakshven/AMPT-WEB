@@ -12,6 +12,7 @@ import { getUsersInClientGroup } from "../controllers/clientGroups/getUsersInCli
 import { moveUserToAnotherGroup } from "../controllers/clientGroups/moveUserToAnotherGroup";
 import { generateInviteToken } from "../controllers/clientGroups/generateInviteToken";
 import { verifyInviteToken } from "../controllers/clientGroups/verifyInviteToken";
+import {getClientGroupById} from "../controllers/clientGroups/getClientGroupById";
 import {getClientGroupAuditLogs} from "../controllers/clientGroups/clientGroupAuditLogs"
 const router = Router();
 router.get("/verify-invite", verifyInviteToken);
@@ -28,7 +29,7 @@ router.post( "/assign-user", requireRole("company_admin", "app_admin"), assignUs
 router.post( "/remove-user", requireRole("company_admin", "app_admin"), removeUserFromClientGroup );
 router.get( "/:clientGroupId/users", requireRole("company_admin", "app_admin"), getUsersInClientGroup );
 router.post( "/move-user", requireRole("company_admin", "app_admin"), moveUserToAnotherGroup );
-
+router.get("/:groupId", requireRole("company_admin", "app_admin"), getClientGroupById);
 router.get("/:groupId/audit-logs", requireRole("company_admin", "app_admin"), getClientGroupAuditLogs);
 router.post("/send-invite",requireRole("company_admin", "app_admin"), sendInviteEmail);
 router.post("/invite-token", requireRole("company_admin", "app_admin"), generateInviteToken);
