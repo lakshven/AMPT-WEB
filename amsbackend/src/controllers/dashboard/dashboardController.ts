@@ -158,6 +158,7 @@ export async function getDashboardRouteAssets(req: Request, res: Response): Prom
     const assets = await prismaClient().assets.findMany({
       where: {
         ...where,
+        is_deleted: false,
         latitude: { not: null },
         longitude: { not: null }
       },
