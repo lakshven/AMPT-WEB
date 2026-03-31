@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import GroupUsersList from "./GroupUserList";
 import AssignUserModal from "./AssignUserModal";
-import MoveUserModal from "./MoveUserModal";
 
 interface ClientGroupUsersSectionProps {
   clientGroupId: number;
@@ -11,21 +10,20 @@ export default function ClientGroupUsersSection({
   clientGroupId,
 }: ClientGroupUsersSectionProps) {
   const [assignModalOpen, setAssignModalOpen] = useState(false);
-  const [moveModalOpen, setMoveModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-
-  // This function will be passed to GroupUsersList
-  const handleMoveUser = (user: any) => {
-    setSelectedUser(user);
-    setMoveModalOpen(true);
-  };
 
   return (
     <div className="space-y-4">
+
+      {/* Assign User Button */}
+      <button
+        onClick={() => setAssignModalOpen(true)}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        Assign User
+      </button>
+
       {/* User List */}
-      <GroupUsersList
-        clientGroupId={clientGroupId}
-      />
+      <GroupUsersList clientGroupId={clientGroupId} />
 
       {/* Assign User Modal */}
       <AssignUserModal
@@ -33,14 +31,6 @@ export default function ClientGroupUsersSection({
         isOpen={assignModalOpen}
         onClose={() => setAssignModalOpen(false)}
         onAssigned={() => {}}
-      />
-
-      {/* Move User Modal */}
-      <MoveUserModal
-        user={selectedUser}
-        isOpen={moveModalOpen}
-        onClose={() => setMoveModalOpen(false)}
-        onMoved={() => {}}
       />
     </div>
   );

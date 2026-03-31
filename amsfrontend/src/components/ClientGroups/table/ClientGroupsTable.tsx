@@ -1,5 +1,5 @@
 import React from "react";
-
+import { useNavigate } from "react-router-dom";
 interface ClientGroup {
   id: number;
   name: string;
@@ -22,6 +22,7 @@ export default function ClientGroupsTable({
   onDelete,
   onRestore,
 }: ClientGroupsTableProps) {
+const navigate = useNavigate();
   return (
     <div className="w-full border rounded-lg shadow-sm bg-white">
       <table className="w-full text-left">
@@ -48,6 +49,17 @@ export default function ClientGroupsTable({
               </td>
 
               <td className="p-3 text-right space-x-3">
+               {/* ⭐ NEW: Group‑specific Dashboard button For Future Individual client groups*/}
+                {!group.isDeleted && (
+                  <button
+                    onClick={() =>
+                      navigate(`/admin/client-groups/${group.id}/dashboard`)
+                    }
+                    className="text-blue-600 hover:underline"
+                  >
+                  ClientDashboard
+                  </button>
+                )}
                 {!group.isDeleted && (
                   <button
                     onClick={() => onEdit(group)}
