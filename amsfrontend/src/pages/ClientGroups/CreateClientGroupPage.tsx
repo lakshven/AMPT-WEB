@@ -12,7 +12,7 @@ export default function CreateClientGroupPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-8">
-      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6">
+      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-xl p-6 border border-gray-200">
 
         <div className="flex justify-end mb-4">
           <button
