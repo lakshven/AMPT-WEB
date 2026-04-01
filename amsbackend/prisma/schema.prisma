@@ -1,4 +1,4 @@
-xgenerator client {
+generator client {
   provider = "prisma-client-js"
 }
 
@@ -11,14 +11,14 @@ model Company {
   id              Int              @id @default(autoincrement())
   name            String
   createdAt       DateTime         @default(now())
-  clientGroups    ClientGroup[]
-  users           Users[]
   issues          AssetIssue[]
-  assets          assets[]
   audits          Audit[]
-  systemAlerts    SystemAlert[]
+  clientGroups    ClientGroup[]
   userActivity    UserActivity[]
+  assets          assets[]
   companySettings CompanySettings?
+  systemAlerts    SystemAlert[]
+  users           Users[]
 }
 
 model Users {
@@ -38,14 +38,13 @@ model Users {
   assignedIssues  AssetIssue[]       @relation("AssignedUser")
   completedIssues AssetIssue[]       @relation("CompletedUser")
   audits          Audit[]
+  userActivity    UserActivity[]
   groups          UserGroup[]
   passwordResets  PasswordReset?
   accountType     AccountTypeOption? @relation(fields: [accountTypeId], references: [id])
   clientGroup     ClientGroup?       @relation(fields: [clientGroupId], references: [id])
   company         Company?           @relation(fields: [companyId], references: [id])
   roleRef         Role?              @relation(fields: [role_id], references: [id])
-  // ⭐ ADD THIS LINE
-  userActivity    UserActivity[]
 
   @@map("users")
 }
@@ -69,22 +68,20 @@ model PasswordReset {
 }
 
 model InviteToken {
-  id        Int       @id @default(autoincrement())
-  token     String    @unique
-  email     String?
-  role      String
-  groupId   Int
-  expiresAt DateTime
-  used      Boolean   @default(false)
-  usedAt    DateTime? // ⭐ Added this field (required fix)
-  createdAt DateTime  @default(now())
-
+  id          Int         @id @default(autoincrement())
+  token       String      @unique
+  email       String?
+  role        String
+  groupId     Int
+  expiresAt   DateTime
+  used        Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  usedAt      DateTime?
   clientGroup ClientGroup @relation(fields: [groupId], references: [id])
 }
 
 model assets {
   id                        Int                  @id @default(autoincrement())
-  elr                       String?
   structure_no              String?
   mileage                   String?
   structure_type            String?
@@ -92,7 +89,6 @@ model assets {
   structure_name            String?
   location                  String?
   carries                   String?
-  over                      String?
   material_type             String?
   work_item                 String?
   possible_consequence      String?
@@ -109,23 +105,25 @@ model assets {
   detailed_exam_years       String?
   last_exam                 DateTime?
   next_exam                 DateTime?
-  visual_report             String?
-  detailed_report           String?
   assessment                String?
   records                   String?
   longitude                 Float?
   latitude                  Float?
-  geocodeWarning            Boolean?             @default(false) // ⭐ ADD THIS
   is_deleted                Boolean              @default(false)
   riskRating                Int?                 @map("risk_rating")
   archived_at               DateTime?
   clientGroupId             Int?
   routeOrder                Int?
+  geocodeWarning            Boolean?             @default(false)
+  category                  String?
+  companyId                 Int?
+  detailed_report           String?
+  visual_report             String?
+  elr                       String?
+  over                      String?
   issues                    AssetIssue[]
   asset_deletion_log        asset_deletion_log[]
   clientGroup               ClientGroup?         @relation(fields: [clientGroupId], references: [id])
-  category                  String? // ⭐ required for analytics
-  companyId                 Int? // ⭐ required for filtering
   company                   Company?             @relation(fields: [companyId], references: [id])
 }
 
@@ -172,8 +170,8 @@ model AssetIssue {
   asset         assets       @relation(fields: [assetId], references: [id])
   assignedUser  Users?       @relation("AssignedUser", fields: [assignedTo], references: [id])
   clientGroup   ClientGroup? @relation(fields: [clientGroupId], references: [id])
+  company       Company?     @relation(fields: [companyId], references: [id])
   completedUser Users?       @relation("CompletedUser", fields: [completedBy], references: [id])
-  company       Company?     @relation(fields: [companyId], references: [id]) // ⭐ OPTIONAL BUT GOOD
 }
 
 model Role {
@@ -243,9 +241,9 @@ model ClientGroup {
   description  String?
   issues       AssetIssue[]
   company      Company?      @relation(fields: [companyId], references: [id])
+  inviteTokens InviteToken[]
   assets       assets[]
   users        Users[]
-  inviteTokens InviteToken[]
 }
 
 model Audit {
@@ -259,10 +257,9 @@ model Audit {
   clientGroupId Int?
   metadata      Json?
   performedBy   String
-  companyId     Int? // ⭐ add
+  companyId     Int?
+  actor         Users?   @relation(fields: [actorUserId], references: [id])
   company       Company? @relation(fields: [companyId], references: [id])
-
-  actor Users? @relation(fields: [actorUserId], references: [id])
 }
 
 model SystemAlert {
@@ -272,7 +269,7 @@ model SystemAlert {
   severity  String   @db.VarChar(20)
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-  companyId Int? // ⭐ add
+  companyId Int?
   company   Company? @relation(fields: [companyId], references: [id])
 
   @@map("system_alerts")
@@ -280,17 +277,17 @@ model SystemAlert {
 
 model ReferenceLocation {
   id            Int      @id @default(autoincrement())
-  rawInput      String // full combined input from user
-  type          String // "postcode", "address", "osgb36", "easting_northing", "uprn", "latlng", "refcode", etc.
-  referenceCode String? // parsed contractor/custom reference code, if any
-  latitude      Float? // resolved WGS84 latitude
-  longitude     Float? // resolved WGS84 longitude
-  easting       Float? // for OSGB / grid
-  northing      Float? // for OSGB / grid
-  osgb36        String? // original OSGB36 string if needed
-  uprn          String? // UPRN if provided
-  description   String? // optional human-readable description
-  sourceSystem  String? // e.g. "web_form", "import", "api"
+  rawInput      String
+  type          String
+  referenceCode String?
+  latitude      Float?
+  longitude     Float?
+  easting       Float?
+  northing      Float?
+  osgb36        String?
+  uprn          String?
+  description   String?
+  sourceSystem  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -298,27 +295,25 @@ model ReferenceLocation {
 model UserActivity {
   id        Int      @id @default(autoincrement())
   userId    Int?
-  hour      String // "00:00" → "23:00"
-  dayOfWeek Int
-  category  String
+  hour      String
   count     Int      @default(0)
   createdAt DateTime @default(now())
-  companyId Int? // ⭐ add
+  category  String
+  dayOfWeek Int
+  companyId Int?
   company   Company? @relation(fields: [companyId], references: [id])
-
-  user Users? @relation(fields: [userId], references: [id])
+  user      Users?   @relation(fields: [userId], references: [id])
 
   @@unique([hour, dayOfWeek, category])
 }
 
 model CompanySettings {
-  id          Int   @id @default(autoincrement())
-  companyId   Int   @unique
+  id          Int     @id @default(autoincrement())
+  companyId   Int     @unique
   companyInfo Json?
   branding    Json?
   preferences Json?
-
-  company Company @relation(fields: [companyId], references: [id])
+  company     Company @relation(fields: [companyId], references: [id])
 
   @@map("company_settings")
 }
