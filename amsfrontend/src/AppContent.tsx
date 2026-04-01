@@ -51,7 +51,7 @@ import CompanyAdminDashboard from "./pages/CompanyAdmin/CompanyAdminDashboard";
 import CompanyActivityLogs from "./pages/CompanyAdmin/CompanyActivityLogs";
 import CompanyAnalytics from "./pages/CompanyAdmin/CompanyAnalytics";
 import CompanySettings from "./pages/CompanyAdmin/CompanySettings";
-
+import ClientGroupDashboardPage from "./pages/ClientGroups/ClientGroupDashboardPage";
 const AppContent: React.FC = () => {
   const { user, role, isAuthenticated, loading } = useAuth();
 
@@ -145,7 +145,35 @@ const AppContent: React.FC = () => {
             <Route path="create" element={<CreateClientGroupPage />} />
             <Route path="list" element={<ClientGroupListPage />} />
             <Route path="manage-new" element={<ClientGroupManagementNew />} />
-          </Route>
+            <Route path=":groupId/dashboard" element={<ClientGroupDashboardPage />} />
+            </Route>
+          {/* ⭐ PUBLIC CLIENT GROUP ROUTES (Required for Company Admin Sidebar) */}
+          <Route
+            path="/client-groups"
+            element={
+              isAuthenticated && (role === "app_admin" || role === "company_admin")
+                ? <ClientGroupListPage />
+                : <Navigate to="/dashboard" replace />
+            }
+          />
+
+          <Route
+            path="/client-groups/create"
+            element={
+              isAuthenticated && (role === "app_admin" || role === "company_admin")
+                ? <CreateClientGroupPage />
+                : <Navigate to="/dashboard" replace />
+            }
+          />
+
+          <Route
+            path="/client-groups/:groupId"
+            element={
+              isAuthenticated && (role === "app_admin" || role === "company_admin")
+                ? <ClientGroupManagementNew />
+                : <Navigate to="/dashboard" replace />
+            }
+          />
 
           {/* ⭐ Unified Admin Layout (Sidebar + Nested Routes) */}
           <Route
