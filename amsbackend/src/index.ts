@@ -28,6 +28,7 @@ import auditRoutes from "./routes/auditRoutes";
 import companyAdminRoutes from "./routes/companyAdminRoutes";
 import { attachUserContext } from "./middleware/auth";
 import {startCronJobs} from "./scheduler/systemCron";
+import workItemsRoutes from "./routes/workItemRoutes";
 // ⭐ ADD THIS — lazy Prisma initialization
 import { getPrisma } from "./prisma/client";
 // ⭐ Wrap everything in an async bootstrap function
@@ -63,6 +64,7 @@ async function bootstrap() {
   app.use("/api/client-groups", clientGroupsRoutes);
   app.get("/departments", getDepartments);
   app.use("/api/audit-logs", auditRoutes);
+  app.use("/api/work-items", workItemsRoutes);
   app.use("/api/issues", assetIssueRoutes);
   app.use("/api/company-admin", companyAdminRoutes);
 

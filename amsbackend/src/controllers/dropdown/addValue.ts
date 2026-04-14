@@ -2,6 +2,7 @@
 import { Request, Response } from "express";
 import { getPrisma } from "../../prisma/client";
 function prismaClient() { return getPrisma(); }
+
 import { logAudit } from "../../models/Audit";
 
 export default async function addValue(req: Request, res: Response) {
@@ -31,7 +32,8 @@ export default async function addValue(req: Request, res: Response) {
 
     const actorUserId = (req as any).user?.id || null;
     const clientGroupId = (req as any).user?.clientGroupId || null;
-    const companyId = (req as any).user?.companyId ?? null;   // ← REQUIRED
+    const companyId = (req as any).user?.companyId ?? null;
+
     // 2️⃣ Prevent duplicates (active)
     const existingActive = await prismaClient().dropdownValue.findFirst({
       where: {
@@ -102,10 +104,9 @@ export default async function addValue(req: Request, res: Response) {
     });
 
     const dynamicOptions: Record<string, string[]> = {};
-    categories.forEach((c) => {
-      dynamicOptions[c.name] = c.values.map((v) => v.value);
+    categories.forEach((c: any) => {
+      dynamicOptions[c.name] = c.values.map((v: any) => v.value);
     });
-
 
     res.json({
       success: true,
