@@ -11,14 +11,14 @@ model Company {
   id              Int              @id @default(autoincrement())
   name            String
   createdAt       DateTime         @default(now())
-  issues          AssetIssue[]
-  audits          Audit[]
   clientGroups    ClientGroup[]
-  userActivity    UserActivity[]
-  assets          assets[]
-  companySettings CompanySettings?
-  systemAlerts    SystemAlert[]
   users           Users[]
+  issues          AssetIssue[]
+  assets          assets[]
+  audits          Audit[]
+  systemAlerts    SystemAlert[]
+  userActivity    UserActivity[]
+  companySettings CompanySettings?
 }
 
 model Users {
@@ -38,13 +38,13 @@ model Users {
   assignedIssues  AssetIssue[]       @relation("AssignedUser")
   completedIssues AssetIssue[]       @relation("CompletedUser")
   audits          Audit[]
-  userActivity    UserActivity[]
   groups          UserGroup[]
   passwordResets  PasswordReset?
   accountType     AccountTypeOption? @relation(fields: [accountTypeId], references: [id])
   clientGroup     ClientGroup?       @relation(fields: [clientGroupId], references: [id])
   company         Company?           @relation(fields: [companyId], references: [id])
   roleRef         Role?              @relation(fields: [role_id], references: [id])
+  userActivity    UserActivity[]
 
   @@map("users")
 }
@@ -68,63 +68,78 @@ model PasswordReset {
 }
 
 model InviteToken {
-  id          Int         @id @default(autoincrement())
-  token       String      @unique
-  email       String?
-  role        String
-  groupId     Int
-  expiresAt   DateTime
-  used        Boolean     @default(false)
-  createdAt   DateTime    @default(now())
-  usedAt      DateTime?
+  id        Int       @id @default(autoincrement())
+  token     String    @unique
+  email     String?
+  role      String
+  groupId   Int
+  expiresAt DateTime
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
   clientGroup ClientGroup @relation(fields: [groupId], references: [id])
 }
 
 model assets {
-  id                        Int                  @id @default(autoincrement())
-  structure_no              String?
-  mileage                   String?
-  structure_type            String?
-  spans                     String?
-  structure_name            String?
-  location                  String?
-  carries                   String?
-  material_type             String?
-  work_item                 String?
-  possible_consequence      String?
-  current_likelihood        String?
-  current_severity          String?
-  current_rating            String?
-  current_date_logged       DateTime?
-  risk_mitigation_proposals String?
-  mitigation_likelihood     String?
-  mitigation_severity       String?
-  mitigation_rating         String?
+  id                  Int     @id @default(autoincrement())
+  elr                 String?
+  structure_no        String?
+  mileage             String?
+  structure_type      String?
+  spans               String?
+  structure_name      String?
+  location            String?
+  carries             String?
+  over                String?
+  material_type       String?
+  detailed_exam_years String?
+  last_exam           DateTime?
+  next_exam           DateTime?
+  visual_report       String?
+  detailed_report     String?
+  assessment          String?
+  records             String?
+  longitude           Float?
+  latitude            Float?
+  geocodeWarning      Boolean             @default(false)
+  isDeleted           Boolean             @default(false) @map("is_deleted")
+  riskRating          Int?                @map("risk_rating")
+  archived_at         DateTime?
+  clientGroupId       Int?
+  routeOrder          Int?
+  issues              AssetIssue[]
+  asset_deletion_log  asset_deletion_log[]
+  clientGroup         ClientGroup?        @relation(fields: [clientGroupId], references: [id])
+  category            String?
+  companyId           Int?
+  company             Company?            @relation(fields: [companyId], references: [id])
+  workItems           WorkItem[]
+
+  @@map("assets")
+}                      
+
+model WorkItem {
+  id                        Int     @id @default(autoincrement())
+  asset_id                  Int
+  asset                     assets     @relation(fields: [asset_id], references: [id])
+  work_item                 String
+  possible_consequence      String
+  current_likelihood        Int
+  current_severity          Int
+  current_rating            Int
+  current_date_logged       DateTime
+  risk_mitigation_proposals String
+  mitigation_likelihood     Int
+  mitigation_severity       Int
+  mitigation_rating         Int
   mitigation_completion     DateTime?
-  status                    String?
-  detailed_exam_years       String?
-  last_exam                 DateTime?
-  next_exam                 DateTime?
-  assessment                String?
-  records                   String?
-  longitude                 Float?
-  latitude                  Float?
-  is_deleted                Boolean              @default(false)
-  riskRating                Int?                 @map("risk_rating")
-  archived_at               DateTime?
-  clientGroupId             Int?
-  routeOrder                Int?
-  geocodeWarning            Boolean?             @default(false)
-  category                  String?
-  companyId                 Int?
-  detailed_report           String?
-  visual_report             String?
-  elr                       String?
-  over                      String?
-  issues                    AssetIssue[]
-  asset_deletion_log        asset_deletion_log[]
-  clientGroup               ClientGroup?         @relation(fields: [clientGroupId], references: [id])
-  company                   Company?             @relation(fields: [companyId], references: [id])
+  status                    String
+  createdAt                 DateTime   @default(now())
+  updatedAt                 DateTime   @updatedAt
+  isDeleted                 Boolean    @default(false) @map("is_deleted")
+
+  @@index([asset_id])
 }
 
 model asset_deletion_log {
@@ -170,8 +185,8 @@ model AssetIssue {
   asset         assets       @relation(fields: [assetId], references: [id])
   assignedUser  Users?       @relation("AssignedUser", fields: [assignedTo], references: [id])
   clientGroup   ClientGroup? @relation(fields: [clientGroupId], references: [id])
-  company       Company?     @relation(fields: [companyId], references: [id])
   completedUser Users?       @relation("CompletedUser", fields: [completedBy], references: [id])
+  company       Company?     @relation(fields: [companyId], references: [id])
 }
 
 model Role {
@@ -241,9 +256,9 @@ model ClientGroup {
   description  String?
   issues       AssetIssue[]
   company      Company?      @relation(fields: [companyId], references: [id])
-  inviteTokens InviteToken[]
   assets       assets[]
   users        Users[]
+  inviteTokens InviteToken[]
 }
 
 model Audit {
@@ -251,15 +266,16 @@ model Audit {
   actorUserId   Int?
   action        String   @db.VarChar(100)
   targetType    String   @db.VarChar(50)
-  targetId      Int?
+  targetId      Int?  // FIXED: must be string
   details       Json?
   createdAt     DateTime @default(now())
   clientGroupId Int?
   metadata      Json?
   performedBy   String
   companyId     Int?
-  actor         Users?   @relation(fields: [actorUserId], references: [id])
   company       Company? @relation(fields: [companyId], references: [id])
+
+  actor Users? @relation(fields: [actorUserId], references: [id])
 }
 
 model SystemAlert {
@@ -296,24 +312,26 @@ model UserActivity {
   id        Int      @id @default(autoincrement())
   userId    Int?
   hour      String
+  dayOfWeek Int
+  category  String
   count     Int      @default(0)
   createdAt DateTime @default(now())
-  category  String
-  dayOfWeek Int
   companyId Int?
   company   Company? @relation(fields: [companyId], references: [id])
-  user      Users?   @relation(fields: [userId], references: [id])
+
+  user Users? @relation(fields: [userId], references: [id])
 
   @@unique([hour, dayOfWeek, category])
 }
 
 model CompanySettings {
-  id          Int     @id @default(autoincrement())
-  companyId   Int     @unique
+  id          Int   @id @default(autoincrement())
+  companyId   Int   @unique
   companyInfo Json?
   branding    Json?
   preferences Json?
-  company     Company @relation(fields: [companyId], references: [id])
+
+  company Company @relation(fields: [companyId], references: [id])
 
   @@map("company_settings")
 }
