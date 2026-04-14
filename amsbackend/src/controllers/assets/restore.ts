@@ -32,7 +32,7 @@ export const restoreAssetController = async (req: Request, res: Response): Promi
         companyId: true,
         structure_no: true,
         structure_name: true,
-        is_deleted: true }
+        isDeleted: true }
     });
 
     if (!existing) {
@@ -40,7 +40,7 @@ export const restoreAssetController = async (req: Request, res: Response): Promi
       return;
     }
 
-    if (!existing.is_deleted) {
+    if (!existing.isDeleted) {
       res.status(400).json({ success: false, message: "Asset is not deleted" });
       return;
     }
