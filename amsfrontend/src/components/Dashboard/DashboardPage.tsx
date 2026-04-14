@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+ximport React, { useEffect, useState, useCallback } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -21,7 +21,7 @@ const DashboardPage: React.FC = () => {
     total: 0,
     completed: 0,
     open: 0,
-    risk: "N/A",
+    highRisk: 0,
   });
 
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -55,7 +55,7 @@ const DashboardPage: React.FC = () => {
             total: 0,
             completed: 0,
             open: 0,
-            risk: "N/A",
+            highRisk: 0,
           }
         );
         setPriorities(res.data.priorities || []);

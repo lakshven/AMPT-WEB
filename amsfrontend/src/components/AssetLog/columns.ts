@@ -1,56 +1,60 @@
 export interface ColumnDefinition {
   key: string;
   label: string;
-  type?: "dropdown" | "date" | "file" | string;
+  width: number; // NEW
+  type?: "dropdown" | "date" | "file" | "statusDropdown" | string;
   filterType?: "text" | "dropdown" | "dateRange" | "none";
   headerClass?: string;
   cellClass?: string;
 }
 
-export const columns: ColumnDefinition[] = [
-  { key: "elr", label: "ELR", filterType: "text", headerClass: "w-[120px]", cellClass: "w-[60px]" },
-  { key: "structure_no", label: "Structure No", filterType: "text", headerClass: "w-[120px]", cellClass: "w-[60px]" },
-  { key: "mileage", label: "Mileage", filterType: "text", headerClass: "w-[120px]", cellClass: "w-[60px]" },
+//  1️⃣ ASSET COLUMNS
+export const assetColumns: ColumnDefinition[] = [
+  { key: "elr", label: "ELR", width: 120, filterType: "text" },
+  { key: "structure_no", label: "Structure No", width: 120, filterType: "text" },
+  { key: "mileage", label: "Mileage", width: 100, filterType: "text" },
 
-  // ⭐ Wider dropdowns
-  { key: "structure_type", label: "Structure Type", type: "dropdown", filterType: "dropdown", headerClass: "w-[100px]", cellClass: "w-[60px]" },
-  { key: "spans", label: "Spans", type: "dropdown", filterType: "dropdown", headerClass: "w-[100px]", cellClass: "w-[60px]" },
+  { key: "structure_type", label: "Structure Type", width: 140, type: "dropdown", filterType: "dropdown" },
+  { key: "spans", label: "Spans", width: 100, type: "dropdown", filterType: "dropdown" },
 
-  { key: "structure_name", label: "Structure Name", filterType: "text", headerClass: "w-[150px]", cellClass: "w-[200px]" },
+  { key: "structure_name", label: "Structure Name", width: 180, filterType: "text" },
 
-  { key: "location", label: "Location \n(latitude, longitude)", filterType: "text", headerClass: "whitespace-pre-line w-[180px]" },
+  { key: "location", label: "Location (lat, long)", width: 180, filterType: "text" },
 
-  { key: "carries", label: "Carries", type: "dropdown", filterType: "dropdown", headerClass: "w-[100px]", cellClass: "w-[60px]" },
-  { key: "over", label: "Over", type: "dropdown", filterType: "dropdown", headerClass: "w-[100px]", cellClass: "w-[60px]" },
-  { key: "material_type", label: "Material Type", type: "dropdown", filterType: "dropdown", headerClass: "w-[100px]", cellClass: "w-[60px]" },
+  { key: "carries", label: "Carries", width: 120, type: "dropdown", filterType: "dropdown" },
+  { key: "over", label: "Over", width: 120, type: "dropdown", filterType: "dropdown" },
+  { key: "material_type", label: "Material Type", width: 140, type: "dropdown", filterType: "dropdown" },
 
-  { key: "work_item", label: "Work Item", filterType: "text", headerClass: "w-[120px]", cellClass: "w-[150px]" },
-  { key: "possible_consequence", label: "Possible Consequence", filterType: "text", headerClass: "w-[150px]"},
+  { key: "last_exam", label: "Last Exam", width: 150, type: "date", filterType: "dateRange" },
+  { key: "next_exam", label: "Next Exam", width: 150, type: "date", filterType: "dateRange" },
+];
 
-  // ⭐ Risk scoring dropdowns (wider)
-  { key: "current_likelihood", label: "CL", type: "dropdown", filterType: "dropdown", headerClass: "w-[80px]", cellClass: "w-[60px]" },
-  { key: "current_severity", label: "CS", type: "dropdown", filterType: "dropdown", headerClass: "w-[80px]", cellClass: "w-[60px]" },
-  { key: "current_rating", label: "CR", type: "dropdown", filterType: "dropdown", headerClass: "w-[80px]", cellClass: "w-[60px]" },
+//  2️⃣ WORK ITEM COLUMNS
+export const workItemColumns: ColumnDefinition[] = [
+  { key: "work_item", label: "Work Item", width: 260, filterType: "text" },
+  { key: "possible_consequence", label: "Possible Consequence", width: 260, filterType: "text" },
 
-  { key: "current_date_logged", label: "Log Date", type: "date", filterType: "dateRange", headerClass: "w-[320px]", cellClass: "w-[250px]" },
+  { key: "current_likelihood", label: "CL", width: 60, type: "dropdown", filterType: "dropdown" },
+  { key: "current_severity", label: "CS", width: 60, type: "dropdown", filterType: "dropdown" },
+  { key: "current_rating", label: "CR", width: 60, filterType: "none" },
 
-  { key: "risk_mitigation_proposals", label: "Risk Mitigation Proposals", filterType: "text",  headerClass: "w-[150px]", cellClass: "w-[100px]" },
+  { key: "current_date_logged", label: "Log Date", width: 150, type: "date", filterType: "dateRange" },
 
-  { key: "mitigation_likelihood", label: "ML", type: "dropdown", filterType: "dropdown", headerClass: "w-[80px]", cellClass: "w-[60px]" },
-  { key: "mitigation_severity", label: "MS", type: "dropdown", filterType: "dropdown", headerClass: "w-[80px]", cellClass: "w-[60px]" },
-  { key: "mitigation_rating", label: "MR", type: "dropdown", filterType: "dropdown", headerClass: "w-[80px]", cellClass: "w-[60px]" },
+  { key: "risk_mitigation_proposals", label: "Risk Mitigation Proposals", width: 260, filterType: "text" },
 
-  { key: "mitigation_completion", label: "Completion", type: "date", filterType: "dateRange", headerClass: "w-[320px]", cellClass: "w-[250px]" },
+  { key: "mitigation_likelihood", label: "ML", width: 60, type: "dropdown", filterType: "dropdown" },
+  { key: "mitigation_severity", label: "MS", width: 60, type: "dropdown", filterType: "dropdown" },
+  { key: "mitigation_rating", label: "MR", width: 60, filterType: "none" },
 
-  { key: "status", label: "Status", type: "dropdown", filterType: "dropdown", headerClass: "w-[100px]", cellClass: "w-[60px]" },
+  { key: "mitigation_completion", label: "Completion", width: 150, type: "date", filterType: "dateRange" },
 
-  { key: "detailed_exam_years", label: "Exam Years", type: "dropdown", filterType: "dropdown", headerClass: "w-[80px]", cellClass: "w-[60px]" },
+  { key: "status", label: "Status", width: 100, type: "statusDropdown", filterType: "dropdown" },
+];
 
-  { key: "last_exam", label: "Last Exam", type: "date", filterType: "dateRange", headerClass: "w-[320px]", cellClass: "w-[250px]" },
-  { key: "next_exam", label: "Next Exam", type: "date", filterType: "dateRange", headerClass: "w-[320px]", cellClass: "w-[250px]" },
-
-  { key: "visual_report", label: "Visual Report", type: "file", filterType: "none",  headerClass: "w-[250px] whitespace-nowrap", cellClass: "w-[230px]" },
-  { key: "detailed_report", label: "Detailed Report", type: "file", filterType: "none", headerClass: "w-[250px] whitespace-nowrap", cellClass: "w-[230px]"  },
-  { key: "assessment", label: "Assessment", type: "file", filterType: "none", headerClass: "w-[250px] whitespace-nowrap", cellClass: "w-[230px]"},
-  { key: "records", label: "Records", type: "file", filterType: "none" , headerClass: "w-[250px] whitespace-nowrap", cellClass: "w-[230px]"}
+//  3️⃣ FILE COLUMNS
+export const fileColumns: ColumnDefinition[] = [
+  { key: "visual_report", label: "Visual Report", width: 150, type: "file", filterType: "none" },
+  { key: "detailed_report", label: "Detailed Report", width: 150, type: "file", filterType: "none" },
+  { key: "assessment", label: "Assessment", width: 150, type: "file", filterType: "none" },
+  { key: "records", label: "Records", width: 150, type: "file", filterType: "none" },
 ];

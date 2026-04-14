@@ -2,40 +2,45 @@ import { useState, useEffect, useCallback } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { usePopup } from "../context/PopupContext";
 import { useAuth } from "../context/AuthContext";
-
+import { recalcWorkItem } from "../utils/riskCalculations";
 export interface Asset {
   id?: number | string;
   isNewAsset?: boolean;
+  workItems?: WorkItem[];
+  [key: string]: any;
+}
+export interface WorkItem {
+  id?: number | string;
+  asset_id?: number | string;
+  work_item?: string;
+  possible_consequence?: string;
+  current_likelihood?: number;
+  current_severity?: number;
+  current_rating?: number;
+  current_date_logged?: string;
+  risk_mitigation_proposals?: string;
+  mitigation_likelihood?: number;
+  mitigation_severity?: number;
+  mitigation_rating?: number;
+  mitigation_completion?: string;
+  status?: string;
   [key: string]: any;
 }
 
 export function useAssets() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [total, setTotal] = useState(0);
-
-  // Pagination
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-
-  // Search
   const [search, setSearch] = useState("");
-
-  // Deleted toggle
   const [showDeleted, setShowDeleted] = useState(false);
-
-  // Sorting
   const [sortBy, setSortBy] = useState("id");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-
-  // Column filters
   const [filters, setFilters] = useState<Record<string, any>>({});
-
-  // Editing state
   const [editingId, setEditingId] = useState<number | string | null>(null);
   const [editedAsset, setEditedAsset] = useState<Asset>({});
   const [newAsset, setNewAsset] = useState<Asset | null>(null);
 
-  // Temp file state (kept for compatibility)
   const [tempUploadedFiles, setTempUploadedFiles] = useState<Record<string, File | null>>({});
   const [tempDefaultSelected, setTempDefaultSelected] = useState<Record<string, boolean>>({});
 
@@ -55,7 +60,7 @@ export function useAssets() {
     role === "single_user" ||
     role === "personal_owner";
 
-  // Fetch assets
+  //  FETCH ASSETS
   const fetchAssets = useCallback(
     async (params: any = {}) => {
       if (!user || !token) return;
@@ -84,7 +89,7 @@ export function useAssets() {
           ? res.data
           : res.data.assets || res.data.data || [];
 
-        const normalized = list.map((a: any) => ({
+        const normalized: Asset[] = list.map((a: any) => ({
           ...a,
           isNewAsset: false,
         }));
@@ -115,29 +120,44 @@ export function useAssets() {
     if (user && token) {
       fetchAssets();
     }
-  }, [user, token, page, limit, search, showDeleted, sortBy, sortOrder, filters, fetchAssets]);
+  }, [
+    user,
+    token,
+    page,
+    limit,
+    search,
+    showDeleted,
+    sortBy,
+    sortOrder,
+    filters,
+    fetchAssets,
+  ]);
 
-  // Edit existing asset
+  //  EDIT ASSET
   const handleEdit = (asset: Asset) => {
     if (!canModify) return;
-    if (!asset.id) return;
-    setEditingId(asset.id!);
+
+    const realAssetId = asset.id;
+    if (!realAssetId) return;
+
+    setEditingId(realAssetId);
     setEditedAsset({ ...asset });
   };
 
-  // Delete asset
+  //  DELETE ASSET
   const handleDelete = async (id: number | string): Promise<void> => {
     if (!canModify || !user || !token) return Promise.resolve();
 
     try {
-      const params: any = { includeDelete: true };
+      const params: any = { includeDeleted: true };
+
       if (isCompanyAccount && clientGroupId != null && !isAppAdmin) {
         params.clientGroupId = clientGroupId;
       }
 
       const res = await axiosInstance.delete(`/assets/${id}`, { params });
 
-      showPopup(res.data.message || "Row deleted successfully");
+      showPopup(res.data.message || "Asset deleted successfully");
 
       setAssets((prev) => prev.filter((a) => a.id !== id));
 
@@ -147,70 +167,129 @@ export function useAssets() {
     }
   };
 
-  // Restore asset
+  //  RESTORE ASSET
   const handleRestore = async (id: number | string): Promise<void> => {
     if (!canModify || !user || !token) return Promise.resolve();
+
     try {
       const res = await axiosInstance.put(`/assets/restore/${id}`);
       showPopup(res.data.message || "Asset restored successfully");
+
       await fetchAssets({ includeDeleted: false });
     } catch (err) {
       console.error("Error restoring asset:", err);
     }
   };
 
-  // Save edited asset
+  //  ADD WORK ITEM
+  const addWorkItem = (assetId?: number | string) => {
+    let newWI: WorkItem;
+
+    setEditedAsset((prev: any) => {
+      const updated = { ...prev };
+      if (!updated.workItems) updated.workItems = [];
+
+      const tempId = `wi-${Math.random().toString(36).slice(2)}`;
+
+      newWI = {
+        id: tempId,
+        asset_id: undefined,
+        work_item: "",
+        possible_consequence: "",
+        current_likelihood: 1,
+        current_severity: 1,
+        current_rating: 1,
+        current_date_logged: new Date().toISOString(),
+        risk_mitigation_proposals: "",
+        mitigation_likelihood: 1,
+        mitigation_severity: 1,
+        mitigation_rating: 1,
+        mitigation_completion: "",
+        status: "Open",
+        isNew: true,
+      };
+
+      updated.workItems.push(newWI);
+      return updated;
+    });
+
+    return newWI!;
+  };
+
+  //  CLEAN WORK ITEMS BEFORE SENDING
+  const sanitizeWorkItems = (items: any[]) => {
+    return items.map((wi: any) => {
+      // Remove temporary IDs
+      if (typeof wi.id === "string" && wi.id.startsWith("wi-")) {
+        delete wi.id;
+      }
+
+      // Convert numeric IDs
+      if (typeof wi.id === "string" && !isNaN(Number(wi.id))) {
+        wi.id = Number(wi.id);
+      }
+
+      // Remove invalid asset_id
+      if (typeof wi.asset_id === "string") {
+        delete wi.asset_id;
+      }
+
+      return wi;
+    });
+  };
+
+  //  SAVE EDITED ASSET
   const handleSave = async (): Promise<void> => {
     if (!canModify || !user || !token || editingId == null) return Promise.resolve();
 
     try {
       const original = assets.find((a) => a.id === editingId) || {};
 
-      const payload: any = {
+      const merged: any = {
         ...original,
         ...editedAsset,
       };
-      // ⭐ FIX: ensure Prisma-safe values (no undefined)
-      Object.keys(payload).forEach((key) => {
-        if (payload[key] === undefined) payload[key] = "";
-      });
+
+      const updatedWorkItems = (merged.workItems || [])
+        .map((wi: any) => recalcWorkItem(wi))
+        .sort((a: any, b: any) => b.current_rating - a.current_rating);
+
+      const assetPayload: any = {
+        ...merged,
+        workItems: sanitizeWorkItems(updatedWorkItems),
+      };
+
+      delete assetPayload.isNewAsset;
+
       if (isCompanyAccount && clientGroupId != null && !isAppAdmin) {
-        payload.clientGroupId = Number(clientGroupId);
+        assetPayload.clientGroupId = Number(clientGroupId);
       }
 
-      const res = await axiosInstance.put(`/assets/${editingId}`, payload);
+      const assetId = merged.id;
 
-      showPopup(res.data.message || "Asset updated successfully");
+      if (assetId) {
+        await axiosInstance.put(`/assets/${assetId}`, assetPayload);
+      }
 
-      setAssets((prev) =>
-        prev.map((a) =>
-          a.id === editingId
-            ? {
-                ...res.data.asset,
-                isNewAsset: false,
-                geocodeWarning: res.data.geocodeWarning,
-              }
-            : a
-        )
-      );
+      showPopup("Asset updated successfully");
 
       setEditingId(null);
       setEditedAsset({});
       await fetchAssets();
     } catch (err) {
       console.error("Error updating asset:", err);
+      showPopup("Failed to update asset");
     }
   };
 
-  // Add new asset row
+  //  ADD NEW ASSET
   const handleAdd = () => {
     if (!canModify) return;
     if (newAsset) return;
 
-    const tempId = `temp-${Math.random().toString(36).slice(2)}`;
-
     const blankAsset: Asset = {
-      id: tempId,
+      isNewAsset: true,
+      workItems: [],
       elr: "",
       structure_no: "",
       mileage: "",
@@ -221,55 +300,50 @@ export function useAssets() {
       carries: "",
       over: "",
       material_type: "",
-      work_item: "",
-      possible_consequence: "",
-      current_likelihood: "",
-      current_severity: "",
-      current_rating: "",
-      current_date_logged: "",
-      risk_mitigation_proposals: "",
-      mitigation_likelihood: "",
-      mitigation_severity: "",
-      mitigation_rating: "",
-      mitigation_completion: "",
-      status: "",
-      detailed_exam_years: "",
-      last_exam: "",
-      next_exam: "",
       visual_report: "",
       detailed_report: "",
       assessment: "",
       records: "",
-      isNewAsset: true,
+      detailed_exam_years: "",
+      last_exam: "",
+      next_exam: "",
     };
 
     setNewAsset(blankAsset);
-    setEditingId(blankAsset.id!);
+    setEditingId("new");
     setEditedAsset(blankAsset);
   };
-
-  // Save new asset
+  //  SAVE NEW ASSET
   const handleSaveNew = async (): Promise<void> => {
     if (!canModify || !user || !token || !newAsset) return Promise.resolve();
 
     try {
-      const payload: any = {
+      const merged: any = {
         ...newAsset,
         ...editedAsset,
       };
-      // ⭐ FIX: ensure Prisma-safe values (no undefined)
-      Object.keys(payload).forEach((key) => {
-        if (payload[key] === undefined) payload[key] = "";
-      });
+
+      const updatedWorkItems = (merged.workItems || [])
+        .map((wi: any) => recalcWorkItem(wi))
+        .sort((a: any, b: any) => b.current_rating - a.current_rating);
+
+      const assetPayload: any = {
+        ...merged,
+        workItems: sanitizeWorkItems(updatedWorkItems),
+      };
+
+      delete assetPayload.id;
+      delete assetPayload.isNewAsset;
+
       if (isCompanyAccount && clientGroupId != null && !isAppAdmin) {
-        payload.clientGroupId = Number(clientGroupId);
+        assetPayload.clientGroupId = Number(clientGroupId);
       }
 
-      const res = await axiosInstance.post("/assets", payload);
+      const res = await axiosInstance.post("/assets", assetPayload);
 
       showPopup(res.data.message || "Asset created successfully");
 
-      const created = {
+      const created: Asset = {
         ...res.data.asset,
         isNewAsset: false,
         geocodeWarning: res.data.geocodeWarning,
@@ -284,6 +358,7 @@ export function useAssets() {
       await fetchAssets();
     } catch (err) {
       console.error("Error creating asset:", err);
+      showPopup("Failed to create asset");
     }
   };
 
@@ -320,6 +395,6 @@ export function useAssets() {
     setTempUploadedFiles,
     tempDefaultSelected,
     setTempDefaultSelected,
+    addWorkItem,
   };
 }
-

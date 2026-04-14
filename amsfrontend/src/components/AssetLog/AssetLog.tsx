@@ -6,13 +6,11 @@ import { AuthContext } from "../../context/AuthContext";
 import RoleBadge from "../common/RoleBadge";
 import { useRBAC } from "../../hooks/useRBAC";
 
-// ✅ Asset type (Prisma-friendly)
 export interface Asset {
   id?: number | string;
   [key: string]: any;
 }
 
-// ✅ Props for AssetLog
 export interface AssetLogProps {
   role?: string;
 }
@@ -27,6 +25,7 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
     showDeleted,
 
     setPage,
+    setLimit,
     setSearch,
     setShowDeleted,
     sortBy,
@@ -49,22 +48,15 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
     handleAdd,
     handleSaveNew,
     setEditingId,
+    addWorkItem,   // ⭐ NEW — required
   } = useAssets();
 
   const dropdownOptions = useDropdownOptions();
   const auth = useContext(AuthContext);
-  // ⭐ Use role prop OR fallback to authenticated user role
-  const effectiveRole = role ?? auth.user?.role;
-  // ⭐ One-line RBAC
-  const rbac = useRBAC();
-  // ⭐ Debug logs (kept as you had them)
-  useEffect(() => {
-    console.log("AUTH USER:", auth.user);
-    console.log("ROLE FROM AUTH:", auth.user?.role);
-    console.log("ROLE FROM FLAGS:", effectiveRole);
-  }, [auth.user, effectiveRole]);
 
-  // ✅ Refetch assets whenever pagination/filter changes
+  const effectiveRole = role ?? auth.user?.role;
+  const rbac = useRBAC();
+
   useEffect(() => {
     fetchAssets({
       includeDeleted: showDeleted,
@@ -83,13 +75,10 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
         Asset Log Table
       </h2>
 
-      {/* Role badge based on prop or context role */}
       <div className="text-center mb-4">
         <RoleBadge role={String(effectiveRole ?? "")} />
       </div>
 
-
-      {/* 🔍 Global Search bar  */}
       <input
         type="text"
         placeholder="Search assets..."
@@ -101,11 +90,10 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
         className="border p-2 rounded mb-4 w-full"
       />
 
-      {/* Add Asset button */}
       {rbac.canAddAssets && (
         <button
           onClick={handleAdd}
-          disabled={!!newAsset} // ✅ prevent multiple new rows
+          disabled={!!newAsset}
           className={`px-4 py-2 rounded mb-4 text-white ${
             newAsset
               ? "bg-green-300 cursor-not-allowed"
@@ -116,9 +104,6 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
         </button>
       )}
 
-
-
-      {/* ✅ Admin-only toggle */}
       {rbac.canSeeDeletedToggle && (
         <label className="block mb-4">
           <input
@@ -139,6 +124,7 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
         editedAsset={editedAsset}
         newAsset={newAsset}
         setEditedAsset={setEditedAsset}
+        setEditingId={setEditingId}
         dropdownOptions={dropdownOptions}
         onEdit={handleEdit}
         onDelete={handleDelete}
@@ -146,11 +132,11 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
         onSave={handleSave}
         onSaveNew={handleSaveNew}
         onCancel={() => setEditingId(null)}
+        addWorkItem={addWorkItem}
         isAdmin={rbac.isAdmin || rbac.isAppAdmin || rbac.isCompanyAdmin}
         isAssetManager={rbac.isAssetManager}
         isEditor={rbac.isEditor || rbac.isSingleUser}
         isViewer={rbac.isViewer}
-        // ⭐ ADD THESE 4 LINES
         sortBy={sortBy}
         sortOrder={sortOrder}
         setSortBy={setSortBy}
@@ -158,7 +144,7 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
         filters={filters}
         setFilters={setFilters}
       />
-      {/* 📄 Pagination controls (minimal) */}
+
       <div className="flex justify-between items-center mt-4">
         <button
           disabled={page === 1}
@@ -183,4 +169,5 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
     </div>
   );
 };
+
 export default AssetLog;

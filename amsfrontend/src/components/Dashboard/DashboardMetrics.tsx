@@ -4,7 +4,7 @@ interface Metrics {
   total: number;
   completed: number;
   open: number;
-  risk: string;
+  higRisk: number;
 }
 
 interface DashboardMetricsProps {
@@ -46,8 +46,8 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       </div>
 
       <div className=" basis-64 shrink-0 grow-0 bg-yellow-100 text-yellow-800 p-4 rounded shadow text-center">
-    <p className="text-3xl font-bold">{metrics.risk}</p>
-    <p className="uppercase text-sm mt-2">Highest Risk Rating</p>
+    <p className="text-3xl font-bold">{metrics.highRisk}</p>
+    <p className="uppercase text-sm mt-2">Highest Risk (CR >= 7)</p>
       </div>
    </div>
       {/* View Asset Log Button */}
