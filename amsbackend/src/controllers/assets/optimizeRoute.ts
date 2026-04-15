@@ -120,7 +120,7 @@ export async function optimizeRoute(req: Request, res: Response): Promise<void> 
       where: {
         latitude: { not: null },
         longitude: { not: null },
-        is_deleted: false,
+        isDeleted: false,
         ...(isAppAdmin
           ? {}
           : {
