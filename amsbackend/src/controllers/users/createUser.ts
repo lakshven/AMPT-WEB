@@ -5,6 +5,15 @@ function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 
 export async function createUser(req: Request, res: Response): Promise<void> {
+  // ⭐ NEW: Prevent empty-body requests (cron jobs, system calls, etc.)
+  if (!req.body || Object.keys(req.body).length === 0) {
+    res.status(400).json({
+      success: false,
+      message: "Request body cannot be empty"
+    });
+    return;
+  }
+
   const user = req.user!;
   const role = String(user.role).toLowerCase();
 
@@ -22,7 +31,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
 
   const finalRoleName = invitedRole;
 
-  // ⭐ FIX ADDED — prevents Prisma crash
+  // ⭐ FIX: Prevent Prisma crash when invitedRole is missing
   if (!finalRoleName) {
     res.status(400).json({ success: false, message: "invitedRole is required" });
     return;
