@@ -4,11 +4,12 @@ import { login } from "../controllers/auth/loginController";
 import { forgotPassword } from "../controllers/auth/forgotPasswordController";
 import { resetPassword } from "../controllers/auth/resetPasswordController";
 import bcrypt from "bcryptjs";   // ⭐ add this import
-
+import { attachUserContext } from "../middleware/auth";
+import { requireRole } from "../middleware/requireRole";
 const router = Router();
 
 // ✅ Auth
-router.post("/signup", (req: Request, res: Response) => signup(req, res));
+router.post("/signup", attachUserContext, requireRole("app_admin"),signup);
 router.post("/login", (req: Request, res: Response) => login(req, res));
 
 // ✅ Password reset (token-based)

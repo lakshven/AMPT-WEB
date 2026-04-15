@@ -4,8 +4,9 @@ function prismaClient() { return getPrisma(); }
 
 export default async function getAllDropdowns(req: Request, res: Response) {
   try {
-    // 2️⃣ Load DYNAMIC dropdowns (only non-deleted values)
+    // Load all dropdown categories with ONLY active values
     const categories = await prismaClient().dropdownCategory.findMany({
+      orderBy: { name: "asc" }, // Keep UI consistent
       include: {
         values: {
           where: { isDeleted: false },
@@ -16,17 +17,20 @@ export default async function getAllDropdowns(req: Request, res: Response) {
 
     const dynamicOptions: Record<string, string[]> = {};
 
-    categories.forEach(((cat: { name: string; values: { value: string }[] }
-) => {
-      dynamicOptions[cat.name] = cat.values.map((v) => v.value);
-    }));
+    // Categories that should NEVER appear in dropdowns
+    const blockedCategories = ["current_rating", "mitigation_rating"];
 
-    // 3️⃣  DYNAMIC DROP DOWN
-    const finalDropdowns = {
-      ...dynamicOptions
-    };
+    categories.forEach((cat: any) => {
+      // Skip system-calculated categories
+      if (blockedCategories.includes(cat.name)) return;
 
-    res.json(finalDropdowns);
+      // Map values safely
+      dynamicOptions[cat.name] = cat.values.map((v: any) => String(v.value));
+    });
+
+    // Return clean, validated dropdowns
+    res.json(dynamicOptions);
+
   } catch (err) {
     console.error("Unified dropdown fetch error:", err);
     res.status(500).json({ error: "Failed to load dropdowns" });

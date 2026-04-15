@@ -1,5 +1,7 @@
 // models/Audit.ts
-import { recordUserActivity } from "./UserActivity"; // Analytics tracking
+import { recordUserActivity } from "./UserActivity";
+import { getPrisma } from "../prisma/client";
+function prismaClient() { return getPrisma(); }
 
 export async function logAudit({
   action,
@@ -14,7 +16,7 @@ export async function logAudit({
 }: {
   action: string;
   targetType: string;
-  targetId?: number | null;
+  targetId?: string | number | null;
   performedBy?: string;
   actorUserId?: number | null;
   clientGroupId: number | null;
@@ -22,14 +24,17 @@ export async function logAudit({
   details?: any;
   metadata?: Record<string, any>;
 }) {
-  // 1. Create the audit log
-  const { getPrisma } = await import("../prisma/client");
-  const prisma = getPrisma(); 
-  const audit = await prisma.audit.create({
+  // Convert targetId to number because Prisma schema requires Int?
+  const numericTargetId =
+    targetId !== undefined && targetId !== null
+      ? Number(targetId)
+      : null;
+
+  const audit = await prismaClient().audit.create({
     data: {
       action,
       targetType,
-      targetId,
+      targetId: numericTargetId,
       performedBy: performedBy || String(actorUserId) || "system",
       actorUserId,
       clientGroupId,
@@ -39,7 +44,7 @@ export async function logAudit({
     }
   });
 
-  // 2. Record analytics (only when user + company exist)
+  // Analytics tracking
   if (actorUserId && companyId) {
     await recordUserActivity({
       userId: actorUserId,

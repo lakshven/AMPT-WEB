@@ -1,30 +1,36 @@
+import { createAlertIfNew as _createAlertIfNew, deleteExpiredAlerts as _deleteExpiredAlerts } from "./alertsService";
 
-import{ createAlertIfNew as _createAlertIfNew, deleteExpiredAlerts as _deleteExpiredAlerts } from "./alertsService";
 type DbSizeResult = {
   size: bigint | number;
 };
+
 export async function getSystemMetrics() {
-  const {getPrisma} = await import("../prisma/client");
+  const { getPrisma } = await import("../prisma/client");
   function prismaClient() { return getPrisma(); }
+
+  // Total users
   const totalUsers = await prismaClient().users.count();
 
+  // Active users in last 24 hours
   const active24h = await prismaClient().audit.groupBy({
     by: ["actorUserId"],
     where: {
-      createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-    },
+      createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+    }
   });
 
+  // Active users in last 7 days
   const active7d = await prismaClient().audit.groupBy({
     by: ["actorUserId"],
     where: {
-      createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-    },
+      createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+    }
   });
 
   const active24hCount = active24h.length;
   const active7dCount = active7d.length;
 
+  // Database size
   const dbSizeQuery = await prismaClient().$queryRaw<DbSizeResult[]>`
     SELECT pg_database_size(current_database()) AS size;
   `;
@@ -32,6 +38,7 @@ export async function getSystemMetrics() {
   const dbSizeBytes = Number(dbSizeQuery[0].size);
   const dbSizeMB = Math.round(dbSizeBytes / (1024 * 1024));
 
+  // Max DB size (10GB)
   const maxDbMB = 10240;
   const dbCapacityPercent = Math.round((dbSizeMB / maxDbMB) * 100);
 
@@ -40,26 +47,29 @@ export async function getSystemMetrics() {
     active24h: active24hCount,
     active7d: active7dCount,
     dbSizeMB,
-    dbCapacityPercent,
+    dbCapacityPercent
   };
 }
+
 export async function checkSystemMetricsAndCreateAlerts() {
-  await _deleteExpiredAlerts(); 
+  await _deleteExpiredAlerts();
+
   const stats = await getSystemMetrics();
 
   if (stats.dbCapacityPercent > 90) {
-    await _createAlertIfNew(null,{
+    await _createAlertIfNew(null, {
       type: "db_usage",
       severity: "critical",
-      message: `Database usage at ${stats.dbCapacityPercent}%. Immediate action needed.`,
+      message: `Database usage at ${stats.dbCapacityPercent}%. Immediate action needed.`
     });
   } else if (stats.dbCapacityPercent > 75) {
     await _createAlertIfNew(null, {
       type: "db_usage",
       severity: "warning",
-      message: `Database usage at ${stats.dbCapacityPercent}%. Plan capacity.`,
+      message: `Database usage at ${stats.dbCapacityPercent}%. Plan capacity.`
     });
   }
 
   return stats;
 }
+

@@ -5,10 +5,11 @@ function prismaClient() { return getPrisma(); }
 export const getDeletedValues = async (req: Request, res: Response) => {
   try {
     // Ensure category is always a string
-    const category = Array.isArray(req.params.category)
+    const category: string = Array.isArray(req.params.category)
       ? req.params.category[0]
       : req.params.category;
 
+    // Validate category exists
     const categoryRecord = await prismaClient().dropdownCategory.findUnique({
       where: { name: category }
     });
@@ -17,6 +18,7 @@ export const getDeletedValues = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Category not found" });
     }
 
+    // Fetch ONLY soft-deleted values
     const deletedValues = await prismaClient().dropdownValue.findMany({
       where: {
         categoryId: categoryRecord.id,
@@ -25,7 +27,11 @@ export const getDeletedValues = async (req: Request, res: Response) => {
       orderBy: { value: "asc" }
     });
 
-    res.json({ deleted: deletedValues.map(v => v.value) });
+    // Return clean list of deleted values
+    res.json({
+      deleted: deletedValues.map((v: any) => String(v.value))
+    });
+
   } catch (error) {
     console.error("Error fetching deleted values:", error);
     res.status(500).json({ error: "Failed to fetch deleted values" });
