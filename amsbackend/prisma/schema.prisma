@@ -44,7 +44,6 @@ model Users {
   clientGroup     ClientGroup?       @relation(fields: [clientGroupId], references: [id])
   company         Company?           @relation(fields: [companyId], references: [id])
   roleRef         Role?              @relation(fields: [role_id], references: [id])
-  // ⭐ ADD THIS LINE
   userActivity    UserActivity[]
 
   @@map("users")
@@ -76,57 +75,71 @@ model InviteToken {
   groupId   Int
   expiresAt DateTime
   used      Boolean   @default(false)
-  usedAt    DateTime? // ⭐ Added this field (required fix)
+  usedAt    DateTime?
   createdAt DateTime  @default(now())
 
   clientGroup ClientGroup @relation(fields: [groupId], references: [id])
 }
 
 model assets {
-  id                        Int                  @id @default(autoincrement())
-  elr                       String?
-  structure_no              String?
-  mileage                   String?
-  structure_type            String?
-  spans                     String?
-  structure_name            String?
-  location                  String?
-  carries                   String?
-  over                      String?
-  material_type             String?
-  work_item                 String?
-  possible_consequence      String?
-  current_likelihood        String?
-  current_severity          String?
-  current_rating            String?
-  current_date_logged       DateTime?
-  risk_mitigation_proposals String?
-  mitigation_likelihood     String?
-  mitigation_severity       String?
-  mitigation_rating         String?
+  id                  Int     @id @default(autoincrement())
+  elr                 String?
+  structure_no        String?
+  mileage             String?
+  structure_type      String?
+  spans               String?
+  structure_name      String?
+  location            String?
+  carries             String?
+  over                String?
+  material_type       String?
+  detailed_exam_years String?
+  last_exam           DateTime?
+  next_exam           DateTime?
+  visual_report       String?
+  detailed_report     String?
+  assessment          String?
+  records             String?
+  longitude           Float?
+  latitude            Float?
+  geocodeWarning      Boolean             @default(false)
+  isDeleted           Boolean             @default(false) @map("is_deleted")
+  riskRating          Int?                @map("risk_rating")
+  archived_at         DateTime?
+  clientGroupId       Int?
+  routeOrder          Int?
+  issues              AssetIssue[]
+  asset_deletion_log  asset_deletion_log[]
+  clientGroup         ClientGroup?        @relation(fields: [clientGroupId], references: [id])
+  category            String?
+  companyId           Int?
+  company             Company?            @relation(fields: [companyId], references: [id])
+  workItems           WorkItem[]
+
+  @@map("assets")
+}                      
+
+model WorkItem {
+  id                        Int     @id @default(autoincrement())
+  asset_id                  Int
+  asset                     assets     @relation(fields: [asset_id], references: [id])
+  work_item                 String
+  possible_consequence      String
+  current_likelihood        Int
+  current_severity          Int
+  current_rating            Int
+  current_date_logged       DateTime
+  risk_mitigation_proposals String
+  mitigation_likelihood     Int
+  mitigation_severity       Int
+  mitigation_rating         Int
   mitigation_completion     DateTime?
-  status                    String?
-  detailed_exam_years       String?
-  last_exam                 DateTime?
-  next_exam                 DateTime?
-  visual_report             String?
-  detailed_report           String?
-  assessment                String?
-  records                   String?
-  longitude                 Float?
-  latitude                  Float?
-  geocodeWarning            Boolean?             @default(false) // ⭐ ADD THIS
-  is_deleted                Boolean              @default(false)
-  riskRating                Int?                 @map("risk_rating")
-  archived_at               DateTime?
-  clientGroupId             Int?
-  routeOrder                Int?
-  issues                    AssetIssue[]
-  asset_deletion_log        asset_deletion_log[]
-  clientGroup               ClientGroup?         @relation(fields: [clientGroupId], references: [id])
-  category                  String? // ⭐ required for analytics
-  companyId                 Int? // ⭐ required for filtering
-  company                   Company?             @relation(fields: [companyId], references: [id])
+  status                    String
+  createdAt                 DateTime   @default(now())
+  updatedAt                 DateTime   @updatedAt
+  isDeleted                 Boolean    @default(false) @map("is_deleted")
+
+  @@index([asset_id])
 }
 
 model asset_deletion_log {
@@ -173,7 +186,7 @@ model AssetIssue {
   assignedUser  Users?       @relation("AssignedUser", fields: [assignedTo], references: [id])
   clientGroup   ClientGroup? @relation(fields: [clientGroupId], references: [id])
   completedUser Users?       @relation("CompletedUser", fields: [completedBy], references: [id])
-  company       Company?     @relation(fields: [companyId], references: [id]) // ⭐ OPTIONAL BUT GOOD
+  company       Company?     @relation(fields: [companyId], references: [id])
 }
 
 model Role {
@@ -253,13 +266,13 @@ model Audit {
   actorUserId   Int?
   action        String   @db.VarChar(100)
   targetType    String   @db.VarChar(50)
-  targetId      Int?
+  targetId      Int?  // FIXED: must be string
   details       Json?
   createdAt     DateTime @default(now())
   clientGroupId Int?
   metadata      Json?
   performedBy   String
-  companyId     Int? // ⭐ add
+  companyId     Int?
   company       Company? @relation(fields: [companyId], references: [id])
 
   actor Users? @relation(fields: [actorUserId], references: [id])
@@ -272,7 +285,7 @@ model SystemAlert {
   severity  String   @db.VarChar(20)
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-  companyId Int? // ⭐ add
+  companyId Int?
   company   Company? @relation(fields: [companyId], references: [id])
 
   @@map("system_alerts")
@@ -280,17 +293,17 @@ model SystemAlert {
 
 model ReferenceLocation {
   id            Int      @id @default(autoincrement())
-  rawInput      String // full combined input from user
-  type          String // "postcode", "address", "osgb36", "easting_northing", "uprn", "latlng", "refcode", etc.
-  referenceCode String? // parsed contractor/custom reference code, if any
-  latitude      Float? // resolved WGS84 latitude
-  longitude     Float? // resolved WGS84 longitude
-  easting       Float? // for OSGB / grid
-  northing      Float? // for OSGB / grid
-  osgb36        String? // original OSGB36 string if needed
-  uprn          String? // UPRN if provided
-  description   String? // optional human-readable description
-  sourceSystem  String? // e.g. "web_form", "import", "api"
+  rawInput      String
+  type          String
+  referenceCode String?
+  latitude      Float?
+  longitude     Float?
+  easting       Float?
+  northing      Float?
+  osgb36        String?
+  uprn          String?
+  description   String?
+  sourceSystem  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -298,12 +311,12 @@ model ReferenceLocation {
 model UserActivity {
   id        Int      @id @default(autoincrement())
   userId    Int?
-  hour      String // "00:00" → "23:00"
+  hour      String
   dayOfWeek Int
   category  String
   count     Int      @default(0)
   createdAt DateTime @default(now())
-  companyId Int? // ⭐ add
+  companyId Int?
   company   Company? @relation(fields: [companyId], references: [id])
 
   user Users? @relation(fields: [userId], references: [id])

@@ -3,7 +3,7 @@ import axiosInstance from "../../utils/axiosInstance";
 // Backend response type
 interface SummaryResponse {
   total: number;
-  high_risk: number;
+  highRisk: number;
 }
 
 const ClientGroupAssetsWidget: React.FC = () => {
@@ -42,7 +42,7 @@ const ClientGroupAssetsWidget: React.FC = () => {
         <div>
           <div className="text-xs text-gray-500">High risk (≥ 7)</div>
           <div className="text-xl font-bold text-red-600">
-            {data?.high_risk ?? 0}
+            {data?.highRisk ?? 0}
           </div>
         </div>
       </div>

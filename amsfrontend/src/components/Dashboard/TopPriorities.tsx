@@ -8,24 +8,30 @@ interface TopPrioritiesProps {
   refreshDashboard: () => void;
 }
 
-const TopPriorities: React.FC<TopPrioritiesProps> = ({ priorities, refreshDashboard }) => {
+const TopPriorities: React.FC<TopPrioritiesProps> = ({
+  priorities,
+  refreshDashboard,
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("score-desc");
   const navigate = useNavigate();
 
   const getScoreClass = (score: number | null | undefined) => {
     if (score == null) return "bg-gray-300 text-gray-800";
-    if (score >= 80) return "bg-red-600 text-white";
-    if (score >= 50) return "bg-yellow-400 text-black";
-    return "bg-green-600 text-white";
+    if (score >= 15) return "bg-red-600 text-white";     // CR high
+    if (score >= 7) return "bg-yellow-400 text-black";   // CR medium
+    return "bg-green-600 text-white";                    // CR low
   };
 
+  // ⭐ Updated: mark work item complete
   const handleMarkComplete = async (id: number) => {
     try {
-      await axiosInstance.put(`/issues/${id}/complete`);
+      await axiosInstance.put(`/work-items/${id}`, {
+        status: "Completed",
+      });
       refreshDashboard();
     } catch (err) {
-      console.error("Failed to complete issue:", err);
+      console.error("Failed to complete work item:", err);
     }
   };
 
@@ -45,7 +51,9 @@ const TopPriorities: React.FC<TopPrioritiesProps> = ({ priorities, refreshDashbo
       case "score-asc":
         return (a.score ?? 0) - (b.score ?? 0);
       case "location-asc":
-        return (a.asset?.location || "").localeCompare(b.asset?.location || "");
+        return (a.asset?.location || "").localeCompare(
+          b.asset?.location || ""
+        );
       case "code-asc":
         return a.code.localeCompare(b.code);
       default:
@@ -82,13 +90,20 @@ const TopPriorities: React.FC<TopPrioritiesProps> = ({ priorities, refreshDashbo
       {/* Priority Cards */}
       <div className="space-y-6">
         {sorted.map((item) => (
-          <div key={item.id} className="border rounded p-4 shadow-sm bg-white relative">
+          <div
+            key={item.id}
+            className="border rounded p-4 shadow-sm bg-white relative"
+          >
             {/* Header Row */}
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-semibold text-lg">
                 {item.code} – {item.asset?.location || "Unknown Location"}
               </h3>
-              <span className={`px-3 py-1 rounded text-sm font-semibold ${getScoreClass(item.score)}`}>
+              <span
+                className={`px-3 py-1 rounded text-sm font-semibold ${getScoreClass(
+                  item.score
+                )}`}
+              >
                 {item.score ?? "N/A"}
               </span>
             </div>
@@ -96,27 +111,32 @@ const TopPriorities: React.FC<TopPrioritiesProps> = ({ priorities, refreshDashbo
             {/* Issue */}
             <p className="text-sm mb-2">{item.issue}</p>
 
-            {/* Mitigation */}
-            <p className="text-sm italic mb-6">{item.mitigation}</p>
+            {/* ⭐ Updated: show consequence instead of mitigation */}
+            <p className="text-sm italic mb-6">
+              {item.consequence || "No consequence provided"}
+            </p>
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-2 mt-2 relative z-10">
+              {/* ⭐ Updated: open asset log filtered to this asset */}
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                onClick={() => navigate(`/issues/${item.id}/assign`)}
+                onClick={() =>
+                  navigate(`/asset-log?assetId=${item.assetId}`)
+                }
               >
-                Assign
+                View Asset
               </button>
 
-              {item.id && (
-                <button 
-                  className="btn-update"
-                  onClick={() => navigate(`/issues/${item.id}/edit`)}
-                >
-                  Update
-                </button>
-              )}
+              {/* ⭐ Updated: open work item edit modal */}
+              <button
+                className="btn-update"
+                onClick={() => navigate(`/work-items/${item.id}/edit`)}
+              >
+                Update
+              </button>
 
+              {/* ⭐ Updated: mark work item complete */}
               <button
                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
                 onClick={() => handleMarkComplete(item.id)}
