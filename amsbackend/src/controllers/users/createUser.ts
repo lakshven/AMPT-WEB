@@ -22,6 +22,12 @@ export async function createUser(req: Request, res: Response): Promise<void> {
 
   const finalRoleName = invitedRole;
 
+  // ⭐ FIX ADDED — prevents Prisma crash
+  if (!finalRoleName) {
+    res.status(400).json({ success: false, message: "invitedRole is required" });
+    return;
+  }
+
   const existing = await prismaClient().users.findFirst({
     where: { OR: [{ username }, { email }] }
   });
