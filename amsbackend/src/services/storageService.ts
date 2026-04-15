@@ -2,24 +2,23 @@ import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 
-// ⭐ Individual folders for each file type
 const rootDir = process.cwd();
 
-const UPLOAD_DIRS = {
+export const UPLOAD_DIRS = {
   visual_report: path.join(rootDir, "uploads", "visual_report"),
   detailed_report: path.join(rootDir, "uploads", "detailed_report"),
   assessment: path.join(rootDir, "uploads", "assessment"),
   records: path.join(rootDir, "uploads", "records"),
 } as const;
 
-// Ensure all folders exist
+// Ensure folders exist
 Object.values(UPLOAD_DIRS).forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 });
 
-// Allowed file types
+// Allowed MIME types
 const ALLOWED_TYPES = [
   "application/pdf",
   "application/msword",
@@ -29,7 +28,7 @@ const ALLOWED_TYPES = [
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
-// ⭐ Save file buffer to the correct folder based on field name
+// Save file
 export async function saveFile(
   file: Express.Multer.File,
   field: keyof typeof UPLOAD_DIRS
@@ -38,12 +37,14 @@ export async function saveFile(
     try {
       // Validate type
       if (!ALLOWED_TYPES.includes(file.mimetype)) {
-        return reject(new Error("Invalid file type"));
+        return reject(
+          new Error("Invalid file type. Allowed: PDF, DOC, DOCX, XLSX")
+        );
       }
 
       // Validate size
       if (file.size > MAX_SIZE_BYTES) {
-        return reject(new Error("File too large"));
+        return reject(new Error("File too large. Max size is 5MB"));
       }
 
       const baseDir = UPLOAD_DIRS[field];
@@ -58,10 +59,24 @@ export async function saveFile(
       // Write file
       fs.writeFile(filePath, file.buffer, (err) => {
         if (err) return reject(err);
-        resolve(fileName);
+
+        // Return relative path (frontend friendly)
+        resolve(`${field}/${fileName}`);
       });
     } catch (err) {
       reject(err);
     }
   });
+}
+
+// Delete file (used when transaction fails)
+export function deleteFile(relativePath: string) {
+  try {
+    const fullPath = path.join(rootDir, "uploads", relativePath);
+    if (fs.existsSync(fullPath)) {
+      fs.unlinkSync(fullPath);
+    }
+  } catch (err) {
+    console.error("Failed to delete file:", err);
+  }
 }
