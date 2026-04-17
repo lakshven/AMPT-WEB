@@ -4,6 +4,7 @@ import { loadSecrets } from "./keyvault";
 import express, { Application } from "express";
 import dotenv from "dotenv";
 import path from "path";
+import fs from "fs";
 import corsOptions from "./middleware/corsConfig";
 import { userActivityLogger } from "./middleware/userActivityLogger";
 
@@ -27,18 +28,18 @@ import { getDepartments } from "./controllers/department/departmentController";
 import auditRoutes from "./routes/auditRoutes";
 import companyAdminRoutes from "./routes/companyAdminRoutes";
 import { attachUserContext } from "./middleware/auth";
-import {startCronJobs} from "./scheduler/systemCron";
+import { startCronJobs } from "./scheduler/systemCron";
 import workItemsRoutes from "./routes/workItemRoutes";
-// ⭐ ADD THIS — lazy Prisma initialization
 import { getPrisma } from "./prisma/client";
+
 // ⭐ Wrap everything in an async bootstrap function
 async function bootstrap() {
   dotenv.config();
+
   // ⭐ WAIT for Key Vault secrets BEFORE Prisma loads anywhere
   await loadSecrets();
   console.log("🔥 DATABASE_URL LOADED:", process.env.DATABASE_URL);
-  // ⭐ Initialize Prisma AFTER secrets load
-  function prismaClient() { return getPrisma(); }
+
   const app: Application = express();
   app.set("trust proxy", 1);
 
@@ -89,9 +90,8 @@ async function bootstrap() {
   app.use("/api/dropdown", dropdownRoutes);
   app.use("/reports", reports);
 
-  // ⭐ FIXED: Correctly closed /manuals-test route
+  // Manual test route
   app.get("/manuals-test", (req, res) => {
-    const fs = require("fs");
     const dir = path.join(process.cwd(), "public", "manuals");
 
     console.log("Checking folder:", dir);
@@ -114,11 +114,13 @@ async function bootstrap() {
   // Start server
   const PORT = process.env.PORT || 5000;
 
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`✅ Backend running on port ${PORT}`);
-    startCronJobs();   
+    await getPrisma().$connect();
+    console.log("⏳ Delayed cron startup...");
+    startCronJobs();
   });
-  
+
   return app;
 }
 

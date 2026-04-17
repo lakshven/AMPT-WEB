@@ -1,3 +1,4 @@
+import { getPrisma } from "../prisma/client";  // ← static import at top
 import { createAlertIfNew as _createAlertIfNew, deleteExpiredAlerts as _deleteExpiredAlerts } from "./alertsService";
 
 type DbSizeResult = {
@@ -5,14 +6,12 @@ type DbSizeResult = {
 };
 
 export async function getSystemMetrics() {
-  const { getPrisma } = await import("../prisma/client");
-  function prismaClient() { return getPrisma(); }
-
+   const prisma = getPrisma();
   // Total users
-  const totalUsers = await prismaClient().users.count();
+  const totalUsers = await prisma.users.count();
 
   // Active users in last 24 hours
-  const active24h = await prismaClient().audit.groupBy({
+  const active24h = await prisma.audit.groupBy({
     by: ["actorUserId"],
     where: {
       createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
@@ -20,7 +19,7 @@ export async function getSystemMetrics() {
   });
 
   // Active users in last 7 days
-  const active7d = await prismaClient().audit.groupBy({
+  const active7d = await prisma.audit.groupBy({
     by: ["actorUserId"],
     where: {
       createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
@@ -31,7 +30,7 @@ export async function getSystemMetrics() {
   const active7dCount = active7d.length;
 
   // Database size
-  const dbSizeQuery = await prismaClient().$queryRaw<DbSizeResult[]>`
+  const dbSizeQuery = await prisma.$queryRaw<DbSizeResult[]>`
     SELECT pg_database_size(current_database()) AS size;
   `;
 

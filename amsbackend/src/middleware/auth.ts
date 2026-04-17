@@ -1,19 +1,33 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { getPrisma } from "../prisma/client";
+
 function prismaClient() { return getPrisma(); }
+
+// Routes that do NOT require a token
+const PUBLIC_ROUTES = [
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
+];
 
 export async function attachUserContext(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  // ⭐ Skip auth for public routes
+  if (PUBLIC_ROUTES.some(route => req.path.startsWith(route))) {
+    return next();
+  }
+
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
 
   if (!token) {
-    req.user = undefined;
-    return next();
+    res.status(401).json({ message: "Unauthorized: missing token" });
+    return;
   }
 
   try {
@@ -35,8 +49,8 @@ export async function attachUserContext(
     });
 
     if (!dbUser) {
-       res.status(401).json({ message: "User not found" });
-        return;
+      res.status(401).json({ message: "User not found" });
+      return;
     }
 
     // ⭐ Keep roles EXACTLY as stored in DB
