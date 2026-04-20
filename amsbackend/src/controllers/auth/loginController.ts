@@ -142,19 +142,21 @@ export async function login(req: Request, res: Response): Promise<void> {
     });
   } catch (err) {
     console.error("Login error:", err);
-
+    try{
     await logAudit({
       action: "login_error",
       targetType: "system",
       targetId: null,
-      performedBy: identifier,
+      performedBy: identifier ?? "unknown",
       actorUserId: null,
       clientGroupId: null,
       companyId: null,
       details: { error: String(err) },
       metadata: { error: String(err) }
     });
-
+    } catch(auditErr){
+     console.error("AUDIT LOG FAILED", auditErr);    
+}
     res.status(500).json({
       success: false,
       message: "Server error during login"
