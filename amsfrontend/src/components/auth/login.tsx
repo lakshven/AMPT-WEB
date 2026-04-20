@@ -29,12 +29,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         rememberMe,
       });
 
-      localStorage.setItem("token", response.data.token);
       const data = response.data;
 
       if (!data.success) {
-        setError(data.message || "Invalid credentials");
+       localStorage.removeItem("token"); 
+       setError(data.message || "Invalid credentials");
         return;
+      }
+      //only store token login actually successed
+      if(data.token)
+      {
+        localStorage.setItem("token", data.token);
       }
 
       handleLogin(data);
@@ -42,7 +47,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
       navigate("/redirect");
     } catch (err: any) {
-      console.error("Login error:", err.response?.data || err.message);
+      console.error("Login error full response:", {
+         status: err.response?.data,
+         data: err.response?.data,
+         headers: error.response?.headers,
+      )};
       setError("Server error. Please try again.");
     }
   };
