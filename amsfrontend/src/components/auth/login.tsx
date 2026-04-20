@@ -51,7 +51,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
          status: err.response?.data,
          data: err.response?.data,
          headers: error.response?.headers,
-      )};
+       });
       setError("Server error. Please try again.");
     }
   };
