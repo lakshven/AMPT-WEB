@@ -50,7 +50,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       console.error("Login error full response:", {
          status: err.response?.data,
          data: err.response?.data,
-         headers: error.response?.headers,
+         headers: err.response?.headers,
        });
       setError("Server error. Please try again.");
     }
