@@ -62,7 +62,49 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
         return;
       }
     }
+    // ⭐ NEW: Handle asset permanent delete
+   if (req.body._permanentDelete === true || req.body._permanentDelete === "true") 
+  {
+  await prismaClient().$transaction(async (tx) => {
+    // 1️⃣ Delete work items
+    await tx.workItem.deleteMany({
+      where: { asset_id: assetId }
+    });
 
+    // 2️⃣ Delete asset deletion logs (THIS WAS MISSING)
+    await tx.asset_deletion_log.deleteMany({
+      where: { asset_id: assetId }
+    });
+
+    // 3️⃣ Delete the asset
+    await tx.assets.delete({
+      where: { id: assetId }
+    });
+  });
+
+  await logAudit({
+    action: "delete",
+    targetType: "asset",
+    targetId: assetId,
+    performedBy: user.username,
+    actorUserId: user.id,
+    clientGroupId: existing.clientGroupId,
+    companyId: existing.companyId ?? null,
+    details: {
+      reason: "Permanent delete from UI"
+    },
+    metadata: {
+      role: user.role,
+      accountType: user.accountType
+    }
+  });
+
+  res.json({
+    success: true,
+    message: "Asset permanently deleted"
+  });
+  return;
+}
     const {
       elr,
       structure_no,
@@ -237,21 +279,19 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
           }
         }
 
-        const toSoftDelete = [...existingIds].filter((id) => !incomingIds.has(id));
+       //* IDs that existed before but are NOT in incoming list anymore/*}
+        //* 👉 These were permanently deleted in the UI/*}
+        const toHardDelete = [...existingIds].filter((id) => !incomingIds.has(id));
 
-        if (toSoftDelete.length > 0) {
-          await tx.workItem.updateMany({
+        if (toHardDelete.length > 0) {
+          await tx.workItem.deleteMany({
             where: {
-              id: { in: toSoftDelete },
+              id: { in: toHardDelete },
               asset_id: assetId
-            },
-            data: {
-              isDeleted: true
             }
           });
         }
       }
-
       return updated;
     });
 

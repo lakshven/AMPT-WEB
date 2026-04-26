@@ -173,7 +173,7 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
         for (const wi of workItems) {
           await tx.workItem.create({
             data: {
-              id: wi.id || crypto.randomUUID(),
+              // id: wi.id || crypto.randomUUID(),
               asset_id: createdAsset.id,
               work_item: wi.work_item ?? "",
               possible_consequence: wi.possible_consequence ?? "",
