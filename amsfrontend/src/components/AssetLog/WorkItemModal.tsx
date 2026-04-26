@@ -23,7 +23,10 @@ const WorkItemModal: React.FC<WorkItemModalProps> = ({
     if (!open) return;
 
     if (initialData) {
-      setForm(initialData);
+      {/* ✔ KEEP the ID passed from AssetRow (temp or real) */}
+      setForm({ ...initialData,
+        isDeleted: initialData.isDeleted ?? false, 
+       });
     } else {
       setForm({
         id: crypto.randomUUID(), // safer unique ID
@@ -68,7 +71,7 @@ const WorkItemModal: React.FC<WorkItemModalProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-start justify-end z-50">
       <div className="bg-white p-6 rounded shadow-lg w-[700px] max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4 text-gray-800">
           {initialData ? "Edit Work Item" : "Add Work Item"}

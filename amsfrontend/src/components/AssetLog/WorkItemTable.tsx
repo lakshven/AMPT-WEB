@@ -6,6 +6,7 @@ interface WorkItemTableProps {
   onEdit: (wi: any) => void;
   onDelete: (id: number | string) => void;
   onRestore: (id: number | string) => void;
+  onPermanentDelete: (id: number | string) => void;
 }
 
 const WorkItemTable: React.FC<WorkItemTableProps> = ({
@@ -13,6 +14,7 @@ const WorkItemTable: React.FC<WorkItemTableProps> = ({
   onEdit,
   onDelete,
   onRestore,
+  onPermanentDelete,
 }) => {
   const [sortBy, setSortBy] = useState<string>("current_rating");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -185,6 +187,7 @@ const WorkItemTable: React.FC<WorkItemTableProps> = ({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onRestore={onRestore}
+                onPermanentDelete={onPermanentDelete}
               />
             ))}
           </tbody>

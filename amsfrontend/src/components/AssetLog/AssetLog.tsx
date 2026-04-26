@@ -44,10 +44,12 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
     handleEdit,
     handleDelete,
     handleRestore,
+    handlePermanentDelete,
     handleSave,
     handleAdd,
     handleSaveNew,
     setEditingId,
+    setNewAsset,
     addWorkItem,   // ⭐ NEW — required
   } = useAssets();
 
@@ -131,7 +133,13 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
         onRestore={handleRestore}
         onSave={handleSave}
         onSaveNew={handleSaveNew}
-        onCancel={() => setEditingId(null)}
+        onPermanentDelete={handlePermanentDelete}
+        // ⭐ FIXED: Cancel now resets everything
+        onCancel={() => {
+          setEditingId(null);
+          setEditedAsset({});
+          setNewAsset(null);
+        }}
         addWorkItem={addWorkItem}
         isAdmin={rbac.isAdmin || rbac.isAppAdmin || rbac.isCompanyAdmin}
         isAssetManager={rbac.isAssetManager}

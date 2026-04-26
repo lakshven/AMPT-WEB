@@ -16,7 +16,7 @@ interface AssetTableProps {
   onEdit: (asset: Asset) => void;
   onDelete: (id: number | string) => Promise<void>;
   onRestore: (id: number | string) => Promise<void>;
-
+  onPermanentDelete: (id: number | string) => Promise<void>;
   onSave: () => Promise<void>;
   onSaveNew: () => Promise<void>;
   onCancel: () => void;
@@ -48,6 +48,7 @@ const AssetTable: React.FC<AssetTableProps> = ({
   onEdit,
   onDelete,
   onRestore,
+  onPermanentDelete,
   onSave,
   onSaveNew,
   onCancel,
@@ -258,6 +259,7 @@ const AssetTable: React.FC<AssetTableProps> = ({
             onEdit={onEdit}
             onDelete={onDelete}
             onRestore={onRestore}
+            onPermanentDelete={onPermanentDelete}
             onSave={onSave}
             onSaveNew={onSaveNew}
             onCancel={onCancel}
@@ -282,6 +284,7 @@ const AssetTable: React.FC<AssetTableProps> = ({
             onEdit={onEdit}
             onDelete={onDelete}
             onRestore={onRestore}
+            onPermanentDelete={onPermanentDelete}
             onSave={onSave}
             onSaveNew={onSaveNew}
             onCancel={onCancel}

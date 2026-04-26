@@ -30,6 +30,7 @@ export interface AssetRowProps {
   onEdit: (asset: Asset) => void;
   onDelete: (id: string | number) => Promise<void>;
   onRestore: (id: string | number) => Promise<void>;
+  onPermanentDelete: (id: string | number) => Promise<void>;
   onSave: () => Promise<void>;
   onSaveNew: () => Promise<void>;
   onCancel: () => void;
@@ -53,6 +54,7 @@ const AssetRow: React.FC<AssetRowProps> = ({
   onEdit,
   onDelete,
   onRestore,
+  onPermanentDelete,
   onSave,
   onSaveNew,
   onCancel,
@@ -65,11 +67,14 @@ const AssetRow: React.FC<AssetRowProps> = ({
   const { showPopup } = usePopup();
 
   const realAssetId = asset.id;
-  const isEditing = editingId === realAssetId;
-  const isNew = newAsset?.id === realAssetId;
+  const isNew = asset.isNewAsset === true;
+  const isEditing =
+    editingId === realAssetId ||
+    (isNew && editingId === "new");
 
   const mergedAsset: Asset = React.useMemo(() => {
-    return isEditing ? { ...(editedAsset as Asset) } : { ...asset };
+    if (isEditing) return { ...(editedAsset as Asset) };
+     return { ...asset };
   }, [isEditing, editedAsset, asset]);
 
   const canEditFields = isAdmin || isAssetManager || isEditor;
@@ -77,9 +82,8 @@ const AssetRow: React.FC<AssetRowProps> = ({
   const [collapsed, setCollapsed] = React.useState(false);
   const [workItemModalOpen, setWorkItemModalOpen] = React.useState(false);
   const [editingWorkItem, setEditingWorkItem] = React.useState<any | null>(null);
-
-  if (!realAssetId) return null;
-
+  // Fix 4 - Allow rendering new asset row 
+  if (!realAssetId && !isNew) return null;
   return (
     <div className="border border-gray-300 rounded bg-white shadow-sm mb-3">
 
@@ -136,6 +140,7 @@ const AssetRow: React.FC<AssetRowProps> = ({
               }}
               onDelete={() => onDelete(realAssetId)}
               onRestore={() => onRestore(realAssetId)}
+              onPermanentDelete={() => onPermanentDelete(realAssetId)}
               onSave={onSave}
               onSaveNew={onSaveNew}
               onCancel={onCancel}
@@ -155,9 +160,25 @@ const AssetRow: React.FC<AssetRowProps> = ({
         <div className="p-2">
           <button
             onClick={() => {
-              const newWI = addWorkItem(realAssetId);
-              if (!newWI) return;
-              setEditingWorkItem(newWI);
+              // Create a TEMP work item in memory only, like an Excel new row
+              const tempWI = {
+                id: "temp-" + Date.now(),
+                asset_id: realAssetId,
+                work_item: "",
+                possible_consequence: "",
+                risk_mitigation_proposals: "",
+                current_likelihood: "",
+                current_severity: "",
+                current_rating: "",
+                current_date_logged: "",
+                mitigation_likelihood: "",
+                mitigation_severity: "",
+                mitigation_rating: "",
+                mitigation_completion: "",
+                status: "Open",
+                isDeleted: false,
+              };     
+              setEditingWorkItem(tempWI);
               setWorkItemModalOpen(true);
             }}
             className="mt-2 mb-2 px-3 py-1 bg-blue-600 text-white rounded text-sm"
@@ -204,7 +225,13 @@ const AssetRow: React.FC<AssetRowProps> = ({
                 ),
               }));
             }}
-          />
+            onPermanentDelete={(id) => {
+             setEditedAsset((prev: any) => ({
+             ...prev,
+             workItems: (prev.workItems ?? []).filter((wi: any) => wi.id !== id),
+           }));
+            }}            
+           />
         </div>
       )}
 
@@ -227,12 +254,20 @@ const AssetRow: React.FC<AssetRowProps> = ({
         assetId={realAssetId}
         initialData={editingWorkItem || undefined}
         onSave={(assetId, updatedWI) => {
-          setEditedAsset((prev: any) => ({
-            ...prev,
-            workItems: prev.workItems.map((wi: any) =>
-              wi.id === updatedWI.id ? updatedWI : wi
-            ),
-          }));
+          setEditedAsset((prev: any) => {
+            const prevItems = prev.workItems ?? [];
+            const isNew = String(updatedWI.id).startsWith("temp-");
+
+            return {
+              ...prev,
+              workItems: isNew
+                ? [...prevItems, updatedWI] // append new work item
+                : prevItems.map((wi: any) =>
+                    wi.id === updatedWI.id ? updatedWI : wi
+                  ), 
+            };
+          });
+
           showPopup("Work item saved successfully");
         }}
       />

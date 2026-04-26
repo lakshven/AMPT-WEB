@@ -23,6 +23,7 @@ export default function ActionButtons({
   onEdit,
   onDelete,
   onRestore,
+  onPermanentDelete,
   onSave,
   onSaveNew,
   onCancel,
@@ -65,8 +66,14 @@ export default function ActionButtons({
       )}
 
       {isAdmin && isDeleted && (
-        <button onClick={onRestore} className="bg-teal-600 text-white px-2 py-1 rounded">
+        <button onClick={onRestore} className="bg-teal-600 text-white px-2 py-1 rounded mr-2">
           Restore
+        </button>
+      )}
+      {/* ⭐ Only show Permanent Delete to Admins when the item is already deleted */}
+      {isAdmin && isDeleted && (
+        <button onClick={onPermanentDelete} className="bg-black text-white px-2 py-1 rounded">
+          Permanent Delete
         </button>
       )}
     </div>

@@ -5,9 +5,10 @@ interface WorkItemRowProps {
   onEdit: (wi: any) => void;
   onDelete: (id: string | number) => void;
   onRestore?: (id: string | number) => void;
+  onPermanentDelete?: (id: string | number) => void;
 }
 
-const WorkItemRow: React.FC<WorkItemRowProps> = ({ workItem, onEdit, onDelete, onRestore }) => {
+const WorkItemRow: React.FC<WorkItemRowProps> = ({ workItem, onEdit, onDelete, onRestore, onPermanentDelete }) => {
   const ratingBadge = (rating: number) => {
     if (!rating && rating !== 0) return "bg-gray-200 text-gray-700";
     if (rating >= 10) return "bg-red-600 text-white";
@@ -74,13 +75,22 @@ const WorkItemRow: React.FC<WorkItemRowProps> = ({ workItem, onEdit, onDelete, o
             Delete
           </button>
         ) : (
+          <>
           <button
             onClick={() => onRestore && onRestore(workItem.id)}
             className="px-2 py-1 text-xs bg-green-600 text-white rounded"
           >
             Restore
           </button>
-        )}
+         {/* ⭐ PERMANENT DELETE BUTTON (only visible when deleted) */}
+            <button
+              onClick={() => onPermanentDelete && onPermanentDelete(workItem.id)}
+              className="px-2 py-1 text-xs bg-black text-white rounded"
+            >
+              Permanent Delete
+            </button>
+          </>
+         )}
       </td>
     </tr>
   );

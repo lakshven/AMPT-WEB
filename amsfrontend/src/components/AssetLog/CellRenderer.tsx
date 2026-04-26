@@ -24,9 +24,10 @@ const CellRenderer: React.FC<CellRendererProps> = ({
   disabled,
 }) => {
 
-  // ⭐ Editing mode applies to both AssetRow + WorkItemRow
-  const isEditing = editingId != null;
-
+   // ⭐ Editing mode applies to both AssetRow + WorkItemRow
+  const isEditing =
+  editingId === asset.id ||
+  (asset.isNewAsset === true && editingId === "new");
   const handleChange = (newValue: any) => {
     setEditedAsset((prev: any) => ({
       ...prev,
