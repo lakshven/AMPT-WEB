@@ -25,22 +25,44 @@ const Signup: React.FC = () => {
   });
 
   const location = useLocation();
-  const inviteState = location.state as any;
-  const [error, setError] = useState<string>("");
-
   const navigate = useNavigate();
-
+  // ⭐ Read invite token from URL query string
+  const query = new URLSearchParams(location.search);
+  const inviteToken = query.get("token");
+  const [error, setError] = useState<string>("");
+  const [loadingInvite, setLoadingInvite] = useState<boolean>(true);
+  // ⭐ If inviteToken exists → verify with backend
   useEffect(() => {
-    if (inviteState?.token) {
-      setForm(prev => ({
-        ...prev,
-        email: inviteState.email || "",
-        accountType: "company",
-        isCompanyAdmin: false
-      }));
-    }
-  }, [inviteState]);
+    const verifyInvite = async () => {
+      if (!inviteToken) {
+        setLoadingInvite(false);
+        return;
+      }
 
+      try {
+        const res = await axiosInstance.get(
+          `/client-groups/verify-invite-token?token=${inviteToken}`
+        );
+ 
+        if (res.data.success) {
+          setForm(prev => ({
+            ...prev,
+            email: res.data.email || "",
+            accountType: "company",
+            isCompanyAdmin: false
+          }));
+        } else {
+          setError("Invalid or expired invite link");
+        }
+      } catch (err) {
+        setError("Invalid or expired invite link");
+      }
+
+      setLoadingInvite(false);
+    };
+
+    verifyInvite();
+  }, [inviteToken]);
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -58,8 +80,8 @@ const Signup: React.FC = () => {
         password: form.password,
       };
 
-      if (inviteState?.token) {
-        payload.inviteToken = inviteState.token;
+      if (inviteToken) {
+        payload.inviteToken = inviteToken;
         payload.accountType = "company";
         payload.isCompanyAdmin = false;
       } else {
@@ -72,6 +94,9 @@ const Signup: React.FC = () => {
           }
         }
       }
+      const endpoint = inviteToken
+       ? "/auth/signup"            // Public route for invited users
+       : "/auth/admin/signup";     // Protected route for app_admin manual signup
 
       const res = await axiosInstance.post("/auth/signup", payload);
       const data = res.data;
@@ -87,7 +112,13 @@ const Signup: React.FC = () => {
       setError("Server error during signup");
     }
   };
-
+  if (loadingInvite) {
+    return (
+      <div className="text-center text-white text-xl mt-20">
+        Verifying invite link...
+      </div>
+    );
+  }
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
 
@@ -159,9 +190,11 @@ const Signup: React.FC = () => {
             <input
               name="email"
               type="email"
+              value={form.email}
               placeholder="Email"
               onChange={handleChange}
               required
+              disabled={!!inviteToken} // Disable if email is pre-filled from invite
               className="w-full border px-3 py-2 rounded-md text-black"
             />
 
@@ -175,7 +208,7 @@ const Signup: React.FC = () => {
             />
 
             {/* Hide company fields if invited */}
-            {!inviteState?.token && (
+            {!inviteToken && (
               <>
                 <select
                   name="accountType"

@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 
 import Navbar from "./components/layout/Navbar";
@@ -54,7 +54,7 @@ import CompanySettings from "./pages/CompanyAdmin/CompanySettings";
 import ClientGroupDashboardPage from "./pages/ClientGroups/ClientGroupDashboardPage";
 const AppContent: React.FC = () => {
   const { user, role, isAuthenticated, loading } = useAuth();
-
+  const location = useLocation();
   if (loading) {
     return (
       <div className="text-white p-10 text-center text-xl">
@@ -62,7 +62,10 @@ const AppContent: React.FC = () => {
       </div>
     );
   }
-
+  const InviteRedirect = () => {
+  const loc = useLocation();
+  return <Navigate to={`/signup${loc.search}`} replace />;
+  };
   return (
     <>
       {isAuthenticated && <Navbar />}
@@ -74,12 +77,11 @@ const AppContent: React.FC = () => {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
-          {/* <Route path="/signup" element={<Signup />} /> */}
-          {user?.role === "app_admin" && (
-           <Route path="/signup" element={<Signup />} />
-          )}
-          {/* ⭐ NEW: Invite Token Route */}
-          <Route path="/invite" element={<VerifyInvitePage />} />
+          {/* ⭐ FIX #1 — Signup must be public (backend already blocks unauthorized signup) */}
+          <Route path="/signup" element={<Signup />} />
+
+          {/* ⭐ FIX #2 — Redirect /invite → /signup?token=xxxx */}
+          <Route path="/invite" element={<InviteRedirect/>} />
 
           <Route path="/redirect" element={<RedirectAfterLogin />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

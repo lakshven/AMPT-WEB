@@ -180,7 +180,27 @@ export function useAssets() {
       console.error("Error restoring asset:", err);
     }
   };
+   // PERMANENT DELETE ASSET
+const handlePermanentDelete = async (id: number | string): Promise<void> => {
+  if (!canModify || !user || !token) return Promise.resolve();
 
+  const confirmed = window.confirm(
+    "Permanently delete this asset and ALL its work items? This cannot be undone."
+  );
+  if (!confirmed) return;
+
+  try {
+    await axiosInstance.put(`/assets/${id}`, { _permanentDelete: true }, { headers: { "Content-Type": "application/json" } });
+
+    showPopup("Asset permanently deleted");
+
+    // Remove from local state immediately
+    setAssets((prev) => prev.filter((a) => a.id !== id));
+  } catch (err) {
+    console.error("Error permanently deleting asset:", err);
+    showPopup("Failed to permanently delete asset");
+  }
+}; 
   //  ADD WORK ITEM
   const addWorkItem = (assetId?: number | string) => {
     let newWI: WorkItem;
@@ -285,8 +305,11 @@ export function useAssets() {
   //  ADD NEW ASSET
   const handleAdd = () => {
     if (!canModify) return;
-    if (newAsset) return;
-
+    // ⭐ Force-cancel any existing edit
+    setEditingId(null);
+    setEditedAsset({});
+    setNewAsset(null);
+ 
     const blankAsset: Asset = {
       isNewAsset: true,
       workItems: [],
@@ -387,10 +410,12 @@ export function useAssets() {
     handleEdit,
     handleDelete,
     handleRestore,
+    handlePermanentDelete,
     handleSave,
     handleAdd,
     handleSaveNew,
     setEditingId,
+    setNewAsset,
     tempUploadedFiles,
     setTempUploadedFiles,
     tempDefaultSelected,
