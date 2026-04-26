@@ -1,11 +1,9 @@
 // src/controllers/clientGroups/generateInviteToken.ts
-
 import { Request, Response } from "express";
 import { getPrisma } from "../../prisma/client";
 function prismaClient() { return getPrisma(); }
 import crypto from "crypto";
 import { logAudit } from "../../models/Audit";
-import sendMail from "../../utils/sendEmail";
 
 export async function generateInviteToken(req: Request, res: Response) {
   try {
@@ -56,19 +54,6 @@ export async function generateInviteToken(req: Request, res: Response) {
     });
 
     const inviteLink = `${process.env.FRONTEND_URL}/invite?token=${invite.token}`;
-
-    // Optional: send email if provided
-    if (email) {
-      await sendMail({
-        to: email,
-        subject: "Your Client Group Invite",
-        html: `
-          <p>You have been invited to join a client group.</p>
-          <p>Click the link below to sign up:</p>
-          <p><a href="${inviteLink}">${inviteLink}</a></p>
-        `,
-      });
-    }
 
     // Audit log
     await logAudit({

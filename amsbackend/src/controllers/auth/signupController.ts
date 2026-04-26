@@ -5,13 +5,6 @@ function prismaClient() { return getPrisma(); }
 import { logAudit } from "../../models/Audit";
 export async function signup(req: Request, res: Response): Promise<Response | void> {
   try {
-    // ⭐ ADD THIS BLOCK HERE
-    if (!req.user || req.user.role !== "app_admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied. Only app_admin can create users."
-      });
-    }
     console.log("🔥 SIGNUP BODY RECEIVED:", req.body);  // ⭐ ADD THIS
     const {
       firstName,
@@ -27,6 +20,16 @@ export async function signup(req: Request, res: Response): Promise<Response | vo
       role: invitedRole,
       inviteToken   // ⭐ NEW: role from invite link (viewer/editor)
     } = req.body;
+    // ⭐ RULE 1 — PUBLIC SIGNUP IS BLOCKED
+    // 1. app_admin manually creating a user  and  2. invited user signing up using inviteToken
+    if (!inviteToken) {
+      if (!req.user || req.user.role !== "app_admin") {
+        return res.status(403).json({
+          success: false,
+          message: "Signup restricted. Only app_admin can create users manually."
+        });
+      }
+    }
     // Check if username or email already exists
     const existingUser = await prismaClient().users.findFirst({
       where: { OR: [{ username }, { email }] }
@@ -52,18 +55,20 @@ export async function signup(req: Request, res: Response): Promise<Response | vo
       });
     }
     // ⭐ NEW INVITE TOKEN FLOW (inviteToken)
-if (inviteToken) {
-  // 1. Find token
-  const token = await prismaClient().inviteToken.findUnique({
+   if (inviteToken) {
+   // 1. Find token
+   const token = await prismaClient().inviteToken.findUnique({
     where: { token: inviteToken },
-  });
-
-  if (!token || token.used || token.expiresAt < new Date()) {
+   });
+   // ⭐ FIXED: Correct UTC-safe expiration check
+      const now = Date.now();
+      const expires = token ? new Date(token.expiresAt).getTime() : 0;
+  if (!token || token.used || expires < now) {   
     return res.status(400).json({
       success: false,
       message: "Invalid or expired invite token",
-    });
-  }
+     });
+    }
 
   // 2. Fetch group
   const group = await prismaClient().clientGroup.findUnique({
@@ -122,8 +127,8 @@ if (inviteToken) {
     action: "signup_invite_token",
     targetType: "user",
     targetId: newUser.id,
-    performedBy: req.user.username,
-    actorUserId: req.user.id,
+    performedBy: req.user?.username || "invite_user",
+    actorUserId: req.user?.id || null,
     clientGroupId: group.id,
     companyId: group.companyId,
     details: {
@@ -181,8 +186,8 @@ if (accountType === "single") {
     action: "signup_single_user",
     targetType: "user",
     targetId: newUser.id,
-    performedBy: req.user.username,
-    actorUserId: req.user.id,
+    performedBy: req.user?.username || "invite_user",
+    actorUserId: req.user?.id,
     clientGroupId: null,
     companyId: singleCompany.id,
     details: { accountType: "single", companyId: singleCompany.id, companyName: singleCompany.name },
@@ -239,8 +244,8 @@ if (accountType === "single") {
         action: "signup_company_admin",
         targetType: "user",
         targetId: newUser.id,
-        performedBy: req.user.username,
-        actorUserId: req.user.id,
+        performedBy: req.user?.username || "invite_user",
+        actorUserId: req.user?.id,
         clientGroupId: newGroup.id,
         companyId: newCompany.id,
         details: {
@@ -314,8 +319,8 @@ if (accountType === "single") {
         action: "signup_company_user",
         targetType: "user",
         targetId: newUser.id,
-        performedBy: req.user.username,
-        actorUserId: req.user.id,
+        performedBy: req.user?.username || "invite_user",
+        actorUserId: req.user?.id,
         clientGroupId: group.id,
           companyId: group.companyId,
         details: {

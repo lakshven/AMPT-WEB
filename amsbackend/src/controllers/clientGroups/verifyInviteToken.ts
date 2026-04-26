@@ -35,8 +35,10 @@ export async function verifyInviteToken(req: Request, res: Response) {
         message: "This invite link has already been used",
       });
     }
-
-    if (invite.expiresAt < new Date()) {
+    // ⭐ FIXED: Correct UTC-safe expiration check
+    const now = Date.now();
+    const expires = new Date(invite.expiresAt).getTime();
+    if (expires < now) {
       return res.status(400).json({
         success: false,
         message: "This invite link has expired",
