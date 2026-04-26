@@ -30,6 +30,7 @@ import companyAdminRoutes from "./routes/companyAdminRoutes";
 import { attachUserContext } from "./middleware/auth";
 import { startCronJobs } from "./scheduler/systemCron";
 import workItemsRoutes from "./routes/workItemRoutes";
+import { verifyInviteToken } from "./controllers/clientGroups/verifyInviteToken";
 import { getPrisma } from "./prisma/client";
 
 // ⭐ Wrap everything in an async bootstrap function
@@ -50,7 +51,7 @@ async function bootstrap() {
   // API Routes
   app.use("/files", filesRouter);
   app.use("/api/auth", authRoutes);
-
+  app.get("/api/client-groups/verify-invite-token", verifyInviteToken);
   app.use(attachUserContext);
   app.use(userActivityLogger);
 

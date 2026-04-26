@@ -9,8 +9,10 @@ import { requireRole } from "../middleware/requireRole";
 
 const router = Router();
 
-// ✅ Signup (Protected) Auth
-router.post("/signup", attachUserContext, requireRole("app_admin"),signup);
+// ✅ Auth
+router.post("/signup", signup);
+/*   ⭐ PROTECTED SIGNUP  Used by app_admin to manually create users   Requires valid JWT + app_admin role */
+router.post( "/admin/signup", attachUserContext, requireRole("app_admin"), signup );
 //Login For Public
 router.post("/login", login);
 

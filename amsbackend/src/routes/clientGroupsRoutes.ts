@@ -15,7 +15,7 @@ import { verifyInviteToken } from "../controllers/clientGroups/verifyInviteToken
 import {getClientGroupById} from "../controllers/clientGroups/getClientGroupById";
 import {getClientGroupAuditLogs} from "../controllers/clientGroups/clientGroupAuditLogs"
 const router = Router();
-router.get("/verify-invite", verifyInviteToken);
+router.get("/verify-invite-token", verifyInviteToken);
 router.use(attachUserContext);
 router.get("/", requireRole("company_admin", "app_admin"), getClientGroups);
 router.post("/",requireRole("company_admin", "app_admin"), createClientGroup);
