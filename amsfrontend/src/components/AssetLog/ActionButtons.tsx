@@ -6,6 +6,7 @@ interface ActionButtonsProps {
   onEdit: () => void;
   onDelete: () => void;
   onRestore: () => void;
+  onPermanentDelete: () => void;
   onSave: () => void;
   onSaveNew: () => void;
   onCancel: () => void;
