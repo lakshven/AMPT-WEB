@@ -110,7 +110,7 @@ const AssetTable: React.FC<AssetTableProps> = ({
             </p>
 
             <a
-              href="/RiskScoringMatrix.xlsx"
+              href="/RiskScoringMatrixNew.xlsx"
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 bg-[#549E39] text-white rounded shadow inline-block"
