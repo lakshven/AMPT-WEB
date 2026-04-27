@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { normalizeRole } from "../../utils/normalizeRole";
 import { getManualForRole } from "../../utils/manualPaths";
 import { getHomeRoute } from "../../utils/getHomeRoute";
+import { FaLongArrowAltLeft } from "react-icons/fa";
 interface AuthUser {
   username?: string;
   role?: string;
@@ -46,13 +47,20 @@ const Navbar: React.FC<NavbarProps> = ({ mode = "default" }) => {
 
   return (
     <header className="bg-[#0989B1] text-white shadow-md overflow-x-auto whitespace-nowrap">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto pr-4">
         {/* TOP BAR */}
         <div className="flex justify-between items-center h-20">
 
-          {/* LEFT: Logo */}
-          <div className="flex items-center gap-4 flex-shrink-0">
-            <img
+          {/* LEFT: Arrow + Logo */}
+          <div className="flex items-center gap-4 ">
+              {/* ⭐ EXTREME-LEFT BACK ARROW BUTTON */}
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 text-white hover:text-gray-300 transition"
+            >
+             <FaLongArrowAltLeft size={28} /> 
+            </button>
+              <img
               src="/images/AMPT5.png"
               alt="AMPT Logo"
               className="w-32 md:w-48"
@@ -185,7 +193,13 @@ const Navbar: React.FC<NavbarProps> = ({ mode = "default" }) => {
           <NavLink to="/startup" className={navLinkClasses}>
             Home
           </NavLink>
-
+           {/* ⭐ MOBILE BACK ARROW */}
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 text-white hover:text-gray-300 transition"
+          >
+            <FaLongArrowAltLeft size={28} /> Back
+          </button>
           {mode === "landing" && (
             <>
               <NavLink
