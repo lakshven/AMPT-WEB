@@ -35,7 +35,7 @@ const WorkItemRow: React.FC<WorkItemRowProps> = ({ workItem, onEdit, onDelete, o
       <td className="px-3 py-2">
         {workItem.current_date_logged?.slice(0, 10) || "-"}
       </td>
-
+      <td className="px-3 py-2">{workItem.risk_mitigation_proposals || "-"}</td> 
       <td className="px-3 py-2 text-center">{workItem.mitigation_likelihood}</td>
       <td className="px-3 py-2 text-center">{workItem.mitigation_severity}</td>
 
