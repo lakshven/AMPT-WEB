@@ -205,7 +205,6 @@ const AssetTable: React.FC<AssetTableProps> = ({
                   )}
 
                   {col.filterType === "dateRange" && (
-                    <div className="flex gap-1">
                       <input
                         type="date"
                         className="border border-[#549E39] p-1 w-full"
@@ -217,18 +216,6 @@ const AssetTable: React.FC<AssetTableProps> = ({
                           )
                         }
                       />
-                      <input
-                        type="date"
-                        className="border border-[#549E39] p-1 w-full"
-                        value={filters[col.key + "_to"] || ""}
-                        onChange={(e) =>
-                          handleFilterChange(
-                            col.key + "_to",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </div>
                   )}
                 </th>
               ))}

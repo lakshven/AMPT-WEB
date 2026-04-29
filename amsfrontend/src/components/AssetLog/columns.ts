@@ -24,7 +24,8 @@ export const assetColumns: ColumnDefinition[] = [
   { key: "carries", label: "Carries", width: 120, type: "dropdown", filterType: "dropdown" },
   { key: "over", label: "Over", width: 120, type: "dropdown", filterType: "dropdown" },
   { key: "material_type", label: "Material Type", width: 140, type: "dropdown", filterType: "dropdown" },
-
+  { key: "last_exam", label: "Last Exam", width: 150, type: "date", filterType: "dateRange" },
+  { key: "next_exam", label: "Next Exam", width: 150, type: "date", filterType: "dateRange" },
 ];
 
 //  2️⃣ WORK ITEM COLUMNS

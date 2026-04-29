@@ -152,6 +152,11 @@ const WorkItemTable: React.FC<WorkItemTableProps> = ({
               <th style={{ width: 150 }} className="p-2 border bg-[#0989B1] text-white cursor-pointer" onClick={() => handleSort("current_date_logged")}>
                 Log Date {sortBy === "current_date_logged" && (sortOrder === "asc" ? "▲" : "▼")}
               </th>
+              
+              <th style={{ width: 260 }}   className="p-2 border bg-[#0989B1] text-white cursor-pointer"
+               onClick={() => handleSort("risk_mitigation_proposals")}
+              >  Risk Mitigation Proposals {sortBy === "risk_mitigation_proposals" && (sortOrder === "asc" ? "▲" : "▼")}
+              </th>
 
               <th style={{ width: 80 }} className="p-2 border bg-[#0989B1] text-white cursor-pointer" onClick={() => handleSort("mitigation_likelihood")}>
                 ML {sortBy === "mitigation_likelihood" && (sortOrder === "asc" ? "▲" : "▼")}
