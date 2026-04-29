@@ -25,8 +25,6 @@ export const assetColumns: ColumnDefinition[] = [
   { key: "over", label: "Over", width: 120, type: "dropdown", filterType: "dropdown" },
   { key: "material_type", label: "Material Type", width: 140, type: "dropdown", filterType: "dropdown" },
 
-  { key: "last_exam", label: "Last Exam", width: 150, type: "date", filterType: "dateRange" },
-  { key: "next_exam", label: "Next Exam", width: 150, type: "date", filterType: "dateRange" },
 ];
 
 //  2️⃣ WORK ITEM COLUMNS
@@ -53,8 +51,8 @@ export const workItemColumns: ColumnDefinition[] = [
 
 //  3️⃣ FILE COLUMNS
 export const fileColumns: ColumnDefinition[] = [
-  { key: "visual_report", label: "Visual Report", width: 150, type: "file", filterType: "none" },
-  { key: "detailed_report", label: "Detailed Report", width: 150, type: "file", filterType: "none" },
-  { key: "assessment", label: "Assessment", width: 150, type: "file", filterType: "none" },
-  { key: "records", label: "Records", width: 150, type: "file", filterType: "none" },
+  { key: "visual_report", label: "Visual Report", width: 260, type: "file", filterType: "none" },
+  { key: "detailed_report", label: "Detailed Report", width: 260, type: "file", filterType: "none" },
+  { key: "assessment", label: "Assessment", width: 260, type: "file", filterType: "none" },
+  { key: "records", label: "Records", width: 260, type: "file", filterType: "none" },
 ];
