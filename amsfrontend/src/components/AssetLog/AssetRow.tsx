@@ -162,7 +162,8 @@ const AssetRow: React.FC<AssetRowProps> = ({
               isViewer={isViewer}
             />
           </div>
-        </div>
+          )}
+         </div>
       </div>
 
       {/* ADD WORK ITEM BUTTON */}
