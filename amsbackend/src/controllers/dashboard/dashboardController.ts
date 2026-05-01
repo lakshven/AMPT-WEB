@@ -97,11 +97,19 @@ export async function getDashboardMetrics(req: Request, res: Response): Promise<
     const topWorkItems = await prismaClient().workItem.findMany({
       where: {
         asset: assetFilter,
-        current_rating: { gte: 7 }
+        current_rating: { gte: 7 },
+        status: { not: "Completed" }   // ✅ exclude completed items
       },
       orderBy: { current_rating: "desc" },
       take: 5,
-      include: {
+      select: {
+        id: true,
+        asset_id: true,
+        work_item: true,
+        possible_consequence: true,
+        status: true,
+        risk_mitigation_proposals: true,
+        current_rating: true,
         asset: {
           select: {
             id: true,
@@ -120,6 +128,7 @@ export async function getDashboardMetrics(req: Request, res: Response): Promise<
       title: wi.asset?.structure_name,
       issue: wi.work_item,
       consequence: wi.possible_consequence,
+      risk_mitigation_proposals: wi.risk_mitigation_proposals,
       score: wi.current_rating,
       status: wi.status,
       asset: {
@@ -172,10 +181,28 @@ export async function getDashboardRouteAssets(req: Request, res: Response): Prom
         riskRating: true,
         latitude: true,
         longitude: true,
-        routeOrder: true
+        routeOrder: true,
+        workItems: {
+          where: { isDeleted: false },
+          select: {
+            work_item: true,
+            risk_mitigation_proposals: true,
+            current_rating: true
+          }
+        }
       }
     });
+    // ⭐ Compute highest CR for each asset
+    const enrichedAssets = assets.map((asset: any) => {
+      const highestCR = asset.workItems.length
+        ? Math.max(...asset.workItems.map((wi: any) => wi.current_rating || 0))
+        : null;
 
+      return {
+        ...asset,
+        highestCR
+      };
+    });
     await logAudit({
       action: "view",
       targetType: "dashboard",
@@ -186,7 +213,7 @@ export async function getDashboardRouteAssets(req: Request, res: Response): Prom
       metadata: { accessed: "routeAssets" }
     });
 
-    res.json({ assets });
+    res.json({ assets: enrichedAssets });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Dashboard route error:", message);

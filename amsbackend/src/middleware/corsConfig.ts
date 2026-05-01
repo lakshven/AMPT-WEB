@@ -13,7 +13,7 @@ const corsOptions = cors({
     "Cache-Control",
     "X-Requested-With"
   ],
-  credentials: false
+  credentials: true
 });
 
 export default corsOptions;

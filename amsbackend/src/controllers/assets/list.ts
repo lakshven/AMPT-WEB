@@ -263,3 +263,27 @@ export const getAssetLocations = async (req: Request, res: Response): Promise<vo
     res.status(500).json({ error: "Failed to fetch asset locations" });
   }
 };
+export const getAssetById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = Number(req.params.id);
+
+    const asset = await prismaClient().assets.findUnique({
+      where: { id },
+      include: {
+        workItems: {
+          orderBy: { current_date_logged: "desc" }
+        }
+      }
+    });
+
+    if (!asset) {
+      res.status(404).json({ success: false, message: "Asset not found" });
+      return;
+    }
+
+    res.json({ success: true, asset });
+  } catch (err) {
+    console.error("Get asset by ID error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch asset" });
+  }
+};

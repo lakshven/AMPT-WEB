@@ -29,6 +29,8 @@ export const ROLE_PERMISSIONS = {
     "VIEW_ASSET",
     "CREATE_ASSET",
     "EDIT_ASSET",
+    "DELETE_ASSET",      // ⭐ REQUIRED for soft delete
+    "RESTORE_ASSET",     // ⭐ REQUIRED for restore
     "EXPORT_ASSET",
     "ARCHIVE_ASSET",
     "BULK_UPDATE_ASSET",

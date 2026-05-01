@@ -16,7 +16,8 @@ import { requireRole } from "../middleware/requireRole";
 import { requirePermission } from "../middleware/requirePermission";
 import { updateRouteOrder } from "../controllers/assets/updateRouteOrder";
 import { optimizeRoute } from "../controllers/assets/optimizeRoute";
-
+import { deleteFileController } from "../controllers/assets/deleteFile";
+import { getAssetById } from "../controllers/assets/list"; // add this impor
 const router = Router();
 
  //  PUBLIC ROUTES (viewer/editor/asset_manager/admin)
@@ -24,7 +25,7 @@ router.get("/", attachUserContext, (req: Request, res: Response) => getAssets(re
 router.get("/summary", attachUserContext, (req: Request, res: Response) => getSummary(req, res));
 router.get("/locations", attachUserContext, (req: Request, res: Response) => getAssetLocations(req, res));
 //   PROTECTED ROUTES (asset_manager + admin)
-const allowedRoles = ["asset_manager", "app_admin", "company_admin", "single_user"];
+const allowedRoles = ["asset_manager", "app_admin", "company_admin", "single_user", "editor"];
 // Create asset
 router.post(
   "/",
@@ -54,7 +55,14 @@ router.put(
   ]),
   (req: Request, res: Response) => updateAsset(req, res)
 );
-
+{/* ⭐⭐⭐ NEW — DELETE A SPECIFIC FILE FROM AN ASSET ⭐⭐⭐/*/}
+router.delete(
+  "/:id/file",
+  attachUserContext,
+  requireRole(...allowedRoles),
+  requirePermission("EDIT_ASSET"),
+  (req: Request, res: Response) => deleteFileController(req, res)
+);
 // ⭐ NEW: Update route order (drag-and-drop map)
 router.post(
   "/update-route-order",
@@ -72,7 +80,13 @@ router.post(
   requirePermission("EDIT_ASSET"),
   (req: Request, res: Response) => optimizeRoute(req, res)
 );
-
+router.get(
+  "/:id",
+  attachUserContext,
+  requireRole(...allowedRoles),
+  requirePermission("VIEW_ASSET"),
+  (req: Request, res: Response) => getAssetById(req, res)
+);
 
 // Delete asset
 router.delete(

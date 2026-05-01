@@ -12,8 +12,37 @@ export async function upgradeToCompany(req: Request, res: Response) {
         message: "Unauthorized: req.user missing"
       });
     }
+    // 1. Fetch target user
+    const targetUser = await prismaClient().users.findUnique({
+      where: { id: userId }
+    });
 
-    // 1. Fetch company_admin role
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // 2. Permission check — company_admin cannot upgrade users from another company
+    if (
+      req.user.role === "company_admin" &&
+      targetUser.companyId !== req.user.companyId
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: cannot upgrade user from another company"
+      });
+    }
+
+    // 3. Prevent upgrading an already company_admin
+    if (targetUser.role === "company_admin") {
+      return res.status(400).json({
+        success: false,
+        message: "User is already a company_admin"
+      });
+    }
+    // 4. Fetch company_admin role
     const companyAdminRole = await prismaClient().role.findUnique({
       where: { name: "company_admin" }
     });
@@ -42,7 +71,7 @@ export async function upgradeToCompany(req: Request, res: Response) {
       data: {
         name: "Default Group",
         accessCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
-        companyId: req.user.companyId
+        companyId: targetUser.companyId
       }
     });
 

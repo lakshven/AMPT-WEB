@@ -62,12 +62,23 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
         return;
       }
     }
+    //  ⭐ BLOCK EDITOR FROM PERMANENT DELETE
+    if (
+      user.role === "editor" &&
+      (req.body._permanentDelete === true || req.body._permanentDelete === "true")
+    ) {
+       res.status(403).json({
+        success: false,
+        message: "Editor is not allowed to permanently delete assets"
+      });
+      return;
+    }
     // ⭐ NEW: Handle asset permanent delete
-   if (req.body._permanentDelete === true || req.body._permanentDelete === "true") 
-  {
-  await prismaClient().$transaction(async (tx) => {
-    // 1️⃣ Delete work items
-    await tx.workItem.deleteMany({
+    if (req.body._permanentDelete === true || req.body._permanentDelete === "true") 
+     {
+      await prismaClient().$transaction(async (tx) => {
+      // 1️⃣ Delete work items
+      await tx.workItem.deleteMany({
       where: { asset_id: assetId }
     });
 
@@ -80,9 +91,9 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
     await tx.assets.delete({
       where: { id: assetId }
     });
-  });
+   });
 
-  await logAudit({
+   await logAudit({
     action: "delete",
     targetType: "asset",
     targetId: assetId,
@@ -97,14 +108,14 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
       role: user.role,
       accountType: user.accountType
     }
-  });
+   });
 
-  res.json({
-    success: true,
-    message: "Asset permanently deleted"
-  });
-  return;
-}
+    res.json({
+     success: true,
+     message: "Asset permanently deleted"
+    });
+    return;
+   }
     const {
       elr,
       structure_no,
@@ -282,7 +293,7 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
        //* IDs that existed before but are NOT in incoming list anymore/*}
         //* 👉 These were permanently deleted in the UI/*}
         const toHardDelete = [...existingIds].filter((id) => !incomingIds.has(id));
-
+        if(user.role !== "editor") {
         if (toHardDelete.length > 0) {
           await tx.workItem.deleteMany({
             where: {
@@ -292,6 +303,7 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
           });
         }
       }
+     }
       return updated;
     });
 
