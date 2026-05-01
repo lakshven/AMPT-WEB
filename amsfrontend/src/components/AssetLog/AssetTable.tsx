@@ -35,6 +35,7 @@ interface AssetTableProps {
 
   filters: Record<string, any>;
   setFilters: (f: Record<string, any>) => void;
+  refreshAsset: (id: number | string) => void;
 }
 
 const AssetTable: React.FC<AssetTableProps> = ({
@@ -63,12 +64,13 @@ const AssetTable: React.FC<AssetTableProps> = ({
   setSortOrder,
   filters,
   setFilters,
+  refreshAsset,
 }) => {
   const showActionsColumn = isAdmin || isAssetManager || isEditor;
   const [showMatrix, setShowMatrix] = React.useState(false);
 
   const allAssetColumns = [...assetColumns, ...fileColumns];
-
+  const allColumnsCount = allAssetColumns.length + (showActionsColumn ? 1 : 0);
   const handleSort = (key: string) => {
     if (sortBy === key) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -129,17 +131,26 @@ const AssetTable: React.FC<AssetTableProps> = ({
       )}
 
       {/* HEADER TABLE */}
-      <div className="w-full overflow-x-auto">
-        <table className="min-w-max border-collapse border border-gray-300">
+      <div className="w-full overflow-x-auto" id="asset-header-scroll">
+        <table
+          className="border-collapse border border-gray-300"
+          style={{ tableLayout: "fixed", width: "max-content" }}
+        >
+          <colgroup>
+            {allAssetColumns.map((col) => (
+              <col key={col.key} style={{ width: col.width }} />
+            ))}
+            {showActionsColumn && <col style={{ width: 150 }} />}
+          </colgroup>
           <thead>
             {/* HEADER ROW */}
             <tr>
               {allAssetColumns.map((col) => (
                 <th
                   key={col.key}
-                  style={{ width: col.width }}
-                  className="p-2 border border-gray-300 bg-[#0989B1] text-white font-semibold cursor-pointer select-none border-b-2 border-b-[#549E39]"
+                  className="p-2 border border-gray-300 bg-[#0989B1] text-white font-semibold cursor-pointer select-none border-b-2 border-b-[#549E39] overflow-hidden whitespace-nowrap text-ellipsis text-left text-sm"
                   onClick={() => handleSort(col.key)}
+                  title={col.label}
                 >
                   {col.label}
                   {sortBy === col.key && (
@@ -151,10 +162,7 @@ const AssetTable: React.FC<AssetTableProps> = ({
               ))}
 
               {showActionsColumn && (
-                <th
-                  style={{ width: 150 }}
-                  className="p-2 border border-gray-300 bg-[#0989B1] text-white font-semibold border-b-2 border-b-[#549E39]"
-                >
+                <th className="p-2 border border-gray-300 bg-[#0989B1] text-white font-semibold border-b-2 border-b-[#549E39] text-left text-sm" >
                   Actions
                 </th>
               )}
@@ -165,12 +173,11 @@ const AssetTable: React.FC<AssetTableProps> = ({
               {allAssetColumns.map((col) => (
                 <th
                   key={col.key}
-                  style={{ width: col.width }}
                   className="p-1 border border-gray-300 bg-[#F0F7F9]"
                 >
                   {col.filterType === "text" && (
                     <input
-                      className="border border-[#549E39] p-1 w-full"
+                      className="border border-[#549E39] p-1 w-full text-sm text-gray-800 font-normal"
                       value={filters[col.key] || ""}
                       onChange={(e) =>
                         handleFilterChange(col.key, e.target.value)
@@ -180,7 +187,7 @@ const AssetTable: React.FC<AssetTableProps> = ({
 
                   {col.filterType === "dropdown" && (
                     <select
-                      className="border border-[#549E39] p-1 w-full"
+                      className="border border-[#549E39] p-1 w-full text-sm text-gray-800 font-normal"
                       value={filters[col.key] || ""}
                       onChange={(e) =>
                         handleFilterChange(col.key, e.target.value)
@@ -222,8 +229,7 @@ const AssetTable: React.FC<AssetTableProps> = ({
 
               {showActionsColumn && (
                 <th
-                  style={{ width: 150 }}
-                  className="bg-[#F0F7F9]"
+                  className=" p-1 border border-gray-300 bg-[#F0F7F9]"
                 />
               )}
             </tr>
@@ -255,6 +261,9 @@ const AssetTable: React.FC<AssetTableProps> = ({
             isAssetManager={isAssetManager}
             isEditor={isEditor}
             isViewer={isViewer}
+            refreshAsset={refreshAsset}
+            showActionsColumn={showActionsColumn}
+            allColumnsCount={allColumnsCount}
           />
         )}
 
@@ -280,6 +289,9 @@ const AssetTable: React.FC<AssetTableProps> = ({
             isAssetManager={isAssetManager}
             isEditor={isEditor}
             isViewer={isViewer}
+            refreshAsset={refreshAsset}
+            showActionsColumn={showActionsColumn}
+            allColumnsCount={allColumnsCount}
           />
         ))}
       </div>

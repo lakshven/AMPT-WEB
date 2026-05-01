@@ -7,6 +7,9 @@ interface WorkItemTableProps {
   onDelete: (id: number | string) => void;
   onRestore: (id: number | string) => void;
   onPermanentDelete: (id: number | string) => void;
+  isAdmin: boolean;
+  isAssetManager: boolean;
+  isEditor: boolean;
 }
 
 const WorkItemTable: React.FC<WorkItemTableProps> = ({
@@ -15,6 +18,9 @@ const WorkItemTable: React.FC<WorkItemTableProps> = ({
   onDelete,
   onRestore,
   onPermanentDelete,
+  isAdmin,
+  isAssetManager,
+  isEditor, 
 }) => {
   const [sortBy, setSortBy] = useState<string>("current_rating");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -91,7 +97,7 @@ const WorkItemTable: React.FC<WorkItemTableProps> = ({
     <div className="mt-3">
 
       {/* FILTER BAR */}
-      <div className="flex gap-3 mb-2 items-center">
+      <div className="flex gap-3 mb-2 items-center min-w-[1600px]">
 
         <input
           type="text"
@@ -108,6 +114,9 @@ const WorkItemTable: React.FC<WorkItemTableProps> = ({
         >
           <option value="">All Status</option>
           <option value="Open">Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Mitigated">Mitigated</option>
+          <option value="Completed">Completed</option>
           <option value="Closed">Closed</option>
         </select>
 
@@ -193,40 +202,39 @@ const WorkItemTable: React.FC<WorkItemTableProps> = ({
                 onDelete={onDelete}
                 onRestore={onRestore}
                 onPermanentDelete={onPermanentDelete}
-              />
+                isAdmin={isAdmin}
+                isAssetManager={isAssetManager}
+                isEditor={isEditor} 
+             />
             ))}
           </tbody>
         </table>
       </div>
 
       {/* PAGINATION */}
-      <div className="flex justify-between items-center mt-2 text-sm">
-        <div>
-          Showing {(page - 1) * pageSize + 1}–
-          {Math.min(page * pageSize, filteredItems.length)} of{" "}
-          {filteredItems.length}
-        </div>
+      <div className="flex justify-between items-center mt-4 text-sm min-w-[1600px]">
+      <button
+       disabled={page === 1}
+       onClick={() => setPage(page - 1)}
+        className="px-3 py-1 border rounded disabled:opacity-50"
+       >
+        Previous
+       </button>
 
-        <div className="flex gap-2">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="px-2 py-1 border rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
+      <span>
+        Page {page} of {Math.max(1, totalPages)}
+      </span>
 
-          <button
-            disabled={page === totalPages}
-            onClick={() => setPage(page + 1)}
-            className="px-2 py-1 border rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+      <button
+        disabled={page === totalPages}
+        onClick={() => setPage(page + 1)}
+        className="px-3 py-1 border rounded disabled:opacity-50"
+      >
+       Next
+     </button>
+   </div>
+ </div>
+ );
 };
 
 export default WorkItemTable;

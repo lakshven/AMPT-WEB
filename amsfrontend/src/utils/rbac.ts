@@ -29,20 +29,22 @@ export function getRoleFlags({ role }: GetRoleFlagsArgs) {
 
   // ✅ Who can see deleted toggle?
   const canSeeDeletedToggle =
-    isAppAdmin || isAdmin || isCompanyAdmin;
+    isAppAdmin || isAdmin || isCompanyAdmin || isEditor || isAssetManager;
 
   // ⭐ NEW ISSUE PERMISSIONS
   const canAddIssues =
     isAppAdmin ||
     isAdmin ||
     isCompanyAdmin ||
-    isEditor;
+    isEditor ||
+    isAssetManager ;
 
   const canEditIssues =
     isAppAdmin ||
     isAdmin ||
     isCompanyAdmin ||
-    isEditor;
+    isEditor ||
+    isAssetManager;
 
   const canAssignIssues =
     isAppAdmin ||
@@ -53,15 +55,18 @@ export function getRoleFlags({ role }: GetRoleFlagsArgs) {
     isAppAdmin ||
     isAdmin ||
     isCompanyAdmin ||
-    isEditor;
+    isEditor ||
+    isAssetManager;
 
   const canDeleteIssues =
     isAppAdmin ||
     isAdmin ||
-    isCompanyAdmin;
+    isCompanyAdmin ||
+    isAssetManager ||
+    isEditor ; 
 
   return {
-     // Role flags
+    // Role flags
     isAppAdmin,
     isAdmin,
     isCompanyAdmin,
@@ -69,12 +74,10 @@ export function getRoleFlags({ role }: GetRoleFlagsArgs) {
     isEditor,
     isViewer,
     isSingleUser,
-    // User permissions
+    // permissions
     canManageUsers,
-// Asset permissions (unchanged)
     canAddAssets,
     canSeeDeletedToggle,
-// ⭐ Issue permissions (new)
     canAddIssues,
     canEditIssues,
     canAssignIssues,

@@ -20,9 +20,11 @@ export interface Asset {
   structure_name?: string;
   location?: string;
   riskRating?: number | null;
+  highestCR?: number | null; 
   latitude?: number | string | null;
   longitude?: number | string | null;
   routeOrder?: number | string | null;
+  workItems?: any[]; // You can replace 'any' with a proper WorkItem type if available
   [key: string]: any;
 }
 
@@ -69,7 +71,7 @@ function FitBounds({ assets }: FitBoundsProps) {
 
   useEffect(() => {
     const coords = assets
-      .filter((a) => a.latitude !== null && a.longitud !== null)
+      .filter((a) => a.latitude !== null && a.longitude !== null)
       .map(
         (a) => [Number(a.latitude), Number(a.longitude)] as [number, number]
       );
@@ -183,13 +185,14 @@ const ClusteredMarkers = ({
     });
 
     assets.forEach((asset) => {
+      const wi = asset.workItems?.[0];
       if (asset.latitude !== null && asset.longitude !== null) {
         const marker = L.marker(
           [asset.latitude as number, asset.longitude as number],
           {
             icon: getMarkerIcon(
               selectedAssetId === asset.id,
-              asset.riskRating,
+              asset.highestCR,
               asset.structure_no
             ),
           }
@@ -202,8 +205,15 @@ const ClusteredMarkers = ({
             <strong class="text-blue-600">${asset.structure_no}</strong><br/>
             ${asset.structure_name ?? ""}<br/>
             ${asset.location ?? ""}<br/>
+            <span class="text-sm text-gray-700">
+              ${wi?.work_item ?? "No work item"}
+            </span><br/>
+
+            <span class="text-sm text-gray-500 italic">
+              ${wi?.risk_mitigation_proposals ?? "No mitigation proposal"}
+            </span><br/><br/>
             <span class="text-xs text-gray-500">
-              Risk: ${asset.riskRating ?? "N/A"}
+              Risk: ${asset.highestCR ?? "N/A"}
             </span>
           </p>
         `);

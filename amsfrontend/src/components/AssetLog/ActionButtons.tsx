@@ -60,19 +60,22 @@ export default function ActionButtons({
         </button>
       )}
 
-      {isAdmin && !isDeleted && (
+       {/* ⭐ Soft Delete: Admin + Editor + Asset Manager */}
+      {!isDeleted && (isAdmin || isEditor || isAssetManager) && ( 
         <button onClick={onDelete} className="bg-red-600 text-white px-2 py-1 rounded">
           Delete
         </button>
       )}
 
-      {isAdmin && isDeleted && (
+      {/* ⭐ Restore: Admin + Editor + Asset Manager */}
+     {isDeleted && (isAdmin || isEditor || isAssetManager) && (
         <button onClick={onRestore} className="bg-teal-600 text-white px-2 py-1 rounded mr-2">
           Restore
         </button>
       )}
-      {/* ⭐ Only show Permanent Delete to Admins when the item is already deleted */}
-      {isAdmin && isDeleted && (
+
+      {/* ⭐ Permanent Delete: allowed for Admin + Asset Manager, but NOT Editor */}
+      {isDeleted && (isAdmin || isAssetManager) && !isEditor && (
         <button onClick={onPermanentDelete} className="bg-black text-white px-2 py-1 rounded">
           Permanent Delete
         </button>

@@ -3,7 +3,7 @@ import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
 // ✅ Use environment variable for both local + production
 const instance: AxiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
-  withCredentials: false,
+  withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
 

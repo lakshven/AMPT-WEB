@@ -1,7 +1,7 @@
 import { useState } from "react";
 import UploadModal from "./UploadModal";
 import FileChoiceModal from "./FileChoiceModal";
-
+import axiosInstance from "../../utils/axiosInstance";
 // ⭐ UPDATED — Accept all file column keys used in your table
 export type FileColumn =
   | "visual_report"
@@ -27,6 +27,7 @@ export default function FileCell({
   const [openChoice, setOpenChoice] = useState(false);
   const [openUpload, setOpenUpload] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const[showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   // ⭐ Determine file states
@@ -48,17 +49,35 @@ export default function FileCell({
   // ⭐ Choose File ALWAYS visible
   const showChooseFile = true;
 
-  const handleOpenChoice = () => {
-    setOpenChoice(true);
-  };
+  const handleOpenChoice = () => { setOpenChoice(true); };
 
   const handleSuccess = () => {
     setShowConfirm(true);
     if (onRefresh) onRefresh();
   };
+  
+  // ⭐ DELETE FILE API CALL
+  const handleDeleteFile = async () => {
+  try {
+    const res = await axiosInstance.delete(`/assets/${rowId}/file`, {
+      params: { column },
+    });
 
+    if (res.data.success) {
+      setUploadedFile(null);
+      setShowDeleteConfirm(false);
+      if (onRefresh) onRefresh();
+    } else {
+      alert(res.data.message || "Failed to delete file");
+    }
+  } catch (err) {
+    console.error("Delete file error:", err);
+    alert("Error deleting file");
+  }
+  };
   return (
-    <div className="flex items-center gap-3">
+   <> 
+   <div className="flex items-center gap-3">
       {/* Always show the Choose File button */}
       {showChooseFile && (
         <button
@@ -80,6 +99,17 @@ export default function FileCell({
           {viewLabel}
         </a>
       )}
+      
+      {/* ⭐ DELETE FILE BUTTON */}
+      {(hasUploadedFile || hasDefaultFile) && (
+        <button
+          onClick={() => setShowDeleteConfirm(true)}
+          className="text-sm text-red-600 underline hover:text-red-800"
+        >
+          Delete File
+        </button>
+      )}
+   </div>
 
       {/* Choice modal */}
       {openChoice && (
@@ -124,6 +154,33 @@ export default function FileCell({
           </div>
         </div>
       )}
-    </div>
+     {/* ⭐ DELETE CONFIRMATION MODAL */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-80 text-center">
+            <h2 className="text-lg font-semibold mb-4">Delete File</h2>
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to delete this file?
+            </p>
+
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleDeleteFile}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -41,7 +41,10 @@ export interface AssetRowProps {
   isAssetManager: boolean;
   isEditor: boolean;
   isViewer: boolean;
-}
+  refreshAsset: (id: number | string) => void;
+  showActionsColumn: boolean;
+  allColumnsCount: number;
+ }
 
 const AssetRow: React.FC<AssetRowProps> = ({
   asset,
@@ -63,6 +66,9 @@ const AssetRow: React.FC<AssetRowProps> = ({
   isAssetManager,
   isEditor,
   isViewer,
+  refreshAsset,
+  showActionsColumn,
+  allColumnsCount,
 }) => {
   const { showPopup } = usePopup();
 
@@ -82,22 +88,25 @@ const AssetRow: React.FC<AssetRowProps> = ({
   const [collapsed, setCollapsed] = React.useState(false);
   const [workItemModalOpen, setWorkItemModalOpen] = React.useState(false);
   const [editingWorkItem, setEditingWorkItem] = React.useState<any | null>(null);
-  // Fix 4 - Allow rendering new asset row 
+
   if (!realAssetId && !isNew) return null;
+  const allColumns = [...assetColumns, ...fileColumns];
+  const rowBg = asset.isDeleted ? "bg-red-50" : "bg-white";
+
   return (
-    <div className="border border-gray-300 rounded bg-white shadow-sm mb-3">
+    <div className={`border border-gray-300 mb-1 ${rowBg} overflow-hidden`>
 
       {/* MAIN ASSET ROW */}
       <div className="w-full overflow-x-auto">
-        <div className="flex min-w-max">
-          {[...assetColumns, ...fileColumns].map((col) => {
+        <div className="flex" style={{ width: "max-content" }}>
+          {allColumns.map((col) => {
             const isFile = col.type === "file";
             const displayValue = mergedAsset[col.key] ?? "";
 
             return (
               <div
                 key={col.key}
-                style={{ width: col.width }}
+                style={{ width: col.width, minWidth: col.width }}
                 className="p-2 border border-gray-200 text-[#333]"
               >
                 {isFile ? (
@@ -106,7 +115,7 @@ const AssetRow: React.FC<AssetRowProps> = ({
                     rowId={Number(realAssetId)}
                     column={col.key as FileColumn}
                     isNewAsset={!!asset.isNewAsset}
-                    onRefresh={() => {}}
+                    onRefresh={() => refreshAsset(realAssetId)}
                   />
                 ) : (
                   <CellRenderer
@@ -124,10 +133,11 @@ const AssetRow: React.FC<AssetRowProps> = ({
               </div>
             );
           })}
-
-          {/* ACTION BUTTONS */}
+          
+          {/* ACTION BUTTONS CELL */}
+          {showActionsColumn && (
           <div
-            style={{ width: 150 }}
+            style={{ width: 150, minWidth: 150 }}
             className="p-2 border border-gray-200"
           >
             <ActionButtons
@@ -157,7 +167,7 @@ const AssetRow: React.FC<AssetRowProps> = ({
 
       {/* ADD WORK ITEM BUTTON */}
       {isEditing && (
-        <div className="p-2">
+        <div className="p-2 bg-blue-50 border-t border-gray-200">
           <button
             onClick={() => {
               // Create a TEMP work item in memory only, like an Excel new row
@@ -181,7 +191,7 @@ const AssetRow: React.FC<AssetRowProps> = ({
               setEditingWorkItem(tempWI);
               setWorkItemModalOpen(true);
             }}
-            className="mt-2 mb-2 px-3 py-1 bg-blue-600 text-white rounded text-sm"
+            className=" px-3 py-1 bg-blue-600 text-white rounded text-sm"
           >
             + Add Work Item
           </button>
@@ -190,10 +200,10 @@ const AssetRow: React.FC<AssetRowProps> = ({
 
       {/* COLLAPSE / EXPAND */}
       {mergedAsset.workItems?.length > 0 && (
-        <div className="p-2">
+        <div className="px-3 py-1 bg-gray-50 border-t border-gray-200">
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="text-sm text-gray-600 underline mb-2"
+            className="text-sm text-[#0989B1] underline"
           >
             {collapsed ? "Show Work Items" : "Hide Work Items"}
           </button>
@@ -202,7 +212,7 @@ const AssetRow: React.FC<AssetRowProps> = ({
 
       {/* WORK ITEM TABLE */}
       {!collapsed && (mergedAsset.workItems ?? []).length > 0 && (
-        <div className="p-2">
+        <div className="bg-gray-50 border-t border-gray-200">
           <WorkItemTable
             workItems={mergedAsset.workItems ?? []}
             onEdit={(w) => {
@@ -231,13 +241,16 @@ const AssetRow: React.FC<AssetRowProps> = ({
              workItems: (prev.workItems ?? []).filter((wi: any) => wi.id !== id),
            }));
             }}            
+            isAdmin={isAdmin}
+            isAssetManager={isAssetManager}
+            isEditor={isEditor}
            />
         </div>
       )}
 
       {/* GEOCODE WARNING */}
       {asset.geocodeWarning && (
-        <div className="p-2">
+        <div className="px-3 py-2 border-t border-gray-200">
           <div className="bg-yellow-200 text-yellow-900 p-2 border border-yellow-400 rounded text-sm">
             ⚠ Unable to geocode this address. Please check spelling or postcode.
           </div>
@@ -256,11 +269,11 @@ const AssetRow: React.FC<AssetRowProps> = ({
         onSave={(assetId, updatedWI) => {
           setEditedAsset((prev: any) => {
             const prevItems = prev.workItems ?? [];
-            const isNew = String(updatedWI.id).startsWith("temp-");
+            const isNewWI = String(updatedWI.id).startsWith("temp-");
 
             return {
               ...prev,
-              workItems: isNew
+              workItems: isNewWI
                 ? [...prevItems, updatedWI] // append new work item
                 : prevItems.map((wi: any) =>
                     wi.id === updatedWI.id ? updatedWI : wi

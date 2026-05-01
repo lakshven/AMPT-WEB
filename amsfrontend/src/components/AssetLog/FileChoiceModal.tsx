@@ -9,6 +9,7 @@ interface FileChoiceModalProps {
   onSuccess: () => void; // NEW
   setUploadedFile: React.Dispatch<React.SetStateAction<File | null>>;
   setDefaultSelected?: React.Dispatch<React.SetStateAction<boolean>>; // ⭐ NEW
+  hasExistingFile?: boolean; // ⭐ NEW
 }
 
 export default function FileChoiceModal({
@@ -18,7 +19,8 @@ export default function FileChoiceModal({
   onChooseUpload,
   onSuccess,
   setUploadedFile,
-  setDefaultSelected
+  setDefaultSelected,
+  hasExistingFile = true
 }: FileChoiceModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -55,7 +57,36 @@ export default function FileChoiceModal({
       setLoading(false);
     }
   };
+  // ⭐ DELETE FILE
+  const handleDeleteFile = async () => {
+    try {
+      if (!rowId) {
+        setError("Cannot delete file for unsaved asset");
+        return;
+      }
 
+      setLoading(true);
+      setError("");
+
+      const res = await axiosInstance.delete(
+        `/assets/${rowId}/file?column=${column}`
+      );
+
+      if (!res.data.success) {
+        throw new Error(res.data.message || "Failed to delete file");
+      }
+
+      setUploadedFile(null);
+      setDefaultSelected && setDefaultSelected(false);
+
+      onClose();
+      onSuccess();
+    } catch (err: any) {
+      setError(err.message || "Failed to delete file");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
@@ -87,7 +118,18 @@ export default function FileChoiceModal({
           >
             Upload Your File
           </button>
-
+          
+           {/* ⭐ DELETE EXISTING FILE */}
+          {hasExistingFile && (
+            <button
+              onClick={handleDeleteFile}
+              disabled={loading}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-red-300"
+            >
+              {loading ? "Deleting..." : "Delete File"}
+            </button>
+          )}
+ 
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"

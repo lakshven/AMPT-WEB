@@ -12,6 +12,7 @@ interface UploadModalProps {
 const ALLOWED_TYPES = [
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
   "application/vnd.ms-excel", // .xls
+  "application/pdf", // ⭐ PDF 
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
   "application/msword", // .doc
 ];
@@ -22,7 +23,8 @@ export default function UploadModal({ rowId, column, onClose, onSuccess, setUplo
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-   // ⭐ Reset uploaded file preview when modal opens
+  const [showSuccess, setShowSuccess] = useState(false); // ⭐ NEW SUCCESS POPUP
+  // ⭐ Reset uploaded file preview when modal opens
   useEffect(() => {
     setUploadedFile(null);
   }, [setUploadedFile]);
@@ -35,7 +37,7 @@ export default function UploadModal({ rowId, column, onClose, onSuccess, setUplo
 
     // File type validation
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError("Invalid file type. Only Excel files (.xlsx, .xls) are allowed.");
+      setError("Invalid file type. Allowed: .xlsx, .xls, .pdf, .doc, .docx");
       return;
     }
     
@@ -70,6 +72,7 @@ export default function UploadModal({ rowId, column, onClose, onSuccess, setUplo
         throw new Error(response.data.message || "Upload failed");
       }
       setUploadedFile(file); // ⭐ Update state with the newly uploaded file
+      setShowSuccess(true); // ⭐ Show success popup
       onClose();
       onSuccess();
     } catch (err: any) {
@@ -80,12 +83,14 @@ export default function UploadModal({ rowId, column, onClose, onSuccess, setUplo
   };
 
   return (
+    <>
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
         <h2 className="text-lg font-semibold mb-4">Upload File</h2>
 
         <input
           type="file"
+          accept=".xlsx,.xls,.pdf,.doc,.docx" // ⭐ UPDATED
           onChange={(e) => {
             setError("");
             const selected = e.target.files?.[0] || null;
@@ -97,7 +102,7 @@ export default function UploadModal({ rowId, column, onClose, onSuccess, setUplo
         />
 
         <p className="text-xs text-gray-500 mb-2">
-          Allowed: .xlsx, .xls — Max size: {MAX_SIZE_MB} MB
+          Allowed: .xlsx, .xls, .pdf, .doc, .docx — Max size: {MAX_SIZE_MB} MB
         </p>
 
         {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
@@ -121,5 +126,26 @@ export default function UploadModal({ rowId, column, onClose, onSuccess, setUplo
         </div>
       </div>
     </div>
+   {/* ⭐ SUCCESS POPUP */}
+      {showSuccess && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-80 text-center">
+            <h2 className="text-lg font-semibold mb-4">Upload Successful</h2>
+            <p className="text-gray-700 mb-6">
+              Your file has been uploaded successfully.
+            </p>
+            <button
+              onClick={() => {
+                setShowSuccess(false);
+                onClose();
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+      </>   
   );
 }

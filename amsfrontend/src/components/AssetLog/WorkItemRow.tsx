@@ -6,9 +6,13 @@ interface WorkItemRowProps {
   onDelete: (id: string | number) => void;
   onRestore?: (id: string | number) => void;
   onPermanentDelete?: (id: string | number) => void;
+  // ⭐ Add role flags
+  isAdmin?: boolean;
+  isAssetManager?: boolean;
+  isEditor?: boolean;
 }
 
-const WorkItemRow: React.FC<WorkItemRowProps> = ({ workItem, onEdit, onDelete, onRestore, onPermanentDelete }) => {
+const WorkItemRow: React.FC<WorkItemRowProps> = ({ workItem, onEdit, onDelete, onRestore, onPermanentDelete, isAdmin = false, isAssetManager = false, isEditor = false }) => {
   const ratingBadge = (rating: number) => {
     if (!rating && rating !== 0) return "bg-gray-200 text-gray-700";
     if (rating >= 10) return "bg-red-600 text-white";
@@ -32,10 +36,8 @@ const WorkItemRow: React.FC<WorkItemRowProps> = ({ workItem, onEdit, onDelete, o
         </span>
       </td>
 
-      <td className="px-3 py-2">
-        {workItem.current_date_logged?.slice(0, 10) || "-"}
-      </td>
-      <td className="px-3 py-2">{workItem.risk_mitigation_proposals || "-"}</td> 
+      <td className="px-3 py-2">{workItem.current_date_logged?.slice(0, 10) || "-"}</td>
+      <td className="px-3 py-2">{workItem.risk_mitigation_proposals || "-"}</td>
       <td className="px-3 py-2 text-center">{workItem.mitigation_likelihood}</td>
       <td className="px-3 py-2 text-center">{workItem.mitigation_severity}</td>
 
@@ -78,17 +80,19 @@ const WorkItemRow: React.FC<WorkItemRowProps> = ({ workItem, onEdit, onDelete, o
           <>
           <button
             onClick={() => onRestore && onRestore(workItem.id)}
-            className="px-2 py-1 text-xs bg-green-600 text-white rounded"
+            className="px-2 py-1 text-xs bg-green-600 text-white rounded mr-2"
           >
             Restore
           </button>
-         {/* ⭐ PERMANENT DELETE BUTTON (only visible when deleted) */}
+         {/* ⭐ Permanent Delete — ONLY for Admin + Asset Manager, NOT Editor  */}
+          {(isAdmin || isAssetManager) && !isEditor && ( 
             <button
               onClick={() => onPermanentDelete && onPermanentDelete(workItem.id)}
               className="px-2 py-1 text-xs bg-black text-white rounded"
             >
               Permanent Delete
             </button>
+           )}
           </>
          )}
       </td>

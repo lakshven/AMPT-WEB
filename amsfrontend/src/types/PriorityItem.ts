@@ -11,6 +11,7 @@ export interface PriorityItem {
   };
   issue: string;
   consequence: string;
+  risk_mitigation_proposals: string;
   score: number;
   status: string;
 }

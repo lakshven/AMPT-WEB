@@ -111,9 +111,9 @@ const TopPriorities: React.FC<TopPrioritiesProps> = ({
             {/* Issue */}
             <p className="text-sm mb-2">{item.issue}</p>
 
-            {/* ⭐ Updated: show consequence instead of mitigation */}
+            {/* ⭐ Updated: show mitigation instead of  consequence*/}
             <p className="text-sm italic mb-6">
-              {item.consequence || "No consequence provided"}
+              {item.risk_mitigation_proposals || "No risk mitigation proposals provided"}
             </p>
 
             {/* Action Buttons */}
@@ -126,14 +126,6 @@ const TopPriorities: React.FC<TopPrioritiesProps> = ({
                 }
               >
                 View Asset
-              </button>
-
-              {/* ⭐ Updated: open work item edit modal */}
-              <button
-                className="btn-update"
-                onClick={() => navigate(`/work-items/${item.id}/edit`)}
-              >
-                Update
               </button>
 
               {/* ⭐ Updated: mark work item complete */}
