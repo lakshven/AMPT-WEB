@@ -44,7 +44,7 @@ export interface AssetRowProps {
   refreshAsset: (id: number | string) => void;
   showActionsColumn: boolean;
   allColumnsCount: number;
- }
+}
 
 const AssetRow: React.FC<AssetRowProps> = ({
   asset,
@@ -75,12 +75,11 @@ const AssetRow: React.FC<AssetRowProps> = ({
   const realAssetId = asset.id;
   const isNew = asset.isNewAsset === true;
   const isEditing =
-    editingId === realAssetId ||
-    (isNew && editingId === "new");
+    editingId === realAssetId || (isNew && editingId === "new");
 
   const mergedAsset: Asset = React.useMemo(() => {
     if (isEditing) return { ...(editedAsset as Asset) };
-     return { ...asset };
+    return { ...asset };
   }, [isEditing, editedAsset, asset]);
 
   const canEditFields = isAdmin || isAssetManager || isEditor;
@@ -90,11 +89,12 @@ const AssetRow: React.FC<AssetRowProps> = ({
   const [editingWorkItem, setEditingWorkItem] = React.useState<any | null>(null);
 
   if (!realAssetId && !isNew) return null;
+
   const allColumns = [...assetColumns, ...fileColumns];
   const rowBg = asset.isDeleted ? "bg-red-50" : "bg-white";
 
   return (
-    <div className={`border border-gray-300 mb-1 ${rowBg} overflow-hidden`>
+    <div className={`border border-gray-300 mb-1 ${rowBg} overflow-hidden`}>
 
       {/* MAIN ASSET ROW */}
       <div className="w-full overflow-x-auto">
@@ -133,45 +133,44 @@ const AssetRow: React.FC<AssetRowProps> = ({
               </div>
             );
           })}
-          
+
           {/* ACTION BUTTONS CELL */}
           {showActionsColumn && (
-          <div
-            style={{ width: 150, minWidth: 150 }}
-            className="p-2 border border-gray-200"
-          >
-            <ActionButtons
-              isEditing={isEditing}
-              isNew={isNew}
-              onEdit={() => {
-                onEdit(asset);
-                setEditedAsset({ ...asset });
-                setEditingId(realAssetId);
-              }}
-              onDelete={() => onDelete(realAssetId)}
-              onRestore={() => onRestore(realAssetId)}
-              onPermanentDelete={() => onPermanentDelete(realAssetId)}
-              onSave={onSave}
-              onSaveNew={onSaveNew}
-              onCancel={onCancel}
-              isDeleted={!!asset.isDeleted}
-              canEditFields={canEditFields}
-              isAdmin={isAdmin}
-              isAssetManager={isAssetManager}
-              isEditor={isEditor}
-              isViewer={isViewer}
-            />
-          </div>
+            <div
+              style={{ width: 150, minWidth: 150 }}
+              className="p-2 border border-gray-200"
+            >
+              <ActionButtons
+                isEditing={isEditing}
+                isNew={isNew}
+                onEdit={() => {
+                  onEdit(asset);
+                  setEditedAsset({ ...asset });
+                  setEditingId(realAssetId);
+                }}
+                onDelete={() => onDelete(realAssetId)}
+                onRestore={() => onRestore(realAssetId)}
+                onPermanentDelete={() => onPermanentDelete(realAssetId)}
+                onSave={onSave}
+                onSaveNew={onSaveNew}
+                onCancel={onCancel}
+                isDeleted={!!asset.isDeleted}
+                canEditFields={canEditFields}
+                isAdmin={isAdmin}
+                isAssetManager={isAssetManager}
+                isEditor={isEditor}
+                isViewer={isViewer}
+              />
+            </div>
           )}
-         </div>
-      </div>
+        </div> {/* FIXED: closes flex container */}
+      </div> {/* closes overflow-x-auto */}
 
       {/* ADD WORK ITEM BUTTON */}
       {isEditing && (
         <div className="p-2 bg-blue-50 border-t border-gray-200">
           <button
             onClick={() => {
-              // Create a TEMP work item in memory only, like an Excel new row
               const tempWI = {
                 id: "temp-" + Date.now(),
                 asset_id: realAssetId,
@@ -188,11 +187,11 @@ const AssetRow: React.FC<AssetRowProps> = ({
                 mitigation_completion: "",
                 status: "Open",
                 isDeleted: false,
-              };     
+              };
               setEditingWorkItem(tempWI);
               setWorkItemModalOpen(true);
             }}
-            className=" px-3 py-1 bg-blue-600 text-white rounded text-sm"
+            className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
           >
             + Add Work Item
           </button>
@@ -237,15 +236,17 @@ const AssetRow: React.FC<AssetRowProps> = ({
               }));
             }}
             onPermanentDelete={(id) => {
-             setEditedAsset((prev: any) => ({
-             ...prev,
-             workItems: (prev.workItems ?? []).filter((wi: any) => wi.id !== id),
-           }));
-            }}            
+              setEditedAsset((prev: any) => ({
+                ...prev,
+                workItems: (prev.workItems ?? []).filter(
+                  (wi: any) => wi.id !== id
+                ),
+              }));
+            }}
             isAdmin={isAdmin}
             isAssetManager={isAssetManager}
             isEditor={isEditor}
-           />
+          />
         </div>
       )}
 
@@ -275,10 +276,10 @@ const AssetRow: React.FC<AssetRowProps> = ({
             return {
               ...prev,
               workItems: isNewWI
-                ? [...prevItems, updatedWI] // append new work item
+                ? [...prevItems, updatedWI]
                 : prevItems.map((wi: any) =>
                     wi.id === updatedWI.id ? updatedWI : wi
-                  ), 
+                  ),
             };
           });
 
