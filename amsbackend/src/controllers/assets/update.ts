@@ -148,9 +148,17 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
       ? await saveFile(files.assessment[0], "assessment")
       : null;
 
-    const uploaded_records = files?.records?.[0]
-      ? await saveFile(files.records[0], "records")
-      : null;
+    // ⭐ MULTI-FILE SUPPORT FOR RECORDS
+    let uploaded_records: string[] | undefined = undefined;
+
+    if (files?.records && Array.isArray(files.records)) {
+     uploaded_records = [];
+     for (const file of files.records) {
+       const saved = await saveFile(file, "records");
+       uploaded_records.push(saved);
+     }
+    }
+
 
     let lat = existing.latitude;
     let lon = existing.longitude;
@@ -208,7 +216,7 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
           visual_report: uploaded_visual_report ?? undefined,
           detailed_report: uploaded_detailed_report ?? undefined,
           assessment: uploaded_assessment ?? undefined,
-          records: uploaded_records ?? undefined,
+          records: uploaded_records !== undefined ? uploaded_records : existing.records,
           riskRating:
             risk_rating !== undefined && risk_rating !== null && risk_rating !== ""
               ? Number(risk_rating)

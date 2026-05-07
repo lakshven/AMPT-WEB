@@ -23,6 +23,7 @@ export const deleteFileController = async (req: Request, res: Response): Promise
   try {
     const assetId = Number(req.params.id);
     const column = req.query.column as FileColumn;
+    const fileUrl = req.query.fileUrl as string | undefined; // For multi-file columns, this identifies which file to delete
     const user = req.user!;
 
     // Validate column
@@ -73,16 +74,42 @@ export const deleteFileController = async (req: Request, res: Response): Promise
       }
     }
 
-    // Get current file path
-    const currentPath = asset[column] as string | null;
+    // ⭐ NEW — Support array-based file storage
+    const rawValue = asset[column] as unknown;
 
-    if (!currentPath) {
-      res.status(400).json({ success: false, message: "No file exists to delete" });
+let fileArray: string[] = [];
+
+if (Array.isArray(rawValue)) {
+  if (rawValue.every((v) => typeof v === "string")) {
+    fileArray = rawValue;
+  }
+} else if (typeof rawValue === "string") {
+  fileArray = [rawValue];
+} else {
+  fileArray = [];
+}
+
+
+    if (fileArray.length === 0) {
+      res.status(400).json({ success: false, message: "No files exist to delete" });
       return;
     }
 
+    // ⭐ For multi-file delete, fileUrl MUST be provided
+    if (!fileUrl) {
+      res.status(400).json({ success: false, message: "fileUrl is required" });
+      return;
+    }
+
+    // ⭐ Remove only the selected file (soft delete)
+    const updatedFiles = fileArray.filter((f) => f !== fileUrl);
+
+    if (updatedFiles.length === fileArray.length) {
+      res.status(404).json({ success: false, message: "File not found in asset" });
+      return;
+    }
     // ⭐ Convert DB relative path → absolute filesystem path
-    const absolutePath = path.join(process.cwd(), currentPath);
+    const absolutePath = path.join(process.cwd(), fileUrl);
 
     // ⭐ Delete file safely (no crash if file missing)
     try {
@@ -98,9 +125,21 @@ export const deleteFileController = async (req: Request, res: Response): Promise
     await prismaClient().assets.update({
       where: { id: assetId },
       data: {
-        [column]: null
+        [column]: updatedFiles
       }
     });
+    // ⭐ NEW — Insert deletion log entry
+    await prismaClient().asset_deletion_log.create({
+     data: {
+     asset_id: assetId,
+     deleted_by: user.username || user.email || "Unknown",
+     asset_snapshot: {
+      column,
+      file_url: fileUrl,
+      deleted_at: new Date(),
+    },
+    },
+   });
 
     // Audit log
     await logAudit({
@@ -113,6 +152,7 @@ export const deleteFileController = async (req: Request, res: Response): Promise
       companyId: asset.companyId ?? null,
       details: {
         column,
+        fileUrl,
         message: `Deleted file from column: ${column}`
       },
       metadata: {
@@ -123,7 +163,8 @@ export const deleteFileController = async (req: Request, res: Response): Promise
 
     res.json({
       success: true,
-      message: `File deleted successfully from ${column}`
+      message: `File deleted successfully from ${column}`,
+      remainingFiles: updatedFiles
     });
 
   } catch (err) {

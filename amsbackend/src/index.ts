@@ -52,6 +52,60 @@ async function bootstrap() {
   app.use("/files", filesRouter);
   app.use("/api/auth", authRoutes);
   app.get("/api/client-groups/verify-invite-token", verifyInviteToken);
+  // Static folders
+  app.use( "/uploads",
+    express.static(path.join(process.cwd(), "uploads"), {
+    setHeaders: (res, filePath) => {
+      // Allow browser to open files instead of forcing download
+      res.setHeader("Content-Disposition", "inline");
+
+      // PDF
+      if (filePath.endsWith(".pdf")) {
+        res.setHeader("Content-Type", "application/pdf");
+      }
+
+      // Excel (xlsx)
+      if (filePath.endsWith(".xlsx")) {
+        res.setHeader(
+          "Content-Type",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+      }
+
+      // Excel (xls)
+      if (filePath.endsWith(".xls")) {
+        res.setHeader("Content-Type", "application/vnd.ms-excel");
+      }
+
+      // Word (docx)
+      if (filePath.endsWith(".docx")) {
+        res.setHeader(
+          "Content-Type",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        );
+      }
+
+      // Word (doc)
+      if (filePath.endsWith(".doc")) {
+        res.setHeader("Content-Type", "application/msword");
+      }
+     }
+     })
+   );
+
+  app.use("/defaults", express.static(path.join(process.cwd(), "public", "defaults")));
+
+  app.use(
+    "/api/manuals",
+    express.static(path.join(process.cwd(), "public", "manuals"), {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith(".pdf")) {
+          res.setHeader("Content-Type", "application/pdf");
+        }
+      },
+    })
+  );
+  
   app.use(attachUserContext);
   app.use(userActivityLogger);
 
@@ -69,21 +123,6 @@ async function bootstrap() {
   app.use("/api/work-items", workItemsRoutes);
   app.use("/api/issues", assetIssueRoutes);
   app.use("/api/company-admin", companyAdminRoutes);
-
-  // Static folders
-  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-  app.use("/defaults", express.static(path.join(process.cwd(), "public", "defaults")));
-
-  app.use(
-    "/api/manuals",
-    express.static(path.join(process.cwd(), "public", "manuals"), {
-      setHeaders: (res, filePath) => {
-        if (filePath.endsWith(".pdf")) {
-          res.setHeader("Content-Type", "application/pdf");
-        }
-      },
-    })
-  );
 
   console.log("STATIC PATH:", path.join(process.cwd(), "uploads"));
   console.log("Serving manuals from:", path.join(process.cwd(), "public", "manuals"));

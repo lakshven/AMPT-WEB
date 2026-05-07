@@ -51,7 +51,7 @@ router.put(
     { name: "visual_report", maxCount: 1 },
     { name: "detailed_report", maxCount: 1 },
     { name: "assessment", maxCount: 1 },
-    { name: "records", maxCount: 1 },
+    { name: "records", maxCount: 20},
   ]),
   (req: Request, res: Response) => updateAsset(req, res)
 );

@@ -61,7 +61,7 @@ export async function saveFile(
         if (err) return reject(err);
 
         // Return relative path (frontend friendly)
-        resolve(`${field}/${fileName}`);
+        resolve(fileName);
       });
     } catch (err) {
       reject(err);

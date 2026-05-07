@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import axios from "axios";
 import { getPrisma } from "../../prisma/client";
 function prismaClient() { return getPrisma(); }
+import { getFileUrl } from "../../services/fileService";
 
 import { normalizeLocation } from "../../utils/normalizeLocation";
 
@@ -21,7 +22,8 @@ export const getAssets = async (req: Request, res: Response): Promise<void> => {
     const isAppAdmin = req.user?.role === "app_admin";
     const userCompanyId = req.user?.companyId;
 
-    let where: any = {};
+    // ⭐ ALWAYS use a unified AND array
+    const AND: any[] = [];
 
     /* ============================================================
        TENANT ISOLATION
@@ -31,32 +33,36 @@ export const getAssets = async (req: Request, res: Response): Promise<void> => {
         res.status(403).json({ message: "User has no company assigned" });
         return;
       }
-      where.companyId = userCompanyId;
+      AND.push({ companyId: userCompanyId });
     }
 
-    if (isAppAdmin) {
-      where.isDeleted = includeDeleted ? true : false;
-    } else if (isSingle) {
-      where.clientGroupId = null;
-      where.isDeleted = includeDeleted ? true : false;
-    } else if (isCompany) {
+    // Deleted filter (applies to all roles)
+    AND.push({ isDeleted: includeDeleted });
+
+    if (isSingle) {
+      AND.push({ clientGroupId: null });
+    }
+
+    if (isCompany) {
       if (!req.user?.clientGroupId) {
         res.status(403).json({ message: "User has no client group assigned" });
         return;
       }
-      where.OR = [
-        { clientGroupId: req.user.clientGroupId },
-        { clientGroupId: null }
-      ];
-      where.isDeleted = includeDeleted ? true : false;
+
+      // ⭐ OR must be nested inside AND
+      AND.push({
+        OR: [
+          { clientGroupId: req.user.clientGroupId },
+          { clientGroupId: null }
+        ]
+      });
     }
 
     /* ============================================================
        SEARCH
        ============================================================ */
-    const andConditions = [];
     if (search.trim() !== "") {
-      andConditions.push({
+      AND.push({
         OR: [
           { structure_no: { contains: search, mode: "insensitive" } },
           { structure_name: { contains: search, mode: "insensitive" } },
@@ -99,8 +105,7 @@ export const getAssets = async (req: Request, res: Response): Promise<void> => {
       if (key.endsWith("_from")) {
         const field = key.replace("_from", "");
         if (dateFields.has(field)) {
-          const existing = where[field] || {};
-          where[field] = { ...existing, gte: new Date(value) };
+          AND.push({ [field]: { gte: new Date(value) } });
         }
         return;
       }
@@ -108,30 +113,25 @@ export const getAssets = async (req: Request, res: Response): Promise<void> => {
       if (key.endsWith("_to")) {
         const field = key.replace("_to", "");
         if (dateFields.has(field)) {
-          const existing = where[field] || {};
-          where[field] = { ...existing, lte: new Date(value) };
+          AND.push({ [field]: { lte: new Date(value) } });
         }
         return;
       }
 
       if (dropdownFields.has(key)) {
-        andConditions.push({ [key]: { equals: value } });
+        AND.push({ [key]: { equals: value } });
         return;
       }
 
       if (dateFields.has(key)) {
-        andConditions.push({ [key]: { equals: new Date(value) } });
+        AND.push({ [key]: { equals: new Date(value) } });
         return;
       }
 
-      andConditions.push({
+      AND.push({
         [key]: { contains: value, mode: "insensitive" }
       });
     });
-
-    if (andConditions.length > 0) {
-      where.AND = where.AND ? [...where.AND, ...andConditions] : andConditions;
-    }
 
     /* ============================================================
        SORTING
@@ -156,7 +156,7 @@ export const getAssets = async (req: Request, res: Response): Promise<void> => {
        FETCH ASSETS + WORK ITEMS
        ============================================================ */
     const assets = await prismaClient().assets.findMany({
-      where,
+      where: { AND },
       skip,
       take: limit,
       orderBy: { [sortBy]: sortOrder },
@@ -166,10 +166,17 @@ export const getAssets = async (req: Request, res: Response): Promise<void> => {
         }
       }
     });
-
+     // ⭐ Convert file names → URLs for ALL assets
+    const transformed = assets.map(asset => ({
+      ...asset,
+      visual_report: asset.visual_report || [],
+      detailed_report: asset.detailed_report || [],
+      records: asset.records || [],
+      assessment: asset.assessment || []
+    }));
     res.json({
-      assets,
-      total: assets.length,
+      assets: transformed,
+      total: transformed.length,
       page,
       limit
     });
@@ -179,6 +186,7 @@ export const getAssets = async (req: Request, res: Response): Promise<void> => {
     res.status(500).send("Error fetching assets");
   }
 };
+
 
 /* ============================================================
    GET ASSET LOCATIONS
@@ -280,8 +288,36 @@ export const getAssetById = async (req: Request, res: Response): Promise<void> =
       res.status(404).json({ success: false, message: "Asset not found" });
       return;
     }
+    // ⭐ Convert file names → full URLs
+    const visual_report = asset.visual_report.map(fileName => ({
+      fileName,
+      url: getFileUrl(fileName, "visual_report")
+    }));
 
-    res.json({ success: true, asset });
+    const detailed_report = asset.detailed_report.map(fileName => ({
+      fileName,
+      url: getFileUrl(fileName, "detailed_report")
+    }));
+
+    const records = asset.records.map(fileName => ({
+      fileName,
+      url: getFileUrl(fileName, "records")
+    }));
+
+    const assessment = asset.assessment.map(fileName => ({
+      fileName,
+      url: getFileUrl(fileName, "assessment")
+    }));
+    res.json({
+      success: true,
+      asset: {
+        ...asset,
+        visual_report,
+        detailed_report,
+        records,
+        assessment
+      }
+    });
   } catch (err) {
     console.error("Get asset by ID error:", err);
     res.status(500).json({ success: false, message: "Failed to fetch asset" });

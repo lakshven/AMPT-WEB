@@ -55,7 +55,17 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
     const visual_report = await saveIfExists(files?.visual_report, "visual_report");
     const detailed_report = await saveIfExists(files?.detailed_report, "detailed_report");
     const assessment = await saveIfExists(files?.assessment, "assessment");
-    const records = await saveIfExists(files?.records, "records");
+    // ⭐ MULTI-FILE SUPPORT FOR RECORDS
+    let records: string[] = [];
+
+    if (files?.records && Array.isArray(files.records)) {
+    for (const file of files.records) {
+     const saved = await saveFile(file, "records");
+     records.push(saved);
+   }
+     uploadedFiles["records"] = records;
+   }
+
 
     /* ============================================================
        GEOCODING
