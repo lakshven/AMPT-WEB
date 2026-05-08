@@ -27,6 +27,35 @@ export interface WorkItem {
   [key: string]: any;
 }
 
+// ⭐ File columns used in multi-file logic
+const FILE_COLUMNS: string[] = [
+  "visual_report",
+  "detailed_report",
+  "assessment",
+  "records",
+];
+
+// ⭐ Normalize file columns → always arrays
+function normalizeFileColumns(asset: any) {
+  const updated = { ...asset };
+
+  FILE_COLUMNS.forEach((col) => {
+    const value = updated[col];
+
+    if (!value) {
+      updated[col] = [];
+    } else if (typeof value === "string") {
+      updated[col] = value.split(",").map((v: string) => v.trim());
+    } else if (Array.isArray(value)) {
+      updated[col] = value;
+    } else {
+      updated[col] = [];
+    }
+  });
+
+  return updated;
+}
+
 export function useAssets() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [total, setTotal] = useState(0);
@@ -89,7 +118,8 @@ export function useAssets() {
           ? res.data
           : res.data.assets || res.data.data || [];
 
-        const normalized: Asset[] = list.map((a: any) => ({
+        const normalized: Asset[] = list.map((a: any) => 
+          normalizeFileColumns({
           ...a,
           isNewAsset: false,
         }));
@@ -115,6 +145,33 @@ export function useAssets() {
       isAppAdmin,
     ]
   );
+  // ⭐ REFRESH A SINGLE ASSET (after upload/delete)
+  const refreshAsset = useCallback(
+    async (id: number | string) => {
+    if (!user || !token) return;
+
+    try {
+      const res = await axiosInstance.get(`/assets/${id}?t=${Date.now()}`, {
+        headers: {
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache",
+        },
+      });
+
+      const updated = normalizeFileColumns({
+        ...res.data.asset,
+        isNewAsset: false,
+      });
+
+      setAssets((prev) =>
+        prev.map((a) => (String(a.id) === String(id) ? updated : a))
+      );
+    } catch (err) {
+      console.error("Failed to refresh asset:", err);
+    }
+   },
+   [user, token]
+  );
 
   useEffect(() => {
     if (user && token) {
@@ -130,7 +187,6 @@ export function useAssets() {
     sortBy,
     sortOrder,
     filters,
-    fetchAssets,
   ]);
 
   //  EDIT ASSET
@@ -265,10 +321,10 @@ const handlePermanentDelete = async (id: number | string): Promise<void> => {
     try {
       const original = assets.find((a) => a.id === editingId) || {};
 
-      const merged: any = {
+      const merged: any = normalizeFileColumns({
         ...original,
         ...editedAsset,
-      };
+      });
 
       const updatedWorkItems = (merged.workItems || [])
         .map((wi: any) => recalcWorkItem(wi))
@@ -341,10 +397,10 @@ const handlePermanentDelete = async (id: number | string): Promise<void> => {
     if (!canModify || !user || !token || !newAsset) return Promise.resolve();
 
     try {
-      const merged: any = {
+      const merged: any = normalizeFileColumns({
         ...newAsset,
         ...editedAsset,
-      };
+      });
 
       const updatedWorkItems = (merged.workItems || [])
         .map((wi: any) => recalcWorkItem(wi))
@@ -407,6 +463,7 @@ const handlePermanentDelete = async (id: number | string): Promise<void> => {
     setEditedAsset,
     newAsset,
     fetchAssets,
+    refreshAsset,   // ⭐ ADD THIS
     handleEdit,
     handleDelete,
     handleRestore,

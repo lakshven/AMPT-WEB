@@ -1,33 +1,39 @@
-import { useState , useEffect} from "react";
+import { useState } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import { FileColumn } from "./FileCell";
+
 interface UploadModalProps {
-  rowId: number | null; // allow null for new assets that don't have an ID yet
+  rowId: number | null;
   column: FileColumn;
+  existingCount: number;        // ⭐ NEW — how many files already exist
   onClose: () => void;
-  onSuccess: () => void; // optional callback for successful upload
-  setUploadedFile: React.Dispatch<React.SetStateAction<File | null>>;
+  onSuccess: () => void;
 }
 
 const ALLOWED_TYPES = [
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
-  "application/vnd.ms-excel", // .xls
-  "application/pdf", // ⭐ PDF 
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
-  "application/msword", // .doc
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/msword",
 ];
 
-const MAX_SIZE_MB = 5; // 5 MB
+const MAX_SIZE_MB = 5;
 
-export default function UploadModal({ rowId, column, onClose, onSuccess, setUploadedFile }: UploadModalProps) {
+export default function UploadModal({
+  rowId,
+  column,
+  existingCount,
+  onClose,
+  onSuccess,
+}: UploadModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showSuccess, setShowSuccess] = useState(false); // ⭐ NEW SUCCESS POPUP
-  // ⭐ Reset uploaded file preview when modal opens
-  useEffect(() => {
-    setUploadedFile(null);
-  }, [setUploadedFile]);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const isRecords = column === "records";
+  const maxFiles = isRecords ? 20 : 1;
 
   const handleUpload = async () => {
     if (!file) {
@@ -35,32 +41,35 @@ export default function UploadModal({ rowId, column, onClose, onSuccess, setUplo
       return;
     }
 
-    // File type validation
+    if (existingCount >= maxFiles) {
+      setError(`Maximum ${maxFiles} file(s) allowed.`);
+      return;
+    }
+
     if (!ALLOWED_TYPES.includes(file.type)) {
       setError("Invalid file type. Allowed: .xlsx, .xls, .pdf, .doc, .docx");
       return;
     }
-    
-    // File size validation
+
     const maxBytes = MAX_SIZE_MB * 1024 * 1024;
     if (file.size > maxBytes) {
       setError(`File is too large. Max allowed size is ${MAX_SIZE_MB} MB.`);
       return;
     }
-    // ⭐ CASE 1: NEW ASSET → handle in frontend only
+
+    // ⭐ NEW ASSET — store locally only
     if (rowId === null || isNaN(Number(rowId))) {
-      setUploadedFile(file); // store file for preview
-      onClose();
+      setShowSuccess(true);
       onSuccess();
       return;
     }
+
     try {
       setLoading(true);
       setError("");
 
-      // ⭐ Updated: use axiosInstance instead of fetch
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append(column, file);
       formData.append("column", column);
       formData.append("rowId", String(rowId));
 
@@ -71,10 +80,13 @@ export default function UploadModal({ rowId, column, onClose, onSuccess, setUplo
       if (!response.data.success) {
         throw new Error(response.data.message || "Upload failed");
       }
-      setUploadedFile(file); // ⭐ Update state with the newly uploaded file
-      setShowSuccess(true); // ⭐ Show success popup
-      onClose();
+
+      setShowSuccess(true);
       onSuccess();
+      // ⭐ ADD THIS LINE
+      setTimeout(() => {
+       window.dispatchEvent(new CustomEvent("asset-files-updated"));
+      }, 50);
     } catch (err: any) {
       setError(err.message || "Upload failed");
     } finally {
@@ -84,49 +96,55 @@ export default function UploadModal({ rowId, column, onClose, onSuccess, setUplo
 
   return (
     <>
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-        <h2 className="text-lg font-semibold mb-4">Upload File</h2>
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+          <h2 className="text-lg font-semibold mb-4">Upload File</h2>
 
-        <input
-          type="file"
-          accept=".xlsx,.xls,.pdf,.doc,.docx" // ⭐ UPDATED
-          onChange={(e) => {
-            setError("");
-            const selected = e.target.files?.[0] || null;
-            setFile(selected);
-            setUploadedFile(selected || null); // ⭐ Update parent state immediately for preview
+          {/* ⭐ Disable input if max reached */}
+          <input
+            type="file"
+            accept=".xlsx,.xls,.pdf,.doc,.docx"
+            disabled={existingCount >= maxFiles}
+            onChange={(e) => {
+              setError("");
+              setFile(e.target.files?.[0] || null);
+            }}
+            className="mb-2"
+          />
 
-          }}
-          className="mb-2"
-        />
+          <p className="text-xs text-gray-500 mb-2">
+            Allowed: .xlsx, .xls, .pdf, .doc, .docx — Max size: {MAX_SIZE_MB} MB
+          </p>
 
-        <p className="text-xs text-gray-500 mb-2">
-          Allowed: .xlsx, .xls, .pdf, .doc, .docx — Max size: {MAX_SIZE_MB} MB
-        </p>
+          {existingCount >= maxFiles && (
+            <p className="text-red-600 text-sm mb-2">
+              Maximum {maxFiles} file(s) allowed. Delete a file to upload more.
+            </p>
+          )}
 
-        {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+          {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
 
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-            disabled={loading}
-          >
-            Cancel
-          </button>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              disabled={loading}
+            >
+              Cancel
+            </button>
 
-          <button
-            onClick={handleUpload}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
-          >
-            {loading ? "Uploading..." : "Upload"}
-          </button>
+            <button
+              onClick={handleUpload}
+              disabled={loading || existingCount >= maxFiles}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
+            >
+              {loading ? "Uploading..." : "Upload"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-   {/* ⭐ SUCCESS POPUP */}
+
+      {/* ⭐ SUCCESS POPUP */}
       {showSuccess && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-80 text-center">
@@ -135,17 +153,23 @@ export default function UploadModal({ rowId, column, onClose, onSuccess, setUplo
               Your file has been uploaded successfully.
             </p>
             <button
-              onClick={() => {
-                setShowSuccess(false);
-                onClose();
-              }}
+             onClick={() => {
+             setShowSuccess(false);
+             onClose();
+
+             // ⭐ Trigger refresh AFTER modal closes
+             setTimeout(() => {
+             window.dispatchEvent(new CustomEvent("asset-files-updated"));
+             }, 50);
+             }}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
               OK
             </button>
+
           </div>
         </div>
       )}
-      </>   
+    </>
   );
 }

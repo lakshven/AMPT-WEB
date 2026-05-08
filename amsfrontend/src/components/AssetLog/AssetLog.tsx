@@ -5,7 +5,6 @@ import AssetTable from "./AssetTable";
 import { AuthContext } from "../../context/AuthContext";
 import RoleBadge from "../common/RoleBadge";
 import { useRBAC } from "../../hooks/useRBAC";
-import axiosInstance from "../../utils/axiosInstance";
 export interface Asset {
   id?: number | string;
   [key: string]: any;
@@ -51,6 +50,7 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
     setEditingId,
     setNewAsset,
     addWorkItem,   // ⭐ NEW — required
+    refreshAsset,   // ⭐ NEW — required
   } = useAssets();
 
   const dropdownOptions = useDropdownOptions();
@@ -69,29 +69,8 @@ const AssetLog: React.FC<AssetLogProps> = ({ role }) => {
       sortOrder,
       filters,
     });
-  }, [showDeleted, page, limit, search, sortBy, sortOrder, filters, fetchAssets]);
+  }, [showDeleted, page, limit, search, sortBy, sortOrder, filters]);
   
-  const refreshAsset = async (id: number | string) => {
-  try {
-    const res = await axiosInstance.get(`/assets/${id}`);
-    const updated = res.data.asset;
-
-    // Replace only the updated asset in the list
-    fetchAssets({
-      includeDeleted: showDeleted,
-      page,
-      limit,
-      search,
-      sortBy,
-      sortOrder,
-      filters,
-    });
-
-  } catch (err) {
-    console.error("Failed to refresh asset:", err);
-  }
-  };
-
   return (
     <div className="p-4">
       <h2 className="text-xl text-black text-center font-bold mb-4">

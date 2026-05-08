@@ -101,7 +101,15 @@ const AssetRow: React.FC<AssetRowProps> = ({
         <div className="flex" style={{ width: "max-content" }}>
           {allColumns.map((col) => {
             const isFile = col.type === "file";
-            const displayValue = mergedAsset[col.key] ?? "";
+            const rawValue = mergedAsset[col.key];
+            const displayValue =
+            rawValue === null || rawValue === undefined
+            ? ""
+            : typeof rawValue === "string"
+            ? rawValue
+            : Array.isArray(rawValue)
+            ? rawValue.join(", ")
+            : String(rawValue);
 
             return (
               <div
@@ -111,7 +119,11 @@ const AssetRow: React.FC<AssetRowProps> = ({
               >
                 {isFile ? (
                   <FileCell
-                    fileUrl={mergedAsset[col.key] || null}
+                    fileUrls={
+                    Array.isArray(mergedAsset[col.key])
+                    ? mergedAsset[col.key].filter((f: any) => typeof f === "string")
+                    : []
+                    }
                     rowId={Number(realAssetId)}
                     column={col.key as FileColumn}
                     isNewAsset={!!asset.isNewAsset}
@@ -291,3 +303,4 @@ const AssetRow: React.FC<AssetRowProps> = ({
 };
 
 export default AssetRow;
+
