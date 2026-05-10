@@ -24,6 +24,7 @@ const ALLOWED_TYPES = [
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel", 
 ];
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB

@@ -166,14 +166,14 @@ export const getAssets = async (req: Request, res: Response): Promise<void> => {
         }
       }
     });
-     // ⭐ Convert file names → URLs for ALL assets
-    const transformed = assets.map(asset => ({
+    // ⭐ Convert file names → URLs for ALL assets
+    const transformed = assets.map((asset: any) => ({
       ...asset,
-      visual_report: asset.visual_report || [],
-      detailed_report: asset.detailed_report || [],
-      records: asset.records || [],
-      assessment: asset.assessment || []
-    }));
+      visual_report: Array.isArray(asset.visual_report) ? asset.visual_report : [],
+      detailed_report: Array.isArray(asset.detailed_report) ? asset.detailed_report : [],
+      records: Array.isArray(asset.records) ? asset.records : [],
+      assessment: Array.isArray(asset.assessment) ? asset.assessment : []
+   }));
     res.json({
       assets: transformed,
       total: transformed.length,
@@ -272,7 +272,7 @@ export const getAssetLocations = async (req: Request, res: Response): Promise<vo
   }
 };
 export const getAssetById = async (req: Request, res: Response): Promise<void> => {
-  try {
+    try {
     const id = Number(req.params.id);
 
     const asset = await prismaClient().assets.findUnique({
@@ -288,38 +288,25 @@ export const getAssetById = async (req: Request, res: Response): Promise<void> =
       res.status(404).json({ success: false, message: "Asset not found" });
       return;
     }
-    // ⭐ Convert file names → full URLs
-    const visual_report = asset.visual_report.map(fileName => ({
-      fileName,
-      url: getFileUrl(fileName, "visual_report")
-    }));
+    // ⭐ ADD THESE HEADERS TO STOP 304 CACHING
+    res.set({
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
+    });
 
-    const detailed_report = asset.detailed_report.map(fileName => ({
-      fileName,
-      url: getFileUrl(fileName, "detailed_report")
-    }));
-
-    const records = asset.records.map(fileName => ({
-      fileName,
-      url: getFileUrl(fileName, "records")
-    }));
-
-    const assessment = asset.assessment.map(fileName => ({
-      fileName,
-      url: getFileUrl(fileName, "assessment")
-    }));
     res.json({
       success: true,
       asset: {
         ...asset,
-        visual_report,
-        detailed_report,
-        records,
-        assessment
+        visual_report: asset.visual_report || [],
+        detailed_report: asset.detailed_report || [],
+        records: asset.records || [],
+        assessment: asset.assessment || []
       }
     });
-  } catch (err) {
-    console.error("Get asset by ID error:", err);
-    res.status(500).json({ success: false, message: "Failed to fetch asset" });
-  }
-};
+    } catch (err) {
+      console.error("Get asset by ID error:", err);
+      res.status(500).json({ success: false, message: "Failed to fetch asset" });
+    }
+    };

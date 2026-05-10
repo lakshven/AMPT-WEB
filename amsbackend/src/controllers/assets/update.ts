@@ -76,7 +76,7 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
     // ⭐ NEW: Handle asset permanent delete
     if (req.body._permanentDelete === true || req.body._permanentDelete === "true") 
      {
-      await prismaClient().$transaction(async (tx) => {
+      await prismaClient().$transaction(async (tx: any) => {
       // 1️⃣ Delete work items
       await tx.workItem.deleteMany({
       where: { asset_id: assetId }

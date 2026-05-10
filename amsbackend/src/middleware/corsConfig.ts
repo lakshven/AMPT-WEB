@@ -11,7 +11,8 @@ const corsOptions = cors({
     "Content-Type",
     "Authorization",
     "Cache-Control",
-    "X-Requested-With"
+    "X-Requested-With",
+    "Pragma" // ⭐ Add this line
   ],
   credentials: true
 });

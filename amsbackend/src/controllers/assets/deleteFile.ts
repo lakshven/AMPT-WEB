@@ -2,9 +2,8 @@ import { Request, Response } from "express";
 import path from "path";
 import fs from "fs";
 import { getPrisma } from "../../prisma/client";
-import { deleteFile as removeFile } from "../../services/storageService";
 import { logAudit } from "../../models/Audit";
-
+import { UPLOAD_DIRS } from "../../services/storageService";
 function prismaClient() {
   return getPrisma();
 }
@@ -23,7 +22,7 @@ export const deleteFileController = async (req: Request, res: Response): Promise
   try {
     const assetId = Number(req.params.id);
     const column = req.query.column as FileColumn;
-    const fileUrl = req.query.fileUrl as string | undefined; // For multi-file columns, this identifies which file to delete
+    let fileUrl = req.query.fileUrl as string | undefined; // For multi-file columns, this identifies which file to delete
     const user = req.user!;
 
     // Validate column
@@ -77,28 +76,30 @@ export const deleteFileController = async (req: Request, res: Response): Promise
     // ⭐ NEW — Support array-based file storage
     const rawValue = asset[column] as unknown;
 
-let fileArray: string[] = [];
+    let fileArray: string[] = [];
 
-if (Array.isArray(rawValue)) {
-  if (rawValue.every((v) => typeof v === "string")) {
-    fileArray = rawValue;
-  }
-} else if (typeof rawValue === "string") {
-  fileArray = [rawValue];
-} else {
-  fileArray = [];
-}
-
+    if (Array.isArray(rawValue)) {
+       fileArray = rawValue;
+     } else if (typeof rawValue === "string") {
+        fileArray = [rawValue];
+       } 
+    // ⭐ Clean invalid values
+    fileArray = fileArray.filter(f => !!f && typeof f === "string"); 
 
     if (fileArray.length === 0) {
       res.status(400).json({ success: false, message: "No files exist to delete" });
       return;
     }
-
+    // ⭐ Handle single-file columns
+    if (column !== "records") {
+      fileUrl = fileArray[0]; // only one file exists
+    } else {
+      // Multi-file column requires fileUrl
     // ⭐ For multi-file delete, fileUrl MUST be provided
     if (!fileUrl) {
       res.status(400).json({ success: false, message: "fileUrl is required" });
       return;
+    }
     }
 
     // ⭐ Remove only the selected file (soft delete)
@@ -109,7 +110,7 @@ if (Array.isArray(rawValue)) {
       return;
     }
     // ⭐ Convert DB relative path → absolute filesystem path
-    const absolutePath = path.join(process.cwd(), fileUrl);
+    const absolutePath = path.join(UPLOAD_DIRS[column], fileUrl);
 
     // ⭐ Delete file safely (no crash if file missing)
     try {
@@ -167,8 +168,8 @@ if (Array.isArray(rawValue)) {
       remainingFiles: updatedFiles
     });
 
-  } catch (err) {
-    console.error("Delete file error:", err);
-    res.status(500).json({ success: false, message: "Failed to delete file" });
-  }
-};
+    } catch (err) {
+      console.error("Delete file error:", err);
+      res.status(500).json({ success: false, message: "Failed to delete file" });
+    }
+    };
