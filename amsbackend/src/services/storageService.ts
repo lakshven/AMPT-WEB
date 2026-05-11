@@ -74,7 +74,7 @@ export async function saveFile(
 // Delete file (used when transaction fails)
 export function deleteFile(relativePath: string) {
   try {
-    const fullPath = path.join(rootDir, "uploads", relativePath);
+    const fullPath = path.join(baseUploadDir, relativePath);
     if (fs.existsSync(fullPath)) {
       fs.unlinkSync(fullPath);
     }
