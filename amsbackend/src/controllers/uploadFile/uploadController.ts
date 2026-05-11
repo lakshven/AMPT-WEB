@@ -90,7 +90,7 @@ if (Array.isArray(rawValue)) {
 // Save file to disk (with validation inside)
     const savedPath = await saveFile(file, column);
     // Multer gives us the actual filename
-    const fileNameOnly = file.filename;
+    const fileNameOnly = savedPath;
     let updatedFiles: string[];
      
     if (column === "records") {
