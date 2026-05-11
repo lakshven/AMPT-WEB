@@ -2,13 +2,14 @@ import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 
-const rootDir = process.cwd();
+// Always resolve relative to THIS FILE, not process.cwd()
+const baseUploadDir = path.join(__dirname, "../../uploads");
 
 export const UPLOAD_DIRS = {
-  visual_report: path.join(rootDir, "uploads", "visual_report"),
-  detailed_report: path.join(rootDir, "uploads", "detailed_report"),
-  assessment: path.join(rootDir, "uploads", "assessment"),
-  records: path.join(rootDir, "uploads", "records"),
+  visual_report: path.join(baseUploadDir, "visual_report"),
+  detailed_report: path.join(baseUploadDir, "detailed_report"),
+  assessment: path.join(baseUploadDir, "assessment"),
+  records: path.join(baseUploadDir, "records"),
 } as const;
 
 // Ensure folders exist
