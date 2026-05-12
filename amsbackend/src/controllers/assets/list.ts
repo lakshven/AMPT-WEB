@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-import axios from "axios";
 import { getPrisma } from "../../prisma/client";
 function prismaClient() { return getPrisma(); }
 import { getFileUrl } from "../../services/fileService";
-
 import { normalizeLocation } from "../../utils/normalizeLocation";
-
+import { resolveLocation } from "../../services/locationResolver";
 /* ============================================================
    GET ASSETS — GROUPED MODE (asset + workItems[])
    ============================================================ */
@@ -235,25 +233,18 @@ export const getAssetLocations = async (req: Request, res: Response): Promise<vo
         if ((!asset.latitude || !asset.longitude) && asset.location?.trim() !== "") {
           try {
             const normalizedLocation = normalizeLocation(asset.location);
-
-            const geoRes = await axios.get(
-              "https://nominatim.openstreetmap.org/search",
-              {
-                params: { q: normalizedLocation, format: "json", limit: 1 },
-                headers: { "User-Agent": "AssetManager/1.0 (lakshmiangular8@gmail.com)" }
-              }
-            );
-
-            if (Array.isArray(geoRes.data) && geoRes.data.length > 0) {
-              const lat = geoRes.data[0].lat;
-              const lon = geoRes.data[0].lon;
-
-              asset.latitude = lat;
-              asset.longitude = lon;
+            const resolved = await resolveLocation(normalizedLocation);
+              
+              if (resolved.latitude !== null && resolved.longitude !== null) {
+              asset.latitude = resolved.latitude;
+              asset.longitude = resolved.longitude;
 
               await prismaClient().assets.update({
                 where: { id: asset.id },
-                data: { latitude: lat, longitude: lon }
+                data: { 
+                       latitude: resolved.latitude, 
+                       longitude: resolved.longitude 
+                     }
               });
             }
           } catch (geoErr: any) {

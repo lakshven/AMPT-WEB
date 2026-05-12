@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import axios from "axios";
 import { getPrisma } from "../../prisma/client";
 function prismaClient() { return getPrisma(); }
 
@@ -173,24 +172,8 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
           lat = resolved.latitude;
           lon = resolved.longitude;
         } else {
-          const geoRes = await axios.get(
-            "https://nominatim.openstreetmap.org/search",
-            {
-              params: { q: normalizedLocation, format: "json", limit: 1 },
-              headers: {
-                "User-Agent": "AssetManager/1.0 (support@example.com)"
-              }
-            }
-          );
-
-          const geoData = geoRes.data?.[0];
-          if (geoData) {
-            lat = Number(geoData.lat) || lat;
-            lon = Number(geoData.lon) || lon;
-          } else {
             geocodeWarning = true;
           }
-        }
       } catch {
         geocodeWarning = true;
       }
@@ -213,9 +196,19 @@ export const updateAsset = async (req: Request, res: Response): Promise<void> =>
           detailed_exam_years,
           last_exam: safeDate(last_exam),
           next_exam: safeDate(next_exam),
-          visual_report: uploaded_visual_report ?? undefined,
-          detailed_report: uploaded_detailed_report ?? undefined,
-          assessment: uploaded_assessment ?? undefined,
+          // ALWAYS send arrays (schema requires String[])
+          visual_report: uploaded_visual_report
+            ? [uploaded_visual_report]
+            : existing.visual_report,
+
+          detailed_report: uploaded_detailed_report
+            ? [uploaded_detailed_report]
+            : existing.detailed_report,
+
+          assessment: uploaded_assessment
+            ? [uploaded_assessment]
+            : existing.assessment,
+
           records: uploaded_records !== undefined ? uploaded_records : existing.records,
           riskRating:
             risk_rating !== undefined && risk_rating !== null && risk_rating !== ""
