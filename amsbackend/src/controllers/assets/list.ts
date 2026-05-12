@@ -232,7 +232,7 @@ export const getAssetLocations = async (req: Request, res: Response): Promise<vo
       rows.map(async (asset: typeof rows[number]) => {
         if ((!asset.latitude || !asset.longitude) && asset.location?.trim() !== "") {
           try {
-            const normalizedLocation = normalizeLocation(asset.location);
+            const normalizedLocation = await normalizeLocation(asset.location);
             const resolved = await resolveLocation(normalizedLocation);
               
               if (resolved.latitude !== null && resolved.longitude !== null) {
