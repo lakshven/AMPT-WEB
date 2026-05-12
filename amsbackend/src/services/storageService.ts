@@ -28,7 +28,7 @@ const ALLOWED_TYPES = [
   "application/vnd.ms-excel", 
 ];
 
-const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 // Save file
 export async function saveFile(
@@ -46,7 +46,7 @@ export async function saveFile(
 
       // Validate size
       if (file.size > MAX_SIZE_BYTES) {
-        return reject(new Error("File too large. Max size is 5MB"));
+        return reject(new Error("File too large. Max size is 10MB"));
       }
 
       const baseDir = UPLOAD_DIRS[field];
@@ -59,7 +59,7 @@ export async function saveFile(
       const filePath = path.join(baseDir, fileName);
 
       // Write file
-      fs.writeFile(filePath, file.buffer, (err) => {
+      fs.writeFile(filePath, file.buffer, {encoding: "binary"}, (err) => {
         if (err) return reject(err);
 
         // Return relative path (frontend friendly)
