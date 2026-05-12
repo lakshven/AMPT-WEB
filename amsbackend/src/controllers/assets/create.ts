@@ -81,21 +81,21 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
         lat = resolved.latitude ?? null;
         lon = resolved.longitude ?? null;
 
-        if (lat === null || lon === null) {
-          const geoRes = await axios.get(
-            "https://nominatim.openstreetmap.org/search",
-            {
-              params: { q: normalized, format: "json", limit: 1 },
-              headers: { "User-Agent": "AssetManager/1.0 (support@example.com)" }
-            }
-          );
+        //if (lat === null || lon === null) {
+          //const geoRes = await axios.get(
+           // "https://nominatim.openstreetmap.org/search",
+            //{
+              //params: { q: normalized, format: "json", limit: 1 },
+              //headers: { "User-Agent": "AssetManager/1.0 (support@example.com)" }
+            //}
+          //);
 
-          const geoData = geoRes.data?.[0];
-          if (geoData) {
-            lat = Number(geoData.lat) || null;
-            lon = Number(geoData.lon) || null;
-          }
-        }
+          //const geoData = geoRes.data?.[0];
+          //if (geoData) {
+            //lat = Number(geoData.lat) || null;
+            //lon = Number(geoData.lon) || null;
+          //}
+        //}
       } catch (err) {
         console.error("Geocoding error:", err);
       }
@@ -165,10 +165,12 @@ export const addAsset = async (req: Request, res: Response): Promise<void> => {
           detailed_exam_years,
           last_exam: safeDate(last_exam),
           next_exam: safeDate(next_exam),
-          visual_report,
-          detailed_report,
-          assessment,
-          records,
+          // ⭐ IMPORTANT: always send arrays, never null
+          visual_report: visual_report ? [visual_report] : [],
+          detailed_report: detailed_report ? [detailed_report] : [],
+          assessment: assessment ? [assessment] : [],
+          records: records ?? [],
+
           riskRating: parsedRiskRating,
           latitude: lat,
           longitude: lon,
