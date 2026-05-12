@@ -60,10 +60,10 @@ export default function FileChoiceModal({
   );
   // ⭐ Convert filenames → full URLs
   const files = safeFileUrls.map((name) => {
-  const cleanName = name.split("/").pop(); // remove folder prefix
   return {
-    fileName: cleanName,
-    url: getFileUrl(cleanName, column),
+    fileName: name.split("/").pop(),
+    fullPath: name,
+    url: getFileUrl(name, column),
   };
 });
 
@@ -84,14 +84,14 @@ export default function FileChoiceModal({
   const maxFiles = isRecords ? 20 : 1;
   const fileCount = safeFileUrls.length;
 
-  // ⭐ DELETE FILE (soft delete)
-  const handleDeleteFile = async (fileUrl: string) => {
+  // ⭐ DELETE Must send the file path, not url (soft delete)
+  const handleDeleteFile = async (filePath: string) => {
     try {
       setLoading(true);
       setError("");
 
       const res = await axiosInstance.delete(
-        `/assets/${rowId}/file?column=${column}&fileUrl=${encodeURIComponent(fileUrl)}`
+        `/assets/${rowId}/file?column=${column}&fileUrl=${encodeURIComponent(filePath)}`
       );
 
       if (!res.data.success) {
@@ -110,7 +110,7 @@ export default function FileChoiceModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/40 flex items-start justify-center pt-20 z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-[450px]">
         <h2 className="text-lg font-semibold mb-4">Manage Files</h2>
 
@@ -151,7 +151,7 @@ export default function FileChoiceModal({
 
                   {/* ⭐ DELETE */}
                   <button
-                    onClick={() => handleDeleteFile(file.url)}
+                    onClick={() => handleDeleteFile(file.fullPath)}
                     disabled={loading}
                     className="text-red-600 underline text-sm hover:text-red-800"
                   >
