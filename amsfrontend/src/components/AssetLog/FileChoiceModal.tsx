@@ -63,7 +63,7 @@ export default function FileChoiceModal({
   return {
     fileName: name.split("/").pop(),
     fullPath: name,
-    url: getFileUrl(name, column),
+    url: getFileUrl(column, name),
   };
 });
 
