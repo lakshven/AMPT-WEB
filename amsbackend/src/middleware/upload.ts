@@ -3,31 +3,41 @@ import fs from "fs";
 import path from "path";
 import { Request } from "express";
 
-// ⭐ Store ALL asset files in one folder (best approach)
-const uploadDir = path.join(process.cwd(), "uploads", "assessments");
+// ⭐ Map each field to its correct folder
+const UPLOAD_DIRS: Record<string, string> = {
+  visual_report: path.join(process.cwd(), "uploads", "visual_report"),
+  detailed_report: path.join(process.cwd(), "uploads", "detailed_report"),
+  assessment: path.join(process.cwd(), "uploads", "assessment"),
+  records: path.join(process.cwd(), "uploads", "records"),
+};
 
-// Ensure directory exists
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// ⭐ Ensure all folders exist
+Object.values(UPLOAD_DIRS).forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
-// ⭐ Multer storage configuration
+// ⭐ Multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir);
+    const folder = UPLOAD_DIRS[file.fieldname];
+    cb(null, folder);
   },
   filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const uniqueName = `${Date.now()}_${safeName}`;
     cb(null, uniqueName);
   },
 });
 
-// ⭐ Allowed file types (PDF, DOC, DOCX, XLSX)
+// ⭐ Allowed MIME types
 const allowedMimeTypes = [
   "application/pdf",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
 ];
 
 // ⭐ File filter
@@ -47,5 +57,5 @@ const fileFilter = (
 export const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
 });

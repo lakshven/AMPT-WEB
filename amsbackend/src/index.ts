@@ -48,13 +48,13 @@ async function bootstrap() {
   app.use(corsOptions);
   app.use(express.json());
 
-  // API Routes
-  app.use("/files", filesRouter);
-  app.use("/api/auth", authRoutes);
-  app.get("/api/client-groups/verify-invite-token", verifyInviteToken);
+  // ⭐ CORRECT STATIC PATH FOR UPLOADS (WORKS IN LOCAL + PRODUCTION)
+  const uploadsPath = path.join(process.cwd(), "uploads");
+  console.log("Serving uploads from:", uploadsPath);
+ 
   // Static folders
   app.use( "/uploads",
-    express.static(path.join(process.cwd(), "uploads"), {
+    express.static(uploadsPath, {
     setHeaders: (res, filePath) => {
       // Allow browser to open files instead of forcing download
       res.setHeader("Content-Disposition", "inline");
@@ -105,7 +105,10 @@ async function bootstrap() {
       },
     })
   );
-  
+  // API Routes
+  app.use("/files", filesRouter);
+  app.use("/api/auth", authRoutes);
+  app.get("/api/client-groups/verify-invite-token", verifyInviteToken);  
   app.use(attachUserContext);
   app.use(userActivityLogger);
 
