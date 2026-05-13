@@ -13,5 +13,5 @@ export function getFileUrl(filePath: string, column: string): string {
   const base = apiUrl.replace(/\/api\/?$/, "");
 
   // Build the full URL to the file
-  return `${base}/uploads/${filePath}`;
+  return `${base}/uploads/${column}/${filePath}`;
 }
