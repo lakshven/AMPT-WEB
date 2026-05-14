@@ -9,7 +9,7 @@ interface ModalPopupProps {
 
 const ModalPopup: React.FC<ModalPopupProps> = ({ message, onClose, children}) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-40">
       <div className="bg-white rounded-lg shadow-lg w-96 relative p-6 text-center">
         
         <div className="absolute top-0 left-0 w-full bg-green-600 text-white py-2 rounded-t-lg font-bold text-lg">
