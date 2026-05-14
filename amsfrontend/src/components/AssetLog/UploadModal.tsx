@@ -18,7 +18,7 @@ const ALLOWED_TYPES = [
   "application/msword",
 ];
 
-const MAX_SIZE_MB = 5;
+const MAX_SIZE_MB = 10;
 
 export default function UploadModal({
   rowId,
@@ -96,7 +96,7 @@ export default function UploadModal({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black/40 flex items-start justify-center z-50">
         <div className="bg-white p-6 rounded-lg shadow-lg w-96">
           <h2 className="text-lg font-semibold mb-4">Upload File</h2>
 
@@ -146,7 +146,7 @@ export default function UploadModal({
 
       {/* ⭐ SUCCESS POPUP */}
       {showSuccess && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-start justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-80 text-center">
             <h2 className="text-lg font-semibold mb-4">Upload Successful</h2>
             <p className="text-gray-700 mb-6">
