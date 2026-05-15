@@ -46,6 +46,7 @@ async function bootstrap() {
 
   // ⭐ Use ONLY corsOptions
   app.use(corsOptions);
+  app.options("/*", corsOptions);  // ⭐ REQUIRED for preflight
   app.use(express.json());
 
   // ⭐ CORRECT STATIC PATH FOR UPLOADS (WORKS IN LOCAL + PRODUCTION)
