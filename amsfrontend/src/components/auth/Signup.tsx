@@ -98,7 +98,11 @@ const Signup: React.FC = () => {
        ? "/auth/signup"            // Public route for invited users
        : "/auth/admin/signup";     // Protected route for app_admin manual signup
 
-      const res = await axiosInstance.post("/auth/signup", payload);
+      const res = await axiosInstance.post(endpoint, payload, {
+         headers: {
+           Authorization: `Bearer ${localStorage.getItem("token")}`
+         }
+      });
       const data = res.data;
 
       if (data.success) {
