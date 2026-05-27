@@ -7,11 +7,11 @@ function prismaClient() { return getPrisma(); }
 // Routes that do NOT require a token
 const PUBLIC_ROUTES = [
   "/api/auth/login",
-  "/api/auth/register", 
+  "/api/auth/signup", 
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
   "/login",
-  "/register",
+  "/signup",
   "/forgot-password",
   "/reset-password",
 ];
